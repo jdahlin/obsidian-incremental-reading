@@ -1,0 +1,29 @@
+/* Cloze styling */
+
+/* Default: make cloze look like a subtle pill */
+.ir-cloze {
+	border: 1px dashed var(--text-muted);
+	border-radius: 6px;
+	padding: 0 0.25em;
+	font-variant-ligatures: none;
+	white-space: pre-wrap;
+}
+
+/* Show the title as a tooltip-like underline marker (optional) */
+.ir-cloze[data-title] {
+	text-decoration: underline dotted;
+}
+
+/* Replace rendered cloze content with a placeholder */
+.ir-cloze {
+	display: inline-block;
+	width: 3ch; /* width of [...] */
+	overflow: hidden;
+	vertical-align: baseline;
+	position: relative;
+}
+
+.ir-cloze::before {
+	content: '[...]';
+}
+
