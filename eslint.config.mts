@@ -20,6 +20,11 @@ export default tseslint.config(
 				extraFileExtensions: ['.json']
 			},
 		},
+		rules: {
+			// This repo is an Obsidian plugin (not a typical Node runtime) and ESLint's package.json
+			// detection can be flaky with TS projectService; avoid false positives for deps like react.
+			'import/no-extraneous-dependencies': 'off',
+		},
 	},
 	...obsidianmd.configs.recommended,
 	globalIgnores([

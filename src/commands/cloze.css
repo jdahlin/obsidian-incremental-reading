@@ -27,3 +27,12 @@
 	content: '[...]';
 }
 
+.ir-cloze.is-revealed {
+	width: auto;
+	overflow: visible;
+	border-style: solid;
+}
+
+.ir-cloze.is-revealed::before {
+	content: '';
+}

@@ -1,7 +1,8 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-incremental-reading",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "An Obsidian plugin for incremental reading.",
+	"author": "Johan Dahlin",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -24,6 +25,8 @@
 		"jiti": "2.6.1"
 	},
 	"dependencies": {
-		"obsidian": "latest"
+		"obsidian": "latest",
+		"preact": "^10.26.9",
+		"ts-fsrs": "^5.2.3"
 	}
 }

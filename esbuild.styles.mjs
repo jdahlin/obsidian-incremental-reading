@@ -5,7 +5,7 @@ const prod = process.argv[2] === 'production';
 
 // Bundle CSS imports into a single styles.css file Obsidian can load.
 await esbuild.build({
-	entryPoints: ['styles.css'],
+	entryPoints: ['src/styles.css'],
 	bundle: true,
 	outfile: 'styles.css',
 	minify: prod,
@@ -14,4 +14,3 @@ await esbuild.build({
 		'.css': 'css',
 	},
 });
-

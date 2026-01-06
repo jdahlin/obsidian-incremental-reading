@@ -1,0 +1,120 @@
+/* Review view */
+
+/* Make sure the Obsidian leaf content and view content can stretch */
+.workspace-leaf-content[data-type="my-review"],
+.workspace-leaf-content[data-type="my-review"] .view-content {
+	height: 100%;
+	min-height: 0;
+}
+
+.workspace-leaf-content[data-type="my-review"] .view-content {
+	overflow: hidden;
+}
+
+.ir-review-root {
+	height: 100%;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	padding: 0.3em;
+	box-sizing: border-box;
+}
+
+.ir-review-header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ir-review-breadcrumbs {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.ir-review-crumb {
+	background: transparent;
+	border: none;
+	padding: 0;
+	color: var(--text-normal);
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ir-review-crumb:hover {
+	text-decoration: underline;
+}
+
+.ir-review-stats {
+	color: var(--text-muted);
+	font-size: 0.9em;
+}
+
+.ir-review-phase {
+	color: var(--text-faint);
+	font-size: 0.8em;
+}
+
+.ir-review-scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	margin-top: 0.5em;
+	position: relative;
+	z-index: 1;
+}
+
+.ir-review-footer {
+	flex: 0 0 auto;
+	margin-top: 0.5em;
+	position: relative;
+	z-index: 10;
+}
+
+.ir-review-gradebar {
+	display: flex;
+	gap: 0.5rem;
+	padding-top: 0.5em;
+	border-top: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+}
+
+.ir-review-gradebtn {
+	flex: 1;
+	padding: 0.5rem 0.75rem;
+	border-radius: 8px;
+	font-weight: 600;
+}
+
+.ir-review-empty {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding: 1.25rem 0.5rem;
+	color: var(--text-muted);
+}
+
+.ir-review-empty-title {
+	font-weight: 700;
+	color: var(--text-normal);
+}
+
+.ir-review-empty-body {
+	font-size: 0.95em;
+}
+
+.ir-review-empty-next {
+	font-size: 0.9em;
+	color: var(--text-faint);
+}
+
+.ir-review-showanswer {
+	width: 100%;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.ir-review-showanswer:hover {
+	background-color: var(--interactive-accent-hover);
+}

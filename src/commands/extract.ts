@@ -2,6 +2,7 @@ import { Editor, MarkdownView, moment, Notice, Plugin } from 'obsidian';
 
 export type ExtractOptions = {
 	titleWords: number;
+	tag?: string;
 };
 
 export async function extractToIncrementalNote(
@@ -26,6 +27,7 @@ export async function extractToIncrementalNote(
 	const selection = selectionRaw.replace(/\r\n/g, '\n').trim();
 
 	const created = moment().format('YYYY-MM-DDTHH:mm:ss');
+	const due = created;
 	const sourceFolder = sourceFile.parent?.path ?? '';
 	const sourceLink = sourceFolder ? `[[${sourceFolder}/${sourceFile.basename}]]` : `[[${sourceFile.basename}]]`;
 
@@ -36,12 +38,22 @@ export async function extractToIncrementalNote(
 
 	const createdBasename = childPath.split('/').pop()?.replace(/\.md$/i, '') ?? childBasename;
 
+	const tag = options.tag?.trim() || 'extract';
 	const childFrontmatter = [
 		'---',
 		`source: "${sourceLink}"`,
+		`tags: [${tag}]`,
+		'type: topic',
 		`created: ${created}`,
-		'tags: [extract]',
-		'status: extract',
+		`due: ${due}`,
+		'status: new',
+		'priority: 50',
+		'stability: 0',
+		'difficulty: 0',
+		'reps: 0',
+		'lapses: 0',
+		'last_review:',
+		'scroll_pos: 0',
 		'---',
 	].join('\n');
 

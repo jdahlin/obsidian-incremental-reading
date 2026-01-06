@@ -1,11 +1,23 @@
 import { Editor, MarkdownView, Plugin, WorkspaceLeaf } from 'obsidian';
-import { clozeSelection } from './cloze';
-import { extractToIncrementalNote } from './extract';
-import { ReviewView, VIEW_TYPE_REVIEW } from './reviewView';
+import { clozeSelectionNextIndex, clozeSelectionSameIndex } from './commands/cloze';
+import { extractToIncrementalNote } from './commands/extract';
+import { ReviewItemView, VIEW_TYPE_REVIEW } from './views/review';
+import { ensureBasesFolder } from './bases';
+import { DEFAULT_SETTINGS, IncrementalReadingSettingTab, type PluginSettings } from './settings';
 
 export default class IncrementalReadingPlugin extends Plugin {
+	settings: PluginSettings = DEFAULT_SETTINGS;
+
 	async onload() {
-		this.registerView(VIEW_TYPE_REVIEW, (leaf: WorkspaceLeaf) => new ReviewView(leaf, this.app));
+		await this.loadSettings();
+		const basesTimeout = window.setTimeout(() => {
+			void ensureBasesFolder(this.app).catch((err) => {
+				console.error('IR: failed to ensure bases folder', err);
+			});
+		}, 0);
+		this.register(() => window.clearTimeout(basesTimeout));
+		this.addSettingTab(new IncrementalReadingSettingTab(this.app, this));
+		this.registerView(VIEW_TYPE_REVIEW, (leaf: WorkspaceLeaf) => new ReviewItemView(leaf, this.app, this));
 
 		this.addRibbonIcon('dice', 'Review', async () => {
 			await this.activateReviewView();
@@ -23,17 +35,37 @@ export default class IncrementalReadingPlugin extends Plugin {
 			id: 'extract-to-incremental-note',
 			name: 'Extract to incremental note',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				await extractToIncrementalNote(this, editor, view, { titleWords: 5 });
-			}
+				await extractToIncrementalNote(this, editor, view, {
+					titleWords: this.settings.extractTitleWords,
+					tag: this.settings.extractTag,
+				});
+			},
+			hotkeys: [{ modifiers: ['Alt'], key: 'X' }],
 		});
 
 		this.addCommand({
 			id: 'cloze-selection',
 			name: 'Cloze selection',
-			editorCallback: (editor: Editor) => {
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				// Default title is "..." for now.
-				clozeSelection(editor, { index: 1, title: '...' });
-			}
+				await clozeSelectionNextIndex(this.app, editor, view.file, {
+					title: '...',
+					extractTag: this.settings.extractTag,
+				});
+			},
+			hotkeys: [{ modifiers: ['Alt'], key: 'Z' }],
+		});
+
+		this.addCommand({
+			id: 'cloze-selection-same-index',
+			name: 'Cloze selection (same index)',
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				await clozeSelectionSameIndex(this.app, editor, view.file, {
+					title: '...',
+					extractTag: this.settings.extractTag,
+				});
+			},
+			hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'Z' }],
 		});
 	}
 
@@ -52,13 +84,18 @@ export default class IncrementalReadingPlugin extends Plugin {
 			leaf = mostRecent;
 			await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true });
 		}
-
-		// revealLeaf may return a Promise depending on Obsidian version; don't leave it floating.
 		void workspace.revealLeaf(leaf);
-
 		const view = leaf.view;
-		if (view instanceof ReviewView) {
+		if (view instanceof ReviewItemView) {
 			view.contentEl.focus();
 		}
+	}
+
+	async loadSettings(): Promise<void> {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings(): Promise<void> {
+		await this.saveData(this.settings);
 	}
 }
