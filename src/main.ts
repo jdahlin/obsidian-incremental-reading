@@ -1,99 +1,64 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import { Editor, MarkdownView, Plugin, WorkspaceLeaf } from 'obsidian';
+import { clozeSelection } from './cloze';
+import { extractToIncrementalNote } from './extract';
+import { ReviewView, VIEW_TYPE_REVIEW } from './reviewView';
 
-// Remember to rename these classes and interfaces!
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-
+export default class IncrementalReadingPlugin extends Plugin {
 	async onload() {
-		await this.loadSettings();
+		this.registerView(VIEW_TYPE_REVIEW, (leaf: WorkspaceLeaf) => new ReviewView(leaf, this.app));
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		this.addRibbonIcon('dice', 'Review', async () => {
+			await this.activateReviewView();
 		});
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
+			id: 'open-review-view',
+			name: 'Open review',
+			callback: async () => {
+				await this.activateReviewView();
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
+		this.addCommand({
+			id: 'extract-to-incremental-note',
+			name: 'Extract to incremental note',
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				await extractToIncrementalNote(this, editor, view, { titleWords: 5 });
+			}
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
+		this.addCommand({
+			id: 'cloze-selection',
+			name: 'Cloze selection',
+			editorCallback: (editor: Editor) => {
+				// Default title is "..." for now.
+				clozeSelection(editor, { index: 1, title: '...' });
+			}
+		});
 	}
 
 	onunload() {
+		// Don't detach leaves here; users may have moved the view.
+		// Obsidian will unload the view type when the plugin is disabled.
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
-	}
+	private async activateReviewView(): Promise<void> {
+		const { workspace } = this.app;
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_REVIEW)[0];
+		if (!leaf) {
+			const mostRecent = workspace.getMostRecentLeaf();
+			if (!mostRecent) return;
+			leaf = mostRecent;
+			await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true });
+		}
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+		// revealLeaf may return a Promise depending on Obsidian version; don't leave it floating.
+		void workspace.revealLeaf(leaf);
 
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+		const view = leaf.view;
+		if (view instanceof ReviewView) {
+			view.contentEl.focus();
+		}
 	}
 }
