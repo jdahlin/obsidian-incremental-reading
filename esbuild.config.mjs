@@ -11,7 +11,7 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
-const sharedExternal = [
+const external = [
 	"obsidian",
 	"electron",
 	"@codemirror/autocomplete",
@@ -28,66 +28,42 @@ const sharedExternal = [
 	...builtinModules,
 ];
 
-const entry = "src/main.ts";
+/** @type {import('esbuild').BuildOptions} */
+const buildOptions = {
+	banner: { js: banner },
+	entryPoints: {
+		main: "src/main.ts",
+		styles: "src/styles.css",
+	},
+	bundle: true,
+	external,
+	format: "cjs",
+	target: "es2018",
+	logLevel: "info",
+	sourcemap: prod ? false : "inline",
+	treeShaking: true,
+	outdir: ".",
+	minify: prod,
+	define: {
+		"process.env.NODE_ENV": prod ? '"production"' : '"development"',
+	},
+	alias: {
+		"react": "preact/compat",
+		"react-dom": "preact/compat",
+		"react/jsx-runtime": "preact/jsx-runtime",
+	},
+	jsx: "automatic",
+	jsxImportSource: "preact",
+	loader: {
+		".css": "css",
+	},
+};
 
-function jsBuildOptions() {
-	/** @type {import('esbuild').BuildOptions} */
-	return {
-		banner: { js: banner },
-		entryPoints: [entry],
-		bundle: true,
-		external: sharedExternal,
-		format: "cjs",
-		target: "es2018",
-		logLevel: "info",
-		sourcemap: prod ? false : "inline",
-		outfile: "main.js",
-		minify: prod,
-		// Keep CSS imports in source (so buildStyles can discover them), but don't emit them into main.js.
-		loader: {
-			'.css': 'empty',
-		},
-	};
-}
-
-function cssBuildOptions() {
-	/** @type {import('esbuild').BuildOptions} */
-	return {
-		entryPoints: [entry],
-		bundle: true,
-		write: false,
-		// An output path is required for esbuild to generate CSS output alongside JS.
-		outfile: 'styles.tmp.js',
-		minify: prod,
-		logLevel: "info",
-		platform: "browser",
-		external: sharedExternal,
-		loader: {
-			".css": "css",
-		},
-	};
-}
-
-const context = await esbuild.context(jsBuildOptions());
-
-async function buildStyles() {
-	// Bundle CSS imports reachable from the TS entry into a single styles.css file.
-	const result = await esbuild.build(cssBuildOptions());
-
-	let cssText = '';
-	for (const out of result.outputFiles ?? []) {
-		if (out.path.endsWith('.css')) cssText += out.text;
-	}
-
-	const fs = await import('node:fs/promises');
-	await fs.writeFile('styles.css', cssText);
-}
+const context = await esbuild.context(buildOptions);
 
 if (prod) {
 	await context.rebuild();
-	await buildStyles();
 	process.exit(0);
 } else {
 	await context.watch();
-	await buildStyles();
 }
