@@ -4,7 +4,7 @@ This plugin adds commands for an incremental reading workflow.
 
 ## Commands
 
-- **Extract to incremental note**: creates a new note next to the current note using the first 5 words of the selection as the filename, and replaces the selection with a Markdown link to the new note.
+- **Extract to topic note**: creates a new note next to the current note using the first 5 words of the selection as the filename, and replaces the selection with a Markdown link to the new note.
 - **Cloze selection**: wraps the selection in an Anki-style cloze (`{{c1::...::...}}`) inside an inline HTML wrapper so you can style/hide it via CSS.
 
 ## Cloze styling

@@ -1,6 +1,6 @@
 {
 	"id": "obsidian-incremental-reading",
-	"name": "Incremental Reading",
+	"name": "Incremental Reading v2",
 	"version": "1.0.0",
 	"minAppVersion": "1.10.0",
 	"description": "Adds a command to extract and normalize the current editor selection.",
