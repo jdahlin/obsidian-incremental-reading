@@ -1,251 +1,170 @@
-# Obsidian community plugin
+# Obsidian Incremental Reading Plugin
 
-## Project overview
+## Project Overview
 
-- Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
-- Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
+This is an Obsidian plugin that implements SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
 
-## Environment & tooling
+**Key Documentation:**
+- `docs/ARCHITECTURE.md` - Technical design, data model, and implementation status
+- `docs/IMPLEMENTATION_SPEC.md` - Step-by-step implementation guide
+- `docs/USER_GUIDE.md` - User-facing documentation
+- `README.md` - Project overview, features, and installation
 
-- Node.js: use current LTS (Node 18+ recommended).
-- **Package manager: npm** (required for this sample - `package.json` defines npm scripts and dependencies).
-- **Bundler: esbuild** (required for this sample - `esbuild.config.mjs` and build scripts depend on it). Alternative bundlers like Rollup or webpack are acceptable for other projects if they bundle all external dependencies into `main.js`.
-- Types: `obsidian` type definitions.
+## Core Concepts
 
-**Note**: This sample project has specific technical dependencies on npm and esbuild. If you're creating a plugin from scratch, you can choose different tools, but you'll need to replace the build configuration accordingly.
+### Incremental Reading Workflow
+1. **Extract** - Select text → create new note linked from source
+2. **Cloze** - Wrap text in `{{c1::answer}}` for active recall
+3. **Review** - Study due items with spaced repetition scheduling
 
-### Install
+### Data Model
+- **Topics** - Extracts without clozes (passive review)
+- **Items** - Cloze deletions (active recall with question/answer phases)
+- **Sidecar files** - Per-note scheduling state in `IR/Review Items/<id>.md`
+- **Revlog** - Review history in `IR/Revlog/YYYY-MM.md` (JSONL format)
 
-```bash
-npm install
+### Key Architecture Decisions
+- Plain Anki-style cloze syntax: `{{c1::text}}` (no HTML wrapper)
+- Single-pane review: content rendered in review panel (no separate editor)
+- Per-cloze scheduling via sidecar files
+- FSRS algorithm for spaced repetition
+- Race condition handling for concurrent file operations
+
+## Source Structure
+
+```
+src/
+├── core/           # Pure functions (testable, no Obsidian deps)
+│   ├── types.ts    # Type definitions
+│   ├── cloze.ts    # Cloze parsing and formatting
+│   ├── queue.ts    # Queue building and ordering
+│   ├── scheduling.ts # FSRS calculations
+│   └── frontmatter.ts # Frontmatter parsing
+│
+├── data/           # Data access layer
+│   ├── revlog.ts   # JSONL append/read
+│   ├── review-items.ts # Sidecar file read/write
+│   ├── sync.ts     # Note ↔ sidecar synchronization
+│   └── ids.ts      # NanoID generation
+│
+├── commands/       # Obsidian commands
+│   ├── extract.ts  # Extract to topic note
+│   └── cloze.ts    # Cloze creation
+│
+├── views/          # UI components (Preact)
+│   ├── review/
+│   │   ├── ReviewItemView.tsx  # Main view controller
+│   │   ├── ReviewScreen.tsx    # Review UI
+│   │   └── DeckSummary.tsx     # Deck list UI
+│   └── stats/
+│       └── StatsModal.tsx
+│
+├── settings.ts     # Plugin settings
+├── styles.css      # CSS styles
+└── main.ts         # Plugin entry point
 ```
 
-### Dev (watch)
+## Environment & Tooling
+
+- **Node.js**: 20+ recommended
+- **Package manager**: npm
+- **Bundler**: esbuild
+- **UI framework**: Preact (JSX)
+- **Scheduling**: ts-fsrs
+
+### Commands
 
 ```bash
-npm run dev
+npm install      # Install dependencies
+npm run dev      # Development build (watch mode)
+npm run build    # Production build
+npm run lint     # Run ESLint
+npm test         # Run tests
 ```
 
-### Production build
+## Key Files to Understand
 
-```bash
-npm run build
+| File | Purpose |
+|------|---------|
+| `src/views/review/ReviewItemView.tsx` | Main review controller - handles queue, grading, content loading |
+| `src/core/cloze.ts` | `formatClozeQuestion()` and `formatClozeAnswer()` for display |
+| `src/core/scheduling.ts` | FSRS grading logic |
+| `src/data/sync.ts` | Syncs note content to sidecar files |
+| `src/data/review-items.ts` | Reads/writes sidecar scheduling state |
+
+## Patterns Used
+
+### Race Condition Handling
+All file creation uses try/catch to handle concurrent operations:
+```typescript
+try {
+    await app.vault.create(path, content);
+} catch {
+    const file = app.vault.getAbstractFileByPath(path);
+    if (file instanceof TFile) {
+        await app.vault.append(file, content);
+    }
+}
 ```
 
-## Linting
+### Phase Detection for Review
+```typescript
+// Topics skip question phase, cloze items show question first
+const isClozeItem = item?.type === 'item' && item?.clozeIndex;
+this.phase = isClozeItem ? 'question' : 'answer';
+```
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+### Content Rendering
+```typescript
+// Load content with cloze formatting based on phase
+const formatted = this.phase === 'question'
+    ? formatClozeQuestion(content, item.clozeIndex)
+    : formatClozeAnswer(content, item.clozeIndex);
+await MarkdownRenderer.render(app, formatted, container, notePath, this);
+```
 
-## File & folder conventions
+## Agent Guidelines
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
-- **Example file structure**:
-  ```
-  src/
-    main.ts           # Plugin entry point, lifecycle management
-    settings.ts       # Settings interface and defaults
-    commands/         # Command implementations
-      command1.ts
-      command2.ts
-    ui/              # UI components, modals, views
-      modal.ts
-      view.ts
-    utils/           # Utility functions, helpers
-      helpers.ts
-      constants.ts
-    types.ts         # TypeScript interfaces and types
-  ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
-- Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
-- Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
+### Do
+- Read `docs/ARCHITECTURE.md` for design decisions and data model
+- Check `docs/IMPLEMENTATION_SPEC.md` for implementation status
+- Use pure functions in `src/core/` for testable logic
+- Handle file race conditions with try/catch pattern
+- Keep UI components in Preact (not React)
 
-## Manifest rules (`manifest.json`)
-
-- Must include (non-exhaustive):  
-  - `id` (plugin ID; for local dev it should match the folder name)  
-  - `name`  
-  - `version` (Semantic Versioning `x.y.z`)  
-  - `minAppVersion`  
-  - `description`  
-  - `isDesktopOnly` (boolean)  
-  - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
-- Never change `id` after release. Treat it as stable API.
-- Keep `minAppVersion` accurate when using newer APIs.
-- Canonical requirements are coded here: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+### Don't
+- Store scheduling data in note frontmatter (use sidecars)
+- Open separate editor tabs during review (use single-pane design)
+- Wrap clozes in HTML (use plain `{{c1::text}}` syntax)
+- Commit `main.js`, `styles.css`, or `node_modules/`
 
 ## Testing
 
-- Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
-  ```
-  <Vault>/.obsidian/plugins/<plugin-id>/
-  ```
-- Reload Obsidian and enable the plugin in **Settings → Community plugins**.
-
-## Commands & settings
-
-- Any user-facing commands should be added via `this.addCommand(...)`.
-- If the plugin has configuration, provide a settings tab and sensible defaults.
-- Persist settings using `this.loadData()` / `this.saveData()`.
-- Use stable command IDs; avoid renaming once released.
-
-## Versioning & releases
-
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
-
-## Security, privacy, and compliance
-
-Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particular:
-
-- Default to local/offline operation. Only make network requests when essential to the feature.
-- No hidden telemetry. If you collect optional analytics or call third-party services, require explicit opt-in and document clearly in `README.md` and in settings.
-- Never execute remote code, fetch and eval scripts, or auto-update plugin code outside of normal releases.
-- Minimize scope: read/write only what's necessary inside the vault. Do not access files outside the vault.
-- Clearly disclose any external services used, data sent, and risks.
-- Respect user privacy. Do not collect vault contents, filenames, or personal information unless absolutely necessary and explicitly consented.
-- Avoid deceptive patterns, ads, or spammy notifications.
-- Register and clean up all DOM, app, and interval listeners using the provided `register*` helpers so the plugin unloads safely.
-
-## UX & copy guidelines (for UI text, commands, settings)
-
-- Prefer sentence case for headings, buttons, and titles.
-- Use clear, action-oriented imperatives in step-by-step copy.
-- Use **bold** to indicate literal UI labels. Prefer "select" for interactions.
-- Use arrow notation for navigation: **Settings → Community plugins**.
-- Keep in-app strings short, consistent, and free of jargon.
-
-## Performance
-
-- Keep startup light. Defer heavy work until needed.
-- Avoid long-running tasks during `onload`; use lazy initialization.
-- Batch disk access and avoid excessive vault scans.
-- Debounce/throttle expensive operations in response to file system events.
-
-## Coding conventions
-
-- TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
-- **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
-- **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
-- Bundle everything into `main.js` (no unbundled runtime deps).
-- Avoid Node/Electron APIs if you want mobile compatibility; set `isDesktopOnly` accordingly.
-- Prefer `async/await` over promise chains; handle errors gracefully.
-
-## Mobile
-
-- Where feasible, test on iOS and Android.
-- Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
-- Avoid large in-memory structures; be mindful of memory and storage constraints.
-
-## Agent do/don't
-
-**Do**
-- Add commands with stable IDs (don't rename once released).
-- Provide defaults and validation in settings.
-- Write idempotent code paths so reload/unload doesn't leak listeners or intervals.
-- Use `this.register*` helpers for everything that needs cleanup.
-
-**Don't**
-- Introduce network calls without an obvious user-facing reason and documentation.
-- Ship features that require cloud services without clear disclosure and explicit opt-in.
-- Store or transmit vault contents unless essential and consented.
-
-## Common tasks
-
-### Organize code across multiple files
-
-**main.ts** (minimal, lifecycle only):
-```ts
-import { Plugin } from "obsidian";
-import { MySettings, DEFAULT_SETTINGS } from "./settings";
-import { registerCommands } from "./commands";
-
-export default class MyPlugin extends Plugin {
-  settings: MySettings;
-
-  async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    registerCommands(this);
-  }
-}
+Manual install for testing:
+```bash
+npm run build
+# Copy main.js, manifest.json, styles.css to:
+# <Vault>/.obsidian/plugins/obsidian-incremental-reading/
 ```
 
-**settings.ts**:
-```ts
-export interface MySettings {
-  enabled: boolean;
-  apiKey: string;
-}
+Reload Obsidian and enable in **Settings → Community plugins**.
 
-export const DEFAULT_SETTINGS: MySettings = {
-  enabled: true,
-  apiKey: "",
-};
-```
+## Manifest Rules
 
-**commands/index.ts**:
-```ts
-import { Plugin } from "obsidian";
-import { doSomething } from "./my-command";
+- `id`: `obsidian-incremental-reading` (never change after release)
+- `version`: Semantic versioning (x.y.z)
+- Keep `minAppVersion` accurate when using newer APIs
 
-export function registerCommands(plugin: Plugin) {
-  plugin.addCommand({
-    id: "do-something",
-    name: "Do something",
-    callback: () => doSomething(plugin),
-  });
-}
-```
+## Releases
 
-### Add a command
-
-```ts
-this.addCommand({
-  id: "your-command-id",
-  name: "Do the thing",
-  callback: () => this.doTheThing(),
-});
-```
-
-### Persist settings
-
-```ts
-interface MySettings { enabled: boolean }
-const DEFAULT_SETTINGS: MySettings = { enabled: true };
-
-async onload() {
-  this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  await this.saveData(this.settings);
-}
-```
-
-### Register listeners safely
-
-```ts
-this.registerEvent(this.app.workspace.on("file-open", f => { /* ... */ }));
-this.registerDomEvent(window, "resize", () => { /* ... */ });
-this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
-```
-
-## Troubleshooting
-
-- Plugin doesn't load after build: ensure `main.js` and `manifest.json` are at the top level of the plugin folder under `<Vault>/.obsidian/plugins/<plugin-id>/`. 
-- Build issues: if `main.js` is missing, run `npm run build` or `npm run dev` to compile your TypeScript source code.
-- Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
-- Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
-- Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+1. Bump version in `manifest.json`
+2. Update `versions.json` to map plugin version → min app version
+3. Create GitHub release with tag matching version (no `v` prefix)
+4. Attach `main.js`, `manifest.json`, `styles.css`
 
 ## References
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API documentation: https://docs.obsidian.md
-- Developer policies: https://docs.obsidian.md/Developer+policies
+- Obsidian API: https://docs.obsidian.md
+- FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki
+- SuperMemo IR: https://supermemo.guru/wiki/Incremental_reading
 - Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide

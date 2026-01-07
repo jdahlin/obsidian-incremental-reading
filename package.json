@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-incremental-reading",
 	"version": "1.0.0",
-	"description": "An Obsidian plugin for incremental reading.",
+	"description": "SuperMemo-inspired incremental reading with extracts, cloze deletions, and spaced repetition.",
 	"author": "Johan Dahlin",
 	"main": "main.js",
 	"type": "module",
@@ -12,8 +12,15 @@
 		"lint": "eslint .",
 		"test": "vitest run --coverage"
 	},
-	"keywords": [],
-	"license": "0-BSD",
+	"keywords": [
+		"obsidian",
+		"incremental-reading",
+		"spaced-repetition",
+		"flashcards",
+		"cloze",
+		"learning"
+	],
+	"license": "MIT",
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",
 		"@codemirror/view": "^6.29.1",
@@ -31,7 +38,6 @@
 		"yaml": "^2.6.0"
 	},
 	"dependencies": {
-		"@openai/codex": "^0.79.0",
 		"obsidian": "latest",
 		"preact": "^10.26.9",
 		"ts-fsrs": "^5.2.3"
