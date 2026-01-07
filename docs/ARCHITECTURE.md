@@ -912,90 +912,58 @@ Testing is deferred until the core workflow is stable end-to-end.
 
 ## Current Implementation Status
 
-This section documents what is actually implemented vs. the target architecture above.
+This section documents what is actually implemented.
 
 ### Implemented (Working)
 
 **Cloze Syntax & Display:**
 - Plain Anki-style clozes: `{{c1::text}}` or `{{c1::text::hint}}` (no HTML wrapper)
-- Question phase: CodeMirror editor extension hides cloze content with `[...]` placeholder
-- Answer phase: Text replacement shows `**[answer]**` via `revealClozes()` function
+- Question phase: Cloze content replaced with `[...]` placeholder
+- Answer phase: Full text revealed
 - Cloze creation command inserts plain syntax
 
-**Review UI:**
-- Header shows deck/folder name only (not breadcrumbs) to avoid spoilers
-- Completion screen with session stats (cards reviewed, again/hard/good/easy counts)
-- Next due date shown when queue empty
+**Review UI (Single-Pane Design):**
+- Two-screen flow: Deck Summary → Review
+- Review content rendered directly in review panel (no separate editor tab)
+- Topics (extracts without cloze): Show content + grade buttons immediately
+- Cloze items: Show question with `[...]` → "Show Answer" → grade buttons
 - Grade buttons (1-4) with color coding
+- Keyboard shortcuts: Enter/Space = show answer, 1-4 = grade, Esc = back
+- Session stats and completion screen
 
-**Revlog:**
-- Append-only Markdown list format in `IR/RevLog/<machineId>.md`
-- Format: `- timestamp | path | grade=N | type=X | status=Y | due=Z`
-- Race condition handling for concurrent writes
-
-### Gap: Per-File vs. Per-Cloze Scheduling
-
-**Current (simplified):**
-- Queue built from notes with `#topic` tag
-- One queue entry per file (not per cloze)
-- Scheduling state stored in note frontmatter
-
-**Target (not yet implemented):**
+**Data Storage:**
 - Per-cloze scheduling via sidecar files (`IR/Review Items/<ir_note_id>.md`)
 - Each cloze gets its own `cloze_uid` and scheduling state
-- Queue contains N entries for a note with N clozes
+- JSONL revlog in `IR/Revlog/YYYY-MM.md`
+- Race condition handling for concurrent file operations
 
-### Gap: Revlog Format
-
-**Current:** Plain Markdown list
-```markdown
-- 2024-01-15T10:30:00 | path/to/note.md | grade=3 | type=item | status=review | due=2024-01-20T10:00:00
-```
-
-**Target:** JSONL for easier parsing
-```json
-{"ts":"2024-01-15T10:30:00.000Z","item_id":"Ab3Kp9Xr2QaL::G7uT2mQ9rW1z","rating":3}
-```
-
-### Gap: Deck List Screen
-
-**Current:** Review opens directly to card review
-**Target:** Two-screen flow (Deck List → Review)
+**Scheduling:**
+- FSRS algorithm for cloze items
+- Simpler interval growth for topics (passive review)
+- Queue built from sidecar files with priority ordering
 
 ### File Locations
 
-| Component | Current Location | Target Location |
-|-----------|------------------|-----------------|
-| Revlog | `IR/RevLog/<machineId>.md` | `IR/Revlog/YYYY-MM.md` |
-| Sidecar | (not implemented) | `IR/Review Items/<ir_note_id>.md` |
-| Scheduling | Note frontmatter | Sidecar files |
+| Component | Location |
+|-----------|----------|
+| Revlog | `IR/Revlog/YYYY-MM.md` (JSONL) |
+| Sidecar | `IR/Review Items/<ir_note_id>.md` |
+| Scheduling | Sidecar files (per-cloze state) |
 
 ### Source Tree Structure
 
-The codebase has two source trees:
-
-| Tree | Purpose | Status |
-|------|---------|--------|
-| `src/` | Original implementation (Markdown revlog, per-file scheduling) | Legacy |
-| `src2/` | New implementation (JSONL revlog, per-cloze scheduling) | Active |
-
-The build uses `src2/` for the main plugin. Key files:
-
-**src2/ (Active)**
 | File | Purpose |
 |------|---------|
-| `src2/data/revlog.ts` | JSONL revlog in `IR/Revlog/YYYY-MM.md` |
-| `src2/data/review-items.ts` | Sidecar files in `IR/Review Items/<id>.md` |
-| `src2/data/sync.ts` | Note ↔ sidecar synchronization |
-| `src2/core/types.ts` | Type definitions |
-
-**src/ (Legacy, partially used)**
-| File | Purpose |
-|------|---------|
-| `src/views/review/MarkdownBlock.tsx` | Cloze rendering (CodeMirror decorations) |
-| `src/views/review/ReviewView.tsx` | Main review UI |
+| `src/data/revlog.ts` | JSONL revlog in `IR/Revlog/YYYY-MM.md` |
+| `src/data/review-items.ts` | Sidecar files in `IR/Review Items/<id>.md` |
+| `src/data/sync.ts` | Note ↔ sidecar synchronization |
+| `src/core/types.ts` | Type definitions |
+| `src/core/cloze.ts` | Cloze parsing and formatting |
+| `src/views/review/ReviewItemView.tsx` | Review view controller |
+| `src/views/review/ReviewScreen.tsx` | Review UI component |
+| `src/views/review/DeckSummary.tsx` | Deck list UI component |
 | `src/commands/cloze.ts` | Cloze creation command |
-| `src/scheduling/queue.ts` | Queue building (per-file) |
+| `src/commands/extract.ts` | Extract command |
 
 ### Race Condition Handling
 
@@ -1020,9 +988,8 @@ try {
 ```
 
 This pattern is applied in:
-- `src2/data/revlog.ts:appendReview()`
-- `src2/data/review-items.ts:writeReviewItemFile()`
-- `src/revlog.ts:appendRevlog()`
+- `src/data/revlog.ts:appendReview()`
+- `src/data/review-items.ts:writeReviewItemFile()`
 
 Folder creation also handles races:
 ```typescript

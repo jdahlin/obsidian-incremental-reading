@@ -8,45 +8,40 @@ export class PriorityModal extends Modal {
 		this.onSubmit = onSubmit;
 	}
 
-	onOpen() {
+	onOpen(): void {
 		const { contentEl } = this;
-		contentEl.createEl('h2', { text: 'Set Priority' });
-		contentEl.createEl('p', { text: '0 (Highest) - 100 (Lowest)' });
+		contentEl.createEl('h2', { text: 'Set priority' });
+		contentEl.createEl('p', { text: '0 (highest) - 100 (lowest)' });
 
 		let value = this.currentPriority;
 		let textComponent: TextComponent | null = null;
 		let sliderComponent: SliderComponent | null = null;
 
-		// Container for controls to keep them close
 		const controlsDiv = contentEl.createDiv();
 
-		// Text Input Setting
 		new Setting(controlsDiv)
 			.setName('Value')
 			.addText((text) => {
 				textComponent = text;
 				text.setValue(String(value));
-				text.inputEl.style.width = '60px'; // Make it compact
+				text.inputEl.setCssProps({ width: '60px' });
 				text.onChange((newValue) => {
 					const parsed = parseInt(newValue, 10);
-					if (!isNaN(parsed)) {
+					if (!Number.isNaN(parsed)) {
 						const clamped = Math.max(0, Math.min(100, parsed));
 						value = clamped;
-						// Sync slider
 						if (sliderComponent) {
 							sliderComponent.setValue(clamped);
 						}
 					}
 				});
-				// Handle Enter key in input
-				text.inputEl.addEventListener('keydown', (evt) => {
-					if (evt.key === 'Enter') {
-						evt.preventDefault();
+				text.inputEl.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
 						this.submit(value);
 					}
 				});
 			})
-			// Slider Setting (merged into same line if possible, or separate)
 			.addSlider((slider) => {
 				sliderComponent = slider;
 				slider.setLimits(0, 100, 1);
@@ -54,39 +49,35 @@ export class PriorityModal extends Modal {
 				slider.setDynamicTooltip();
 				slider.onChange((newValue) => {
 					value = newValue;
-					// Sync text
 					if (textComponent) {
 						textComponent.setValue(String(newValue));
 					}
 				});
 			});
 
-		// Save Button
 		new Setting(contentEl)
-			.addButton((btn) =>
-				btn
+			.addButton((button) =>
+				button
 					.setButtonText('Save')
 					.setCta()
 					.onClick(() => {
 						this.submit(value);
-					})
+					}),
 			);
-		
-		// Focus input on open
+
 		setTimeout(() => {
 			textComponent?.inputEl.focus();
 			textComponent?.inputEl.select();
 		}, 0);
 	}
 
-	private submit(value: number) {
+	private submit(value: number): void {
 		const clamped = Math.max(0, Math.min(100, value));
 		this.onSubmit(clamped);
 		this.close();
 	}
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
+	onClose(): void {
+		this.contentEl.empty();
 	}
 }
