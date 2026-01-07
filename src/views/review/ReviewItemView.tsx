@@ -2,9 +2,13 @@ import { render } from 'preact';
 import { App, ItemView, Scope, WorkspaceLeaf, TFile } from 'obsidian';
 import { ReviewView } from './ReviewView';
 import { buildQueue, getNextCard, getQueueStats, type QueueEntry, type QueueStats, type ReviewQueue } from '../../scheduling/queue';
-import { createScheduler, gradeCard, writeCardState, type CardState, type Status } from '../../scheduling';
+import { createScheduler, gradeCard, writeCardState, type CardState } from '../../scheduling';
 import { Rating } from 'ts-fsrs';
 import type IncrementalReadingPlugin from '../../main';
+import { appendRevlog } from '../../revlog';
+import { gradeTopic, mapGradeToRating, recordSessionGrade, type SessionStats } from '../../review/grading';
+
+import { PriorityModal } from '../../ui/PriorityModal';
 
 export const VIEW_TYPE_REVIEW = 'my-review';
 
@@ -42,7 +46,6 @@ export class ReviewItemView extends ItemView {
 		this.scheduler = createScheduler({
 			maximumInterval: this.pluginRef.settings.maximumInterval,
 			requestRetention: this.pluginRef.settings.requestRetention,
-			weights: this.pluginRef.settings.fsrsParameters,
 		});
 
 		for (let n = 1; n <= 4; n++) {
@@ -53,8 +56,8 @@ export class ReviewItemView extends ItemView {
 			this.hotkeyScope.register([], `Numpad${n}`, () => {
 				this.onGrade(n);
 				return true;
-	});
-}
+			});
+		}
 
 		this.hotkeyScope.register([], 'Enter', () => {
 			this.onEnter();
@@ -69,6 +72,18 @@ export class ReviewItemView extends ItemView {
 		this.hotkeyScope.register([], 'Space', (evt) => {
 			if (this.shouldIgnoreHotkeyEvent(evt)) return false;
 			this.onEnter();
+			return true;
+		});
+
+		// Alt+P: Set Priority
+		this.hotkeyScope.register(['Mod'], 'p', (evt) => { // 'Mod' matches Cmd/Ctrl. For Alt use 'Alt'
+			// Wait, the guide says Alt+P. 'Mod' usually means Cmd/Ctrl.
+			// Let's use 'Alt'.
+			return false; // Let the fall-through handler catch it if we want strict control, or register properly.
+		});
+		// Actually, register it properly:
+		this.hotkeyScope.register(['Alt'], 'p', () => {
+			this.onSetPriority();
 			return true;
 		});
 	}
@@ -134,6 +149,7 @@ export class ReviewItemView extends ItemView {
 				queueStats={this.queueStats}
 				sessionStats={this.sessionStats}
 				upcomingInfo={this.getUpcomingInfo()}
+				extractTag={this.pluginRef.settings.extractTag}
 			/>,
 			this.contentEl,
 		);
@@ -150,6 +166,10 @@ export class ReviewItemView extends ItemView {
 
 	public getCurrentCard(): TFile | null {
 		return this.current?.file ?? null;
+	}
+
+	public getPhase(): Phase {
+		return this.phase;
 	}
 
 	public getQueueStats(): QueueStats {
@@ -212,16 +232,43 @@ export class ReviewItemView extends ItemView {
 
 		if (entry.state.type === 'topic') {
 			const scrollPos = this.getScrollPosition();
-			updated = this.gradeTopic(entry.state, grade, now, scrollPos);
+			updated = gradeTopic(entry.state, grade, now, scrollPos);
 		} else {
-			const rating = this.mapGradeToRating(grade);
+			const rating = mapGradeToRating(grade);
 			updated = gradeCard(this.scheduler, entry.state, rating, now);
 		}
 
-		this.recordSessionGrade(grade);
+		recordSessionGrade(this.sessionStats, grade);
+		await appendRevlog(this.appRef, this.pluginRef.machineId, {
+			timestamp: now,
+			file: entry.file,
+			grade,
+			type: updated.type,
+			status: updated.status,
+			due: updated.due,
+		});
 		await writeCardState(this.appRef, entry.file, updated, this.pluginRef.settings.extractTag);
 
 		await this.refreshQueue();
+	}
+
+	private onSetPriority(): void {
+		if (!this.current) return;
+		const file = this.current.file;
+		const currentPriority = this.current.state.priority;
+
+		new PriorityModal(this.app, currentPriority, async (newPriority) => {
+			if (!this.current) return;
+			
+			// Update state in memory
+			const newState = { ...this.current.state, priority: newPriority };
+			this.current.state = newState;
+			
+			// Persist to disk
+			await writeCardState(this.appRef, file, newState, this.pluginRef.settings.extractTag);
+			
+			// We don't refresh the queue here to avoid the current card jumping away.
+		}).open();
 	}
 
 	getApp() {
@@ -273,86 +320,9 @@ export class ReviewItemView extends ItemView {
 		}
 	}
 
-	private gradeTopic(state: CardState, grade: number, now: Date, scrollPos: number): CardState {
-		const clamped = Math.max(1, Math.min(4, grade));
-		let due: Date;
-		switch (clamped) {
-			case 1:
-				due = addMinutes(now, 10);
-				break;
-			case 2:
-				due = addDays(now, 1);
-				break;
-			case 3:
-				due = addDays(now, 3);
-				break;
-			default:
-				due = addDays(now, 7);
-				break;
-		}
-
-		const status: Status = clamped === 1 ? 'learning' : 'review';
-		return {
-			...state,
-			due,
-			status,
-			reps: state.reps + 1,
-			lapses: state.lapses + (clamped === 1 ? 1 : 0),
-			last_review: now,
-			scroll_pos: scrollPos,
-		};
-	}
-
-	private mapGradeToRating(grade: number): Rating {
-		switch (grade) {
-			case 1:
-				return Rating.Again;
-			case 2:
-				return Rating.Hard;
-			case 4:
-				return Rating.Easy;
-			default:
-				return Rating.Good;
-		}
-	}
-
-	private recordSessionGrade(grade: number): void {
-		this.sessionStats.reviewed += 1;
-		switch (grade) {
-			case 1:
-				this.sessionStats.again += 1;
-				break;
-			case 2:
-				this.sessionStats.hard += 1;
-				break;
-			case 4:
-				this.sessionStats.easy += 1;
-				break;
-			default:
-				this.sessionStats.good += 1;
-		}
-	}
-
 	private getScrollPosition(): number {
-		const scrollEl = this.contentEl.querySelector<HTMLElement>('.ir-review-scroll');
+		const scrollEl = this.contentEl.querySelector<HTMLElement>('.ir-review-content');
 		if (!scrollEl) return 0;
 		return scrollEl.scrollTop;
 	}
-}
-
-export interface SessionStats {
-	started: Date;
-	reviewed: number;
-	again: number;
-	hard: number;
-	good: number;
-	easy: number;
-}
-
-function addMinutes(date: Date, minutes: number): Date {
-	return new Date(date.getTime() + minutes * 60 * 1000);
-}
-
-function addDays(date: Date, days: number): Date {
-	return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }

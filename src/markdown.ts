@@ -35,13 +35,6 @@ export async function renderMarkdownToEl(
 		await mr.render(app, markdown, containerEl, sourcePath, component);
 		return;
 	}
-
-	// Compatibility for older Obsidian versions.
-	if (typeof mr.renderMarkdown === 'function') {
-		await mr.renderMarkdown(markdown, containerEl, sourcePath, component);
-		return;
-	}
-
 	// Ultimate fallback.
 	containerEl.createEl('pre', { text: markdown });
 }

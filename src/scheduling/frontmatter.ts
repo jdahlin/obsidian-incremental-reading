@@ -1,7 +1,7 @@
 import { App, TFile } from 'obsidian';
 import type { CardState, CardType, Status } from './types';
 
-const DEFAULT_EXTRACT_TAG = 'extract';
+const DEFAULT_EXTRACT_TAG = 'topic';
 
 export async function readCardState(app: App, file: TFile, extractTag = DEFAULT_EXTRACT_TAG): Promise<CardState | null> {
 	const cache = app.metadataCache.getFileCache(file);
@@ -76,7 +76,7 @@ function ensureTag(tags: unknown, tag: string): string[] {
 	return normalized;
 }
 
-function normalizeTags(tags: unknown): string[] {
+export function normalizeTags(tags: unknown): string[] {
 	if (Array.isArray(tags)) {
 		return tags.map((t) => String(t).replace(/^#/, '')).filter(Boolean);
 	}
@@ -86,11 +86,11 @@ function normalizeTags(tags: unknown): string[] {
 	return [];
 }
 
-function normalizeType(value: unknown): CardType {
+export function normalizeType(value: unknown): CardType {
 	return value === 'item' ? 'item' : 'topic';
 }
 
-function normalizeStatus(value: unknown): Status {
+export function normalizeStatus(value: unknown): Status {
 	switch (value) {
 		case 'learning':
 		case 'review':
@@ -102,12 +102,12 @@ function normalizeStatus(value: unknown): Status {
 	}
 }
 
-function normalizeNumber(value: unknown, fallback: number): number {
+export function normalizeNumber(value: unknown, fallback: number): number {
 	const num = typeof value === 'number' ? value : Number(value);
 	return Number.isFinite(num) ? num : fallback;
 }
 
-function parseDate(value: unknown): Date | null {
+export function parseDate(value: unknown): Date | null {
 	if (value instanceof Date) return value;
 	if (typeof value === 'string' && value.trim()) {
 		const parsed = new Date(value);
@@ -116,7 +116,7 @@ function parseDate(value: unknown): Date | null {
 	return null;
 }
 
-function formatDate(value: Date): string {
+export function formatDate(value: Date): string {
 	const year = value.getFullYear();
 	const month = String(value.getMonth() + 1).padStart(2, '0');
 	const day = String(value.getDate()).padStart(2, '0');

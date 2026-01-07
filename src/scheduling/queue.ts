@@ -23,7 +23,7 @@ export interface QueueStats {
 	total: number;
 }
 
-export async function buildQueue(app: App, now: Date, extractTag = 'extract'): Promise<ReviewQueue> {
+export async function buildQueue(app: App, now: Date, extractTag = 'topic'): Promise<ReviewQueue> {
 	const extracts = getNotesWithTag(app, `#${extractTag}`);
 	const queue: ReviewQueue = { learning: [], due: [], new: [], nextDue: null, upcomingCount: 0 };
 
