@@ -79,6 +79,17 @@ Your notes remain clean - all scheduling metadata is kept separate.
 ### From Obsidian Community Plugins
 *Coming soon*
 
+### Using BRAT (Recommended for Beta Testing)
+
+1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins
+2. Open BRAT settings
+3. Click **Add Beta Plugin**
+4. Enter: `https://github.com/jdahlin/obsidian-incremental-reading`
+5. Click **Add Plugin**
+6. Enable the plugin in **Settings → Community plugins**
+
+BRAT will automatically keep the plugin updated when new releases are published.
+
 ### Manual Installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
