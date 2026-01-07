@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { App, ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { App, ItemView, MarkdownRenderer, TFile, WorkspaceLeaf } from 'obsidian';
 import type IncrementalReadingPlugin from '../../main';
 import { DeckSummary } from './DeckSummary';
 import { ReviewScreen, type SessionStats } from './ReviewScreen';
@@ -8,13 +8,12 @@ import { buildQueue, getNextItem, getQueueStats } from '../../core/queue';
 import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
 import type { DeckInfo, ReviewItem, ReviewQueue, ReviewRecord, StreakInfo, TodayStats } from '../../core/types';
 import { formatDate } from '../../core/frontmatter';
-import { parseClozeIndices } from '../../core/cloze';
+import { parseClozeIndices, formatClozeQuestion, formatClozeAnswer } from '../../core/cloze';
 import { appendReview } from '../../data/revlog';
 import { updateClozeState, updateTopicState } from '../../data/review-items';
 import { loadReviewItems } from '../../data/review-loader';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
 import { syncNoteToSidecar } from '../../data/sync';
-import { setActiveCloze } from '../../editor/cloze-hider';
 import { StatsModal } from '../stats/StatsModal';
 
 export const VIEW_TYPE_REVIEW = 'ir-review';
@@ -35,7 +34,7 @@ export class ReviewItemView extends ItemView {
 	private phase: Phase = 'question';
 	private sessionStats: SessionStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 	private currentStartedAt: Date | null = null;
-	private editorLeaf: WorkspaceLeaf | null = null;
+	private currentContent: string = '';
 	private mounted = false;
 	private onKeyDownBound = (event: KeyboardEvent) => this.onKeyDown(event);
 
@@ -63,7 +62,6 @@ export class ReviewItemView extends ItemView {
 
 	async onClose(): Promise<void> {
 		this.contentEl.removeEventListener('keydown', this.onKeyDownBound);
-		this.editorLeaf = null;
 		if (this.mounted) {
 			render(null, this.contentEl);
 			this.mounted = false;
@@ -81,9 +79,52 @@ export class ReviewItemView extends ItemView {
 		this.queue = null;
 		this.phase = 'question';
 		this.currentStartedAt = null;
-		this.updateClozeDisplay();
+		this.currentContent = '';
 		this.selectedPath = this.getPreselectedPath();
 		this.screen = 'summary';
+	}
+
+	private async loadItemContent(): Promise<void> {
+		const item = this.currentItem;
+		if (!item) {
+			this.currentContent = '';
+			return;
+		}
+
+		const file = item.noteFile ?? this.appRef.vault.getAbstractFileByPath(item.notePath);
+		if (!(file instanceof TFile)) {
+			this.currentContent = '';
+			return;
+		}
+
+		try {
+			const rawContent = await this.appRef.vault.read(file);
+
+			// For cloze items, format the content based on phase
+			if (item.type === 'item' && item.clozeIndex) {
+				const indices = parseClozeIndices(rawContent);
+				if (!indices.includes(item.clozeIndex)) {
+					await syncNoteToSidecar(this.appRef, file, this.pluginRef.settings.extractTag);
+				}
+
+				const formatted = this.phase === 'question'
+					? formatClozeQuestion(rawContent, item.clozeIndex)
+					: formatClozeAnswer(rawContent, item.clozeIndex);
+
+				// Render markdown to HTML
+				const container = document.createElement('div');
+				await MarkdownRenderer.render(this.appRef, formatted, container, item.notePath, this);
+				this.currentContent = container.innerHTML;
+			} else {
+				// For topics, render the full content
+				const container = document.createElement('div');
+				await MarkdownRenderer.render(this.appRef, rawContent, container, item.notePath, this);
+				this.currentContent = container.innerHTML;
+			}
+		} catch (error) {
+			console.error('IR: failed to load item content', error);
+			this.currentContent = '<p>Failed to load content</p>';
+		}
 	}
 
 	private getPreselectedPath(): string | null {
@@ -130,6 +171,7 @@ export class ReviewItemView extends ItemView {
 					phase={this.phase}
 					queueStats={queueStats}
 					sessionStats={this.sessionStats}
+					content={this.currentContent}
 					onBack={() => { void this.backToSummary(); }}
 					onShowAnswer={() => this.showAnswer()}
 					onGrade={(grade) => { void this.onGrade(grade); }}
@@ -147,14 +189,14 @@ export class ReviewItemView extends ItemView {
 			folderFilter: this.selectedPath ?? undefined,
 		});
 		this.currentItem = this.queue ? getNextItem(this.queue) : null;
-		this.phase = this.currentItem?.type === 'item' ? 'question' : 'answer';
+		// Only show question phase for cloze items that have an actual cloze index
+		const isClozeItem = this.currentItem?.type === 'item' && this.currentItem?.clozeIndex;
+		this.phase = isClozeItem ? 'question' : 'answer';
+		console.log('IR: startReview item', { type: this.currentItem?.type, clozeIndex: this.currentItem?.clozeIndex, phase: this.phase, path: this.currentItem?.notePath });
 		this.sessionStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 		this.currentStartedAt = this.currentItem ? new Date() : null;
 		this.screen = 'review';
-		if (this.currentItem) {
-			await this.openItemInLeaf(this.currentItem);
-		}
-		this.updateClozeDisplay();
+		await this.loadItemContent();
 		this.renderView();
 	}
 
@@ -166,16 +208,8 @@ export class ReviewItemView extends ItemView {
 	private showAnswer(): void {
 		if (this.currentItem?.type === 'item' && this.phase === 'question') {
 			this.phase = 'answer';
-			this.updateClozeDisplay();
-			this.renderView();
+			void this.loadItemContent().then(() => this.renderView());
 		}
-	}
-	private updateClozeDisplay(): void {
-		if (this.currentItem?.type === 'item' && this.currentItem.clozeIndex) {
-			setActiveCloze(this.appRef, this.currentItem.clozeIndex, this.phase);
-			return;
-		}
-		setActiveCloze(this.appRef, null, 'answer');
 	}
 
 
@@ -248,46 +282,11 @@ export class ReviewItemView extends ItemView {
 			removeCurrentFromQueue(this.queue, this.currentItem);
 		}
 		this.currentItem = getNextItem(this.queue);
-		this.phase = this.currentItem?.type === 'item' ? 'question' : 'answer';
+		const isClozeItem = this.currentItem?.type === 'item' && this.currentItem?.clozeIndex;
+		this.phase = isClozeItem ? 'question' : 'answer';
 		this.currentStartedAt = this.currentItem ? new Date() : null;
-		if (this.currentItem) {
-			await this.openItemInLeaf(this.currentItem);
-		}
-		this.updateClozeDisplay();
+		await this.loadItemContent();
 		this.renderView();
-	}
-
-	private async openItemInLeaf(item: ReviewItem): Promise<void> {
-		const file = item.noteFile ?? this.appRef.vault.getAbstractFileByPath(item.notePath);
-		if (!(file instanceof TFile)) return;
-		if (item.type === 'item' && item.clozeIndex) {
-			const content = await this.appRef.vault.read(file);
-			const indices = parseClozeIndices(content);
-			if (!indices.includes(item.clozeIndex)) {
-				await syncNoteToSidecar(this.appRef, file, this.pluginRef.settings.extractTag);
-			}
-		}
-		const leaf = this.getEditorLeaf();
-		if (!leaf || leaf === this.leaf) return;
-		await leaf.openFile(file, { active: true });
-	}
-
-	private getEditorLeaf(): WorkspaceLeaf | null {
-		if (this.editorLeaf && this.editorLeaf !== this.leaf) return this.editorLeaf;
-		const markdownLeaves = this.appRef.workspace.getLeavesOfType('markdown');
-		const existing = markdownLeaves.find((leaf) => leaf !== this.leaf);
-		if (existing) {
-			this.editorLeaf = existing;
-			return existing;
-		}
-		const candidates = [
-			this.appRef.workspace.getLeaf('split', 'vertical'),
-			this.appRef.workspace.getLeaf('tab'),
-			this.appRef.workspace.getLeaf(true),
-		];
-		const leaf = candidates.find((candidate) => candidate && candidate !== this.leaf) ?? null;
-		this.editorLeaf = leaf;
-		return leaf;
 	}
 
 	private onKeyDown(event: KeyboardEvent): void {
