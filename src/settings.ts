@@ -9,7 +9,6 @@ export interface IncrementalReadingSettings {
 	extractTitleWords: number;
 	trackReviewTime: boolean;
 	showStreak: boolean;
-	migrationVersion: number;
 }
 
 export const DEFAULT_SETTINGS: IncrementalReadingSettings = {
@@ -20,7 +19,6 @@ export const DEFAULT_SETTINGS: IncrementalReadingSettings = {
 	extractTitleWords: 5,
 	trackReviewTime: true,
 	showStreak: true,
-	migrationVersion: 0,
 };
 
 export class IncrementalReadingSettingTab extends PluginSettingTab {

@@ -4,7 +4,6 @@ import { normalizeNumber } from './core/frontmatter';
 import { ensureBasesFolder } from './bases';
 import { clozeHiderExtension } from './editor/cloze-hider';
 import { exportReviewHistory } from './data/export';
-import { runMigration } from './migration';
 import { DEFAULT_SETTINGS, IncrementalReadingSettingTab, type IncrementalReadingSettings } from './settings';
 import { PriorityModal } from './ui/PriorityModal';
 import { StatsModal } from './views/stats/StatsModal';
@@ -15,11 +14,6 @@ export default class IncrementalReadingPlugin extends Plugin {
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
-		if (this.settings.migrationVersion < 1) {
-			await runMigration(this.app, this.settings.extractTag);
-			this.settings.migrationVersion = 1;
-			await this.saveSettings();
-		}
 		this.addSettingTab(new IncrementalReadingSettingTab(this.app, this));
 		registerCommands(this);
 		this.registerEditorExtension(clozeHiderExtension);
