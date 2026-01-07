@@ -1,8 +1,9 @@
-import { Editor, MarkdownView, moment, Notice, Plugin } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 
 export type ExtractOptions = {
 	titleWords: number;
 	tag?: string;
+	now?: Date;
 };
 
 export async function extractToIncrementalNote(
@@ -12,7 +13,8 @@ export async function extractToIncrementalNote(
 	options: ExtractOptions = { titleWords: 5 },
 ): Promise<void> {
 	const selectionRaw = editor.getSelection();
-	if (!selectionRaw.trim()) {
+	const selection = normalizeSelection(selectionRaw);
+	if (!selection) {
 		new Notice('No selection to extract.');
 		return;
 	}
@@ -23,13 +25,10 @@ export async function extractToIncrementalNote(
 		return;
 	}
 
-	// Normalize selection.
-	const selection = selectionRaw.replace(/\r\n/g, '\n').trim();
-
-	const created = moment().format('YYYY-MM-DDTHH:mm:ss');
-	const due = created;
+	const createdAt = options.now ?? new Date();
+	const created = formatDate(createdAt);
 	const sourceFolder = sourceFile.parent?.path ?? '';
-	const sourceLink = sourceFolder ? `[[${sourceFolder}/${sourceFile.basename}]]` : `[[${sourceFile.basename}]]`;
+	const sourceLink = buildSourceLink(sourceFolder, sourceFile.basename);
 
 	// Create child note next to the source note.
 	const childBasename = titleFromSelection(selection, options.titleWords);
@@ -38,24 +37,8 @@ export async function extractToIncrementalNote(
 
 	const createdBasename = childPath.split('/').pop()?.replace(/\.md$/i, '') ?? childBasename;
 
-	const tag = options.tag?.trim() || 'extract';
-	const childFrontmatter = [
-		'---',
-		`source: "${sourceLink}"`,
-		`tags: [${tag}]`,
-		'type: topic',
-		`created: ${created}`,
-		`due: ${due}`,
-		'status: new',
-		'priority: 50',
-		'stability: 0',
-		'difficulty: 0',
-		'reps: 0',
-		'lapses: 0',
-		'last_review:',
-		'scroll_pos: 0',
-		'---',
-	].join('\n');
+	const tag = normalizeTag(options.tag) || 'topic';
+	const childFrontmatter = buildExtractFrontmatter(sourceLink, tag, created);
 
 	const childContent = [childFrontmatter, selection].join('\n');
 
@@ -72,7 +55,31 @@ export async function extractToIncrementalNote(
 	new Notice(`Created note: ${createdBasename}`);
 }
 
-function escapeMarkdownLinkText(text: string): string {
+function normalizeSelection(selection: string): string {
+	return selection.replace(/\r\n/g, '\n').trim();
+}
+
+function normalizeTag(tag: string | undefined): string {
+	if (!tag) return '';
+	return tag.trim().replace(/^#/, '');
+}
+
+function buildSourceLink(folderPath: string, basename: string): string {
+	return folderPath ? `[[${folderPath}/${basename}]]` : `[[${basename}]]`;
+}
+
+function buildExtractFrontmatter(sourceLink: string, tag: string, created: string): string {
+	// Keep frontmatter minimal so defaults are derived during review.
+	return [
+		'---',
+		`source: "${sourceLink}"`,
+		`tags: [${tag}]`,
+		`created: ${created}`,
+		'---',
+	].join('\n');
+}
+
+export function escapeMarkdownLinkText(text: string): string {
 	// Escape characters that break markdown link text.
 	// We keep it minimal: escape ] and newlines (collapse to spaces) so the link stays one-line.
 	return text
@@ -83,7 +90,7 @@ function escapeMarkdownLinkText(text: string): string {
 		.trim();
 }
 
-function titleFromSelection(selection: string, maxWords: number): string {
+export function titleFromSelection(selection: string, maxWords: number): string {
 	const words = selection
 		.replace(/\s+/g, ' ')
 		.trim()
@@ -95,7 +102,7 @@ function titleFromSelection(selection: string, maxWords: number): string {
 	return sanitizeTitle(raw);
 }
 
-function sanitizeTitle(title: string): string {
+export function sanitizeTitle(title: string): string {
 	// Obsidian filenames can't contain: / \\ : | ? * " < >
 	return title
 		.replace(/[\\/:|?*"<>]/g, '')
@@ -115,4 +122,14 @@ async function getAvailablePath(plugin: Plugin, desiredPath: string): Promise<st
 	let i = 2;
 	while (plugin.app.vault.getAbstractFileByPath(`${stem} ${i}${ext}`)) i++;
 	return `${stem} ${i}${ext}`;
+}
+
+function formatDate(date: Date): string {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	const hours = String(date.getHours()).padStart(2, '0');
+	const minutes = String(date.getMinutes()).padStart(2, '0');
+	const seconds = String(date.getSeconds()).padStart(2, '0');
+	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }

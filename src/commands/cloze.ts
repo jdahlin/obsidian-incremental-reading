@@ -5,7 +5,7 @@ export type ClozeOptions = {
 	title?: string;
 	/** Cloze index for Anki-style syntax, defaults to 1 */
 	index?: number;
-	/** Extract tag used to mark cards */
+	/** Tag used to mark cards */
 	extractTag?: string;
 };
 
@@ -14,8 +14,7 @@ let lastClozeIndex: number | null = null;
 /**
  * Wrap the current selection in a cloze marker.
  *
- * Output format:
- * <span class="ir-cloze" data-cloze="c1" data-title="...">{{c1::selected::...}}</span>
+ * Output format: {{c1::selected}} (plain Anki-style, no HTML wrapper)
  */
 export async function clozeSelection(
 	app: App,
@@ -31,23 +30,22 @@ export async function clozeSelection(
 
 	const index = options.index ?? 1;
 
-	// Keep Anki cloze syntax but wrap it in a span so we can style/hide via CSS.
+	// Plain Anki-style cloze syntax - no HTML wrapper
 	const clozeText = `{{c${index}::${selectionRaw}}}`;
-	const html = `<span class="ir-cloze" data-cloze="c${index}">${escapeHtmlText(clozeText)}</span>`;
 
-	editor.replaceSelection(html);
+	editor.replaceSelection(clozeText);
 
 	if (index > 0) {
 		lastClozeIndex = index;
 	}
 
 	if (file) {
-		const tag = options.extractTag?.trim() || 'extract';
+		const tag = options.extractTag?.trim() || 'topic';
 		await convertToItem(app, file, tag);
 	}
 }
 
-function escapeHtmlText(value: string): string {
+export function escapeHtmlText(value: string): string {
 	// We want the literal cloze braces to render as text, not parsed HTML.
 	return value
 		.replace(/&/g, '&amp;')
@@ -86,7 +84,7 @@ export async function clozeSelectionSameIndex(
 	await clozeSelection(app, editor, file, { ...options, index });
 }
 
-function getHighestClozeIndex(content: string): number | null {
+export function getHighestClozeIndex(content: string): number | null {
 	const matches = content.matchAll(/\{\{c(\d+)::/g);
 	let max = 0;
 	for (const match of matches) {

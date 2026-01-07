@@ -16,103 +16,183 @@
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
-	padding: 0.3em;
 	box-sizing: border-box;
 }
 
-.ir-review-header {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	padding-bottom: 0.5rem;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.ir-review-breadcrumbs {
-	font-weight: 600;
-	color: var(--text-normal);
-}
-
-.ir-review-crumb {
-	background: transparent;
-	border: none;
-	padding: 0;
-	color: var(--text-normal);
-	cursor: pointer;
-	font-weight: 600;
-}
-
-.ir-review-crumb:hover {
-	text-decoration: underline;
-}
-
-.ir-review-stats {
-	color: var(--text-muted);
-	font-size: 0.9em;
-}
-
-.ir-review-phase {
-	color: var(--text-faint);
-	font-size: 0.8em;
-}
-
-.ir-review-scroll {
+.ir-review-content {
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
-	margin-top: 0.5em;
-	position: relative;
-	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+}
+
+.ir-review-card {
+	text-align: center;
+	max-width: 600px;
+	font-size: 1.1em;
+	line-height: 1.6;
 }
 
 .ir-review-footer {
 	flex: 0 0 auto;
-	margin-top: 0.5em;
-	position: relative;
-	z-index: 10;
+	padding: 1rem;
+	display: flex;
+	justify-content: center;
 }
 
 .ir-review-gradebar {
 	display: flex;
-	gap: 0.5rem;
-	padding-top: 0.5em;
-	border-top: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
+	gap: 0.75rem;
+	justify-content: center;
 }
 
 .ir-review-gradebtn {
-	flex: 1;
-	padding: 0.5rem 0.75rem;
-	border-radius: 8px;
-	font-weight: 600;
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	font-weight: 700;
+	font-size: 1.1em;
+	border: 2px solid transparent;
+	cursor: pointer;
+}
+
+.ir-review-gradebtn.ir-grade-again {
+	background: var(--color-red);
+	color: white;
+}
+
+.ir-review-gradebtn.ir-grade-hard {
+	background: var(--color-orange);
+	color: white;
+}
+
+.ir-review-gradebtn.ir-grade-good {
+	background: var(--color-green);
+	color: white;
+}
+
+.ir-review-gradebtn.ir-grade-easy {
+	background: var(--color-cyan);
+	color: white;
+}
+
+.ir-review-gradebtn:hover {
+	filter: brightness(1.1);
+}
+
+.ir-review-codemirror {
+	background: transparent;
+	text-align: center;
+}
+
+.ir-review-codemirror .cm-editor {
+	background: transparent;
+}
+
+.ir-review-codemirror .cm-content {
+	font-family: var(--font-text);
+	font-size: 1.1em;
+	line-height: 1.6;
+}
+
+.ir-review-codemirror .cm-line {
+	text-align: center;
+}
+
+.ir-review-codemirror .cm-gutters {
+	display: none;
+}
+
+.ir-review-codemirror .cm-focused {
+	outline: none;
+}
+
+.ir-cloze-placeholder {
+	border: 1px dashed var(--text-muted);
+	border-radius: 6px;
+	padding: 0 0.25em;
+	font-variant-ligatures: none;
+	white-space: pre-wrap;
 }
 
 .ir-review-empty {
 	display: flex;
 	flex-direction: column;
-	gap: 0.35rem;
-	padding: 1.25rem 0.5rem;
+	align-items: center;
+	gap: 0.5rem;
+	text-align: center;
 	color: var(--text-muted);
 }
 
 .ir-review-empty-title {
+	font-size: 1.5em;
 	font-weight: 700;
 	color: var(--text-normal);
 }
 
 .ir-review-empty-body {
-	font-size: 0.95em;
+	font-size: 1em;
 }
 
 .ir-review-empty-next {
 	font-size: 0.9em;
 	color: var(--text-faint);
+	margin-top: 0.5rem;
+}
+
+/* Session stats */
+.ir-review-session-stats {
+	margin-top: 1rem;
+	padding: 0.75rem;
+	background: var(--background-secondary);
+	border-radius: 8px;
+	max-width: 200px;
+}
+
+.ir-review-session-title {
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+	color: var(--text-normal);
+}
+
+.ir-review-session-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.15rem 0;
+	font-size: 0.9em;
+}
+
+.ir-review-session-value {
+	font-weight: 600;
+}
+
+/* Grade colors */
+.ir-grade-again {
+	color: var(--color-red);
+}
+
+.ir-grade-hard {
+	color: var(--color-orange);
+}
+
+.ir-grade-good {
+	color: var(--color-green);
+}
+
+.ir-grade-easy {
+	color: var(--color-cyan);
 }
 
 .ir-review-showanswer {
-	width: 100%;
+	padding: 0.75rem 2rem;
+	border-radius: 8px;
+	font-weight: 600;
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
+	cursor: pointer;
 }
 
 .ir-review-showanswer:hover {

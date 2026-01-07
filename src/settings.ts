@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 		0.0912, 0.0658, 0.1542,
 	],
 	extractTitleWords: 5,
-	extractTag: 'extract',
+	extractTag: 'topic',
 	showNextReviewTime: false,
 	autoAdvanceDelay: 0,
 };
@@ -83,15 +83,16 @@ export class IncrementalReadingSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Request retention')
-			.setDesc('Target recall rate for scheduling (0.7 - 0.99).')
+			.setDesc('Target recall rate for scheduling (70 - 99%).')
 			.addText((text) =>
 				text
 					.setPlaceholder('0.9')
-					.setValue(String(this.plugin.settings.requestRetention))
+					.setValue(String(Math.round(this.plugin.settings.requestRetention * 100)))
 					.onChange(async (value) => {
 						const num = Number(value);
 						if (Number.isFinite(num)) {
-							this.plugin.settings.requestRetention = Math.min(0.99, Math.max(0.7, num));
+							const normalized = num / 100;
+							this.plugin.settings.requestRetention = Math.min(0.99, Math.max(0.7, normalized));
 							await this.plugin.saveSettings();
 						}
 					})
@@ -112,11 +113,11 @@ export class IncrementalReadingSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Extract tag')
-			.setDesc('Tag applied to extracts to include them in review queues.')
+			.setName('Topic tag')
+			.setDesc('Tag applied to topic/item notes so they appear in review queues.')
 			.addText((text) =>
 				text
-					.setPlaceholder('extract')
+					.setPlaceholder('topic')
 					.setValue(this.plugin.settings.extractTag)
 					.onChange(async (value) => {
 						this.plugin.settings.extractTag = value.trim() || DEFAULT_SETTINGS.extractTag;

@@ -1,6 +1,13 @@
 /* Cloze styling */
 
-/* Default: make cloze look like a subtle pill */
+/*
+ * Clozes use plain Anki syntax: {{c1::answer}} or {{c1::answer::hint}}
+ * During review, clozes are hidden via CodeMirror decorations (question phase)
+ * and replaced with styled answers (answer phase).
+ * No special CSS needed for the cloze syntax itself in the source.
+ */
+
+/* Legacy support for old HTML-wrapped clozes (for migration) */
 .ir-cloze {
 	border: 1px dashed var(--text-muted);
 	border-radius: 6px;
@@ -9,30 +16,6 @@
 	white-space: pre-wrap;
 }
 
-/* Show the title as a tooltip-like underline marker (optional) */
-.ir-cloze[data-title] {
-	text-decoration: underline dotted;
-}
-
-/* Replace rendered cloze content with a placeholder */
-.ir-cloze {
-	display: inline-block;
-	width: 3ch; /* width of [...] */
-	overflow: hidden;
-	vertical-align: baseline;
-	position: relative;
-}
-
-.ir-cloze::before {
-	content: '[...]';
-}
-
 .ir-cloze.is-revealed {
-	width: auto;
-	overflow: visible;
 	border-style: solid;
-}
-
-.ir-cloze.is-revealed::before {
-	content: '';
 }
