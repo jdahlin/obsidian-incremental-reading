@@ -192,7 +192,6 @@ export class ReviewItemView extends ItemView {
 		// Only show question phase for cloze items that have an actual cloze index
 		const isClozeItem = this.currentItem?.type === 'item' && this.currentItem?.clozeIndex;
 		this.phase = isClozeItem ? 'question' : 'answer';
-		console.log('IR: startReview item', { type: this.currentItem?.type, clozeIndex: this.currentItem?.clozeIndex, phase: this.phase, path: this.currentItem?.notePath });
 		this.sessionStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 		this.currentStartedAt = this.currentItem ? new Date() : null;
 		this.screen = 'review';

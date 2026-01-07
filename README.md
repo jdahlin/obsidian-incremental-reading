@@ -1,29 +1,129 @@
 # Obsidian Incremental Reading
 
-This plugin adds commands for an incremental reading workflow.
+A plugin for [Obsidian](https://obsidian.md) that brings SuperMemo-inspired incremental reading to your vault.
 
-## Commands
+## What is Incremental Reading?
 
-- **Extract to topic note**: creates a new note next to the current note using the first 5 words of the selection as the filename, and replaces the selection with a Markdown link to the new note.
-- **Cloze selection**: wraps the selection in an Anki-style cloze (`{{c1::...::...}}`) inside an inline HTML wrapper so you can style/hide it via CSS.
+Incremental reading is a learning technique where you:
 
-## Cloze styling
+1. **Extract** important passages from articles into separate notes
+2. **Create cloze deletions** to turn passive highlights into active recall questions
+3. **Review** extracts and clozes on a spaced repetition schedule
 
-Cloze is inserted as:
+This plugin implements the core incremental reading workflow, allowing you to build a knowledge base that grows with your reading.
 
-`<span class="ir-cloze" data-cloze="c1" data-title="...">{{c1::selected::...}}</span>`
+## Features
 
-Customize `styles.css` to hide/reveal clozes in reading view.
+### Current Features
 
-## Development
+- **Extract to topic note** - Select text and extract it to a new note, linked from the source
+- **Cloze deletion** - Wrap selections in Anki-style cloze syntax (`{{c1::text}}`)
+- **Review interface** - Built-in review panel with deck summary and spaced repetition
+- **FSRS scheduling** - Uses the Free Spaced Repetition Scheduler algorithm for optimal review intervals
+- **Per-cloze scheduling** - Each cloze deletion is scheduled independently
+- **Priority queue** - Items are reviewed based on priority and due date
+- **Review statistics** - Track your daily reviews and streaks
 
-- Install deps: `npm i`
-- Dev build (watch): `npm run dev`
-- Lint: `npm run lint`
-- Production build: `npm run build`
+### Commands
 
-## Manual install
+| Command | Description |
+|---------|-------------|
+| Extract to topic note | Creates a new note from selection, replaces with link |
+| Cloze selection | Wraps selection in `{{c1::...}}` cloze syntax |
+| Open review | Opens the review panel |
+| Sync all notes | Re-syncs all tagged notes to sidecar files |
 
-Copy `main.js`, `manifest.json`, and `styles.css` into:
+## How It Works
 
-`<your-vault>/.obsidian/plugins/<your-plugin-id>/`
+### Workflow
+
+1. **Import** - Add articles or content to your vault
+2. **Tag** - Add the extract tag (default: `#extract`) to notes you want to process
+3. **Extract** - Select important passages and use "Extract to topic note"
+4. **Cloze** - Create cloze deletions from key facts: `{{c1::answer}}`
+5. **Review** - Open the review panel to study due items
+
+### Data Storage
+
+The plugin stores scheduling data in sidecar files:
+- `IR/Review Items/<note-id>.md` - Per-note scheduling state
+- `IR/Revlog/YYYY-MM.md` - Review history (JSONL format)
+
+Your notes remain clean - all scheduling metadata is kept separate.
+
+## Status
+
+**Alpha** - Core functionality works but expect rough edges.
+
+### What Works
+- Extract and cloze commands
+- Basic review loop with FSRS scheduling
+- Deck-based organization (folder hierarchy)
+- Topic and cloze item review
+
+### Known Limitations
+- No priority editing UI yet
+- No manual interval adjustments
+- Limited statistics display
+
+## Roadmap
+
+- [ ] Keyboard shortcuts in review
+- [ ] Reading progress tracking
+- [ ] Advanced statistics and charts
+- [ ] Export/import review data
+- [ ] Image occlusion
+
+## Installation
+
+### From Obsidian Community Plugins
+*Coming soon*
+
+### Manual Installation
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
+2. Create folder: `<your-vault>/.obsidian/plugins/obsidian-incremental-reading/`
+3. Copy the files into that folder
+4. Enable the plugin in Obsidian settings
+
+### Development
+
+```bash
+# Install dependencies
+npm install
+
+# Development build (watch mode)
+npm run dev
+
+# Production build
+npm run build
+
+# Run tests
+npm test
+
+# Lint
+npm run lint
+```
+
+## Configuration
+
+Settings available in the plugin options:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Extract tag | `extract` | Tag that marks notes for incremental reading |
+| Title words | 5 | Words from selection used for extract filename |
+| New cards per day | 20 | Maximum new items introduced daily |
+| Maximum interval | 365 | Maximum days between reviews |
+| Request retention | 0.9 | Target retention rate (0.0-1.0) |
+| Show streak | true | Display streak in review summary |
+
+## Credits
+
+- Inspired by [SuperMemo](https://supermemo.guru/wiki/Incremental_reading)
+- Scheduling algorithm: [FSRS](https://github.com/open-spaced-repetition/fsrs4anki)
+- Built on the [Obsidian Plugin API](https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin)
+
+## License
+
+MIT

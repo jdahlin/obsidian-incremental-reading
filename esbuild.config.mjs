@@ -32,8 +32,8 @@ const external = [
 const buildOptions = {
 	banner: { js: banner },
 	entryPoints: {
-		main: "src2/main.ts",
-		styles: "src2/styles.css",
+		main: "src/main.ts",
+		styles: "src/styles.css",
 	},
 	bundle: true,
 	external,

@@ -10,73 +10,59 @@ This document provides a step-by-step implementation guide. Each phase builds on
 
 ## Current Implementation Summary
 
-A working prototype exists with these features implemented:
-
 ### What's Working
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Cloze creation | ✅ Done | Plain `{{c1::text}}` syntax, no HTML wrapper |
-| Cloze display (question) | ✅ Done | CodeMirror decorations hide answer with `[...]` |
-| Cloze display (answer) | ✅ Done | Text replacement shows `**[answer]**` |
-| Review grading | ✅ Done | 1-4 buttons, color-coded (Again/Hard/Good/Easy) |
+| Cloze creation | ✅ Done | Plain `{{c1::text}}` syntax |
+| Cloze display (question) | ✅ Done | Content shows `[...]` placeholder |
+| Cloze display (answer) | ✅ Done | Full text revealed |
+| Review grading | ✅ Done | 1-4 buttons, color-coded |
+| Deck summary screen | ✅ Done | Two-screen flow (Deck List → Review) |
+| Per-cloze scheduling | ✅ Done | Via sidecar files |
+| Single-pane review | ✅ Done | Content rendered in review panel |
+| Topic vs cloze handling | ✅ Done | Topics show grade buttons immediately |
 | Session stats | ✅ Done | Completion screen shows reviewed + grade breakdown |
-| Revlog | ✅ Done | Append-only Markdown in `IR/RevLog/<machineId>.md` |
-| Spoiler-free header | ✅ Done | Shows deck/folder name, not note title |
-| Queue building | ⚠️ Partial | Per-file only, not per-cloze |
+| JSONL revlog | ✅ Done | `IR/Revlog/YYYY-MM.md` |
+| Sidecar storage | ✅ Done | `IR/Review Items/<id>.md` |
+| Keyboard shortcuts | ✅ Done | Enter/Space = show, 1-4 = grade, Esc = back |
 
 ### What's Missing (Gaps)
 
 | Feature | Gap | Priority |
 |---------|-----|----------|
-| Per-cloze scheduling | Needs sidecar files | High |
-| Deck list screen | Review opens directly | Medium |
-| NanoID identifiers | Not generated | High (for sidecars) |
-| JSONL revlog format | Uses Markdown list | Low |
-| Bases integration | Needs sidecars first | Medium |
-| Statistics modal | Not started | Low |
+| Priority editing | No UI yet | Medium |
+| Dismiss/delete items | Not implemented | Medium |
+| Statistics modal | Basic only | Low |
+| Bases integration | Not started | Low |
+| Image occlusion | Not started | Future |
 
-### Key Implementation Decisions Made
+### Key Implementation Decisions
 
-1. **Cloze syntax**: Plain Anki-style `{{c1::text}}` (not HTML-wrapped)
-2. **Question phase rendering**: CodeMirror `Decoration.replace` with `ClozeWidget`
-3. **Answer phase rendering**: Simple text replacement via `revealClozes()`
-4. **Header**: Shows deck/folder name only (avoids spoilers from breadcrumbs)
-5. **Revlog**: Race condition handled via try/catch on create with fallback to append
-
-### Source Tree Structure
-
-Two source trees exist:
-
-| Tree | Status | Notes |
-|------|--------|-------|
-| `src2/` | **Active** | New architecture (JSONL revlog, sidecar files) |
-| `src/` | Legacy | Original code, partially used for UI components |
-
-The build entry point uses `src2/`. Some UI components still reference `src/`.
+1. **Cloze syntax**: Plain Anki-style `{{c1::text}}` (no HTML wrapper)
+2. **Single-pane review**: Content rendered directly in review panel (no separate editor tab)
+3. **Topic review**: Topics (extracts without cloze) skip "Show Answer" and show grade buttons immediately
+4. **Cloze review**: Shows question with `[...]` → "Show Answer" → grade buttons
+5. **Race condition handling**: try/catch on file create with fallback to append
 
 ### Source Files Reference
 
-**src2/ (Active)**
-| File | What It Does |
-|------|--------------|
-| `src2/data/revlog.ts` | JSONL revlog with race condition handling |
-| `src2/data/review-items.ts` | Sidecar file read/write |
-| `src2/data/sync.ts` | Note ↔ sidecar synchronization |
-| `src2/core/types.ts` | Type definitions |
-
-**src/ (UI Components)**
-| File | What It Does |
-|------|--------------|
-| `src/views/review/MarkdownBlock.tsx:97-159` | `createClozeEditor()` and `buildClozeDecorations()` |
-| `src/views/review/MarkdownBlock.tsx:82-87` | `revealClozes()` for answer phase |
-| `src/views/review/ReviewView.tsx:22-29` | Deck name extraction (folder-based) |
-| `src/views/review/ReviewView.tsx:51-75` | Session stats in completion screen |
-| `src/commands/cloze.ts` | Cloze creation with plain syntax |
+| File | Purpose |
+|------|---------|
+| `src/data/revlog.ts` | JSONL revlog with race condition handling |
+| `src/data/review-items.ts` | Sidecar file read/write |
+| `src/data/sync.ts` | Note ↔ sidecar synchronization |
+| `src/core/types.ts` | Type definitions |
+| `src/core/cloze.ts` | Cloze parsing (`formatClozeQuestion`, `formatClozeAnswer`) |
+| `src/views/review/ReviewItemView.tsx` | Review view controller |
+| `src/views/review/ReviewScreen.tsx` | Review UI component |
+| `src/views/review/DeckSummary.tsx` | Deck list UI |
+| `src/commands/cloze.ts` | Cloze creation command |
+| `src/commands/extract.ts` | Extract command |
 
 ### Race Condition Pattern
 
-All file/folder creation uses this pattern to avoid "File already exists" errors:
+All file/folder creation uses this pattern:
 
 ```typescript
 try {
@@ -84,12 +70,12 @@ try {
 } catch {
     const file = app.vault.getAbstractFileByPath(path);
     if (file instanceof TFile) {
-        await app.vault.append(file, content);  // or modify()
+        await app.vault.append(file, content);
     }
 }
 ```
 
-Applied in: `src2/data/revlog.ts`, `src2/data/review-items.ts`, `src/revlog.ts`
+Applied in: `src/data/revlog.ts`, `src/data/review-items.ts`
 
 ---
 
