@@ -33,12 +33,13 @@ describe('ReviewController', () => {
 			'Notes/Deck/Note.md',
 			[
 				'---',
+				'ir_note_id: note-1',
 				'tags: [topic]',
 				'type: topic',
 				'priority: 10',
 				'created: 2024-01-01T00:00:00',
 				'---',
-				'Body',
+				'Body {{c1::cloze}}',
 			].join('\n'),
 		);
 		app.workspace.setActiveFile(note);
@@ -79,5 +80,59 @@ describe('ReviewController', () => {
 
 		await withDocument(() => controller.gradeCurrentItem(3));
 		expect(controller.getModel().sessionStats.reviewed).toBe(1);
+	});
+
+	it.skip('includes newly created notes after sync (repro: metadata cache lag)', async () => {
+		const app = new App();
+		const note = await app.vault.create(
+			'Notes/Deck/New item.md',
+			[
+				'---',
+				'source: "[[Pars centrale/Pars centrale]]"',
+				'tags: [extract]',
+				'type: item',
+				'created: 2026-01-08T15:26:04',
+				'priority: 50',
+				'ir_note_id: LQaMCyIluFSK',
+				'---',
+				'Text with {{c1::CLOZE}}',
+			].join('\n'),
+		);
+		app.workspace.setActiveFile(note);
+
+		const originalGetFileCache = app.metadataCache.getFileCache.bind(app.metadataCache);
+		app.metadataCache.getFileCache = ((file: unknown) => {
+			if (file === note) return null;
+			return originalGetFileCache(file as never);
+		}) as typeof app.metadataCache.getFileCache;
+
+		await writeReviewItemFile(app, 'LQaMCyIluFSK', {
+			ir_note_id: 'LQaMCyIluFSK',
+			note_path: note.path,
+			type: 'item',
+			priority: 50,
+			topic: makeState(),
+			clozes: {
+				c1: { cloze_uid: 'uid-1', ...makeState() },
+			},
+		});
+
+		const controller = new ReviewController({
+			app,
+			view: {},
+			settings: {
+				newCardsPerDay: 10,
+				maximumInterval: 30,
+				requestRetention: 0.9,
+				extractTag: 'extract',
+				trackReviewTime: false,
+				showStreak: true,
+			},
+		});
+
+		await withDocument(() => controller.refreshSummary());
+		expect(controller.getModel().items.some((item) => item.noteId === 'LQaMCyIluFSK')).toBe(
+			true,
+		);
 	});
 });
