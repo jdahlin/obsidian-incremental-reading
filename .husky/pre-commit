@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
-npx --no-install nano-staged
+./node_modules/.bin/nano-staged
 npm run -s lint
 npm run -s typecheck

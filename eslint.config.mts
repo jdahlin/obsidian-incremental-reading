@@ -70,7 +70,6 @@ export default tseslint.config(
 		'css-tmp',
 		'esbuild.config.mjs',
 		'eslint.config.js',
-		'.nano-staged.js',
 		'vitest.config.ts',
 		'version-bump.mjs',
 		'versions.json',

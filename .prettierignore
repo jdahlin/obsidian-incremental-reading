@@ -1,5 +1,6 @@
 node_modules
 coverage
 dist
+.claude
 main.js
 styles.css
