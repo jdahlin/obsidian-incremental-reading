@@ -15,7 +15,7 @@
 .ir-secondary {
 	background: var(--background-secondary);
 	color: var(--text-normal);
-	border: 1px solid var(--background-modifier-border);
+	border: none;
 	padding: 6px 10px;
 	border-radius: 6px;
 }
@@ -89,6 +89,9 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	max-width: 720px;
+	width: 100%;
+	margin: 0 auto;
 }
 
 .ir-review-content {
@@ -152,6 +155,38 @@
 	font-size: 1em;
 	font-weight: 600;
 	cursor: pointer;
+}
+
+.ir-primary,
+.ir-secondary,
+.ir-show-answer,
+.ir-grade {
+	border: none;
+	transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease,
+		background 120ms ease;
+}
+
+.ir-primary:hover,
+.ir-show-answer:hover {
+	filter: brightness(1.05);
+}
+
+.ir-secondary:hover {
+	background: var(--background-modifier-hover);
+}
+
+.ir-grade:hover {
+	filter: brightness(1.05);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ir-primary:focus-visible,
+.ir-secondary:focus-visible,
+.ir-show-answer:focus-visible,
+.ir-grade:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
 }
 
 .ir-grade-again {
