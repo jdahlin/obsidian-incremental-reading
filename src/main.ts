@@ -7,7 +7,7 @@ import {
 	IncrementalReadingSettingTab,
 	type IncrementalReadingSettings,
 } from './settings';
-import { ReviewItemView, VIEW_TYPE_REVIEW } from './views/review/ReviewItemView';
+import { ReviewItemView, VIEW_TYPE_REVIEW } from './ui/review/ReviewItemView';
 
 export default class IncrementalReadingPlugin extends Plugin {
 	settings: IncrementalReadingSettings = DEFAULT_SETTINGS;

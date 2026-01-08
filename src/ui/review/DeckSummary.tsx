@@ -1,5 +1,7 @@
 import type { JSX } from 'preact';
 import type { DeckInfo, StreakInfo, TodayStats } from '../../core/types';
+import { DeckCounts } from './DeckCounts';
+import { flattenDecks, rowClass } from './deck-summary-utils';
 
 export function DeckSummary(props: {
 	decks: DeckInfo[];
@@ -35,7 +37,7 @@ export function DeckSummary(props: {
 					data-depth="0"
 				>
 					<span className="ir-deck-name">All decks</span>
-					<Counts counts={props.allCounts} />
+					<DeckCounts counts={props.allCounts} />
 				</div>
 				{rows.map((row) => (
 					<div
@@ -51,7 +53,7 @@ export function DeckSummary(props: {
 						>
 							{row.name}
 						</span>
-						<Counts counts={row.counts} />
+						<DeckCounts counts={row.counts} />
 					</div>
 				))}
 			</div>
@@ -61,30 +63,4 @@ export function DeckSummary(props: {
 			</div>
 		</div>
 	);
-}
-
-function rowClass(selected: boolean): string {
-	return `ir-deck-row${selected ? ' is-selected' : ''}`;
-}
-
-function Counts(props: { counts: { new: number; learning: number; due: number } }): JSX.Element {
-	return (
-		<span className="ir-deck-counts">
-			<span className="ir-count-new">{props.counts.new}</span>
-			<span className="ir-count-learning">{props.counts.learning}</span>
-			<span className="ir-count-due">{props.counts.due}</span>
-		</span>
-	);
-}
-
-function flattenDecks(decks: DeckInfo[]): DeckInfo[] {
-	const rows: DeckInfo[] = [];
-	const walk = (nodes: DeckInfo[]): void => {
-		for (const node of nodes) {
-			rows.push(node);
-			if (node.children.length) walk(node.children);
-		}
-	};
-	walk(decks);
-	return rows;
 }

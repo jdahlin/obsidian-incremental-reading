@@ -5,7 +5,7 @@ import { Notice } from 'obsidian';
 import { exportReviewHistory } from '../data/export';
 import { normalizeNumber } from '../core/frontmatter';
 import { PriorityModal } from '../ui/PriorityModal';
-import { StatsModal } from '../views/stats/StatsModal';
+import { StatsModal } from '../ui/stats/StatsModal';
 
 export function registerCommands(plugin: IncrementalReadingPlugin): void {
 	plugin.addCommand({

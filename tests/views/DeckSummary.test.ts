@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DeckSummary } from '../../src/views/review/DeckSummary';
+import { DeckSummary } from '../../src/ui/review/DeckSummary';
 import type { DeckInfo } from '../../src/core/types';
 
 function collectText(node: unknown, acc: string[] = []): string[] {

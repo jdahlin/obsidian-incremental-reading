@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { App, FakeElement } from 'obsidian';
-import { StatsModal } from '../../src/views/stats/StatsModal';
+import { StatsModal } from '../../src/ui/stats/StatsModal';
 import { appendReview } from '../../src/data/revlog';
 import { writeReviewItemFile } from '../../src/data/review-items';
 import type { ItemState } from '../../src/core/types';
