@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { App, Setting, TextComponent, ToggleComponent } from 'obsidian';
-import { IncrementalReadingSettingTab, DEFAULT_SETTINGS } from '../src/settings';
+import { IncrementalReadingSettingTab, DEFAULT_SETTINGS } from '../settings';
 
 function makePlugin() {
 	return {

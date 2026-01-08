@@ -13,9 +13,6 @@ export default tseslint.config(
 				...globals.browser,
 			},
 			parserOptions: {
-				projectService: {
-					allowDefaultProject: ['eslint.config.js', 'manifest.json', '.nano-staged.js'],
-				},
 				tsconfigRootDir: import.meta.dirname,
 				extraFileExtensions: ['.json'],
 			},
@@ -47,12 +44,24 @@ export default tseslint.config(
 		},
 	},
 	{
-		files: ['**/*.ts', '**/*.tsx'],
+		files: ['src/**/*.ts', 'src/**/*.tsx'],
+		languageOptions: {
+			parserOptions: {
+				project: ['tsconfig.json', 'src/tests/tsconfig.json'],
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
 		rules: {
 			'@typescript-eslint/no-unnecessary-type-assertion': 'error',
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
+		rules: {
+			'@typescript-eslint/no-deprecated': 'off',
+		},
+	},
 	globalIgnores([
 		'node_modules',
 		'dist',
@@ -61,6 +70,7 @@ export default tseslint.config(
 		'css-tmp',
 		'esbuild.config.mjs',
 		'eslint.config.js',
+		'.nano-staged.js',
 		'vitest.config.ts',
 		'version-bump.mjs',
 		'versions.json',

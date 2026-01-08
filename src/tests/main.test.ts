@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { WorkspaceLeaf } from 'obsidian';
-import IncrementalReadingPlugin from '../src/main';
-import { VIEW_TYPE_REVIEW } from '../src/ui/review/ReviewItemView';
+import IncrementalReadingPlugin from '../main';
+import { VIEW_TYPE_REVIEW } from '../ui/review/ReviewItemView';
 
 function makeStoredSettings() {
 	return {
