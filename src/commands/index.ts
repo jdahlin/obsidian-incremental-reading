@@ -13,15 +13,7 @@ export function registerCommands(plugin: IncrementalReadingPlugin): void {
 		id: 'open-review-view',
 		name: 'Open review',
 		callback: async () => {
-			const { workspace } = plugin.app;
-			let leaf = workspace.getLeavesOfType(VIEW_TYPE_REVIEW)[0];
-			if (!leaf) {
-				const mostRecent = workspace.getMostRecentLeaf();
-				if (!mostRecent) return;
-				leaf = mostRecent;
-				await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true });
-			}
-			void workspace.revealLeaf(leaf);
+			await plugin.activateReviewView();
 		},
 	});
 

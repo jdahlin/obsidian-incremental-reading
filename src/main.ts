@@ -26,8 +26,17 @@ export default class IncrementalReadingPlugin extends Plugin {
 		});
 	}
 
-	onunload(): void {
-		// Obsidian handles view teardown.
+	/** Open (or reveal) the Review view in the workspace. */
+	async activateReviewView(): Promise<void> {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_REVIEW)[0];
+		if (!leaf) {
+			const mostRecent = workspace.getMostRecentLeaf();
+			if (!mostRecent) return;
+			leaf = mostRecent;
+			await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true });
+		}
+		void workspace.revealLeaf(leaf);
 	}
 
 	async loadSettings(): Promise<void> {
