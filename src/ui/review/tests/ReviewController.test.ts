@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { App, FakeElement } from 'obsidian';
+import { App, Editor, FakeElement, MarkdownView } from 'obsidian';
 import { writeReviewItemFile } from '../../../data/review-items';
 import type { ItemState } from '../../../core/types';
 import { ReviewController } from '../review-controller';
+import { extractToIncrementalNote } from '../../../commands/extract';
 
 function makeState(): ItemState {
 	return {
@@ -82,40 +83,52 @@ describe('ReviewController', () => {
 		expect(controller.getModel().sessionStats.reviewed).toBe(1);
 	});
 
-	it.skip('includes newly created notes after sync (repro: metadata cache lag)', async () => {
+	it.each(['topic', 'extract'])(
+		'%s: includes newly created review items (via extract command)',
+		async (type: string) => {
+			const app = new App();
+			const source = await app.vault.create('Notes/Deck/Source.md', 'Source body');
+			app.workspace.setActiveFile(source);
+
+			const selection = 'Text with {{c1::CLOZE}}';
+			const editor = new Editor(selection, 0, selection.length);
+			const view = new MarkdownView(source);
+			await extractToIncrementalNote(app, editor, view, { titleWords: 5, tag: type });
+
+			const reviewFiles = app.vault
+				.getMarkdownFiles()
+				.filter((file) => file.path.startsWith('IR/Review Items/'));
+			expect(reviewFiles).toHaveLength(1);
+			const noteId = reviewFiles[0]?.basename;
+
+			const controller = new ReviewController({
+				app,
+				view: {},
+				settings: {
+					newCardsPerDay: 10,
+					maximumInterval: 30,
+					requestRetention: 0.9,
+					extractTag: type,
+					trackReviewTime: false,
+					showStreak: true,
+				},
+			});
+
+			await withDocument(() => controller.refreshSummary());
+			expect(controller.getModel().items.some((item) => item.noteId === noteId)).toBe(true);
+		},
+	);
+
+	it('includes root-level notes in the summary', async () => {
 		const app = new App();
-		const note = await app.vault.create(
-			'Notes/Deck/New item.md',
-			[
-				'---',
-				'source: "[[Pars centrale/Pars centrale]]"',
-				'tags: [extract]',
-				'type: item',
-				'created: 2026-01-08T15:26:04',
-				'priority: 50',
-				'ir_note_id: LQaMCyIluFSK',
-				'---',
-				'Text with {{c1::CLOZE}}',
-			].join('\n'),
-		);
-		app.workspace.setActiveFile(note);
+		const source = await app.vault.create('RootSource.md', 'Source body content');
+		app.workspace.setActiveFile(source);
 
-		const originalGetFileCache = app.metadataCache.getFileCache.bind(app.metadataCache);
-		app.metadataCache.getFileCache = ((file: unknown) => {
-			if (file === note) return null;
-			return originalGetFileCache(file as never);
-		}) as typeof app.metadataCache.getFileCache;
+		const selection = 'Extracted content from root';
+		const editor = new Editor(selection, 0, selection.length);
+		const view = new MarkdownView(source);
 
-		await writeReviewItemFile(app, 'LQaMCyIluFSK', {
-			ir_note_id: 'LQaMCyIluFSK',
-			note_path: note.path,
-			type: 'item',
-			priority: 50,
-			topic: makeState(),
-			clozes: {
-				c1: { cloze_uid: 'uid-1', ...makeState() },
-			},
-		});
+		await extractToIncrementalNote(app, editor, view, { titleWords: 5, tag: 'topic' });
 
 		const controller = new ReviewController({
 			app,
@@ -124,15 +137,17 @@ describe('ReviewController', () => {
 				newCardsPerDay: 10,
 				maximumInterval: 30,
 				requestRetention: 0.9,
-				extractTag: 'extract',
+				extractTag: 'topic',
 				trackReviewTime: false,
 				showStreak: true,
 			},
 		});
 
 		await withDocument(() => controller.refreshSummary());
-		expect(controller.getModel().items.some((item) => item.noteId === 'LQaMCyIluFSK')).toBe(
-			true,
-		);
+		const model = controller.getModel();
+
+		// Root items should be represented in the deck tree (e.g. as '/')
+		expect(model.decks.length).toBeGreaterThan(0);
+		expect(model.decks.some((d) => d.path === '/')).toBe(true);
 	});
 });

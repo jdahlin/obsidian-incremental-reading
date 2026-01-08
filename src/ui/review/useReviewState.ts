@@ -16,9 +16,13 @@ export function useReviewState(deps: ReviewControllerDeps): UseReviewStateResult
 	const [state, setState] = useState<ReviewScreenState>(controller.getState());
 
 	useEffect(() => {
+		controller.mount();
 		const unsubscribe = controller.subscribe(setState);
 		void controller.refreshSummary();
-		return unsubscribe;
+		return () => {
+			unsubscribe();
+			controller.unmount();
+		};
 	}, [controller]);
 
 	const actions = useMemo<ReviewScreenActions>(() => controller.getActions(), [controller]);
