@@ -8,6 +8,7 @@ import {
 	WidgetType,
 } from '@codemirror/view';
 import { MarkdownView, type App } from 'obsidian';
+import './cloze-hider.css';
 
 export type ClozePhase = 'question' | 'answer';
 

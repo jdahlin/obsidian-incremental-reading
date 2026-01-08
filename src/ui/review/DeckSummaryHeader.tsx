@@ -1,4 +1,5 @@
 import type { FunctionalComponent } from 'preact';
+import './DeckSummaryHeader.css';
 
 export interface DeckSummaryHeaderProps {
 	onStats: () => void;

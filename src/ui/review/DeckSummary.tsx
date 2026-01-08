@@ -5,6 +5,7 @@ import { DeckList } from './DeckList';
 import { DeckSummaryFooter } from './DeckSummaryFooter';
 import { DeckSummaryHeader } from './DeckSummaryHeader';
 import { flattenDecks } from './deck-summary-utils';
+import './DeckSummary.css';
 
 export interface DeckSummaryProps {
 	decks: DeckInfo[];

@@ -2,6 +2,7 @@ import type { FunctionalComponent } from 'preact';
 import { DeckCounts } from './DeckCounts';
 import { rowClass } from './deck-summary-utils';
 import type { DeckCountsValue } from './deck-summary-types';
+import './DeckRow.css';
 
 export interface DeckRowProps {
 	label: string;

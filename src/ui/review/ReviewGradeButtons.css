@@ -1,0 +1,49 @@
+.ir-grade-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+.ir-grade {
+	border: none;
+	border-radius: 6px;
+	padding: 10px 20px;
+	font-size: 1em;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		transform 120ms ease,
+		box-shadow 120ms ease,
+		filter 120ms ease,
+		background 120ms ease;
+}
+
+.ir-grade:hover {
+	filter: brightness(1.05);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ir-grade:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
+.ir-grade-again {
+	background: var(--color-red);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-hard {
+	background: var(--color-orange);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-good {
+	background: var(--color-green);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-easy {
+	background: var(--color-blue);
+	color: var(--text-on-accent);
+}

@@ -9,6 +9,7 @@ import {
 	buildHeatmapData,
 } from '../../stats/aggregations';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
+import './StatsModal.css';
 
 export class StatsModal extends Modal {
 	constructor(

@@ -1,4 +1,5 @@
 import type { FunctionalComponent } from 'preact';
+import './ReviewCard.css';
 
 export interface ReviewCardProps {
 	content: string;

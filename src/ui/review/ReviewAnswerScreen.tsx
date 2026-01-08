@@ -1,6 +1,7 @@
 import type { FunctionalComponent } from 'preact';
 import { ReviewCard } from './ReviewCard';
 import { ReviewGradeButtons } from './ReviewGradeButtons';
+import './ReviewAnswerScreen.css';
 
 export interface ReviewAnswerScreenProps {
 	content: string;

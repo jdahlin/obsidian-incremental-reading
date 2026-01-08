@@ -1,5 +1,6 @@
 import type { FunctionalComponent } from 'preact';
 import type { StreakInfo, TodayStats } from '../../core/types';
+import './DeckSummaryFooter.css';
 
 export interface DeckSummaryFooterProps {
 	todayStats: TodayStats;
