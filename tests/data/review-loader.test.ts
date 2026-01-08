@@ -21,7 +21,15 @@ describe('review loader', () => {
 		const app = new App();
 		const noteFile = await app.vault.create(
 			'Notes/Source.md',
-			['---', 'ir_note_id: note-1', 'tags: [topic]', 'priority: 10', 'created: 2024-01-01T00:00:00', '---', ''].join('\n'),
+			[
+				'---',
+				'ir_note_id: note-1',
+				'tags: [topic]',
+				'priority: 10',
+				'created: 2024-01-01T00:00:00',
+				'---',
+				'',
+			].join('\n'),
 		);
 
 		const state = makeState();

@@ -55,7 +55,12 @@ describe('extractToIncrementalNote', () => {
 		Notice.clear();
 
 		const now = new Date('2024-01-02T03:04:05');
-		await extractToIncrementalNote(app, editor, view, { titleWords: 2, tag: '#topic', now, priority: 80 });
+		await extractToIncrementalNote(app, editor, view, {
+			titleWords: 2,
+			tag: '#topic',
+			now,
+			priority: 80,
+		});
 
 		const childPath = 'Folder/Line one.md';
 		const childFile = app.vault.getAbstractFileByPath(childPath);
@@ -66,9 +71,10 @@ describe('extractToIncrementalNote', () => {
 		expect(frontmatter.type).toBe('topic');
 		expect(frontmatter.source).toBe('[[Folder/Source Note]]');
 		expect(frontmatter.priority).toBe(80);
-		const created = frontmatter.created instanceof Date
-			? formatDate(frontmatter.created)
-			: String(frontmatter.created);
+		const created =
+			frontmatter.created instanceof Date
+				? formatDate(frontmatter.created)
+				: String(frontmatter.created);
 		expect(created).toBe(formatDate(now));
 		expect(frontmatter.ir_note_id).toBeTruthy();
 

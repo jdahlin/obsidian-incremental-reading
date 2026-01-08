@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { App, TFile } from 'obsidian';
-import { appendReview, readReviewsSince, readReviewsForItem, readAllReviews, getReviewCount } from '../../src/data/revlog';
+import {
+	appendReview,
+	readReviewsSince,
+	readReviewsForItem,
+	readAllReviews,
+	getReviewCount,
+} from '../../src/data/revlog';
 
 function asFile(file: TFile | null): TFile {
 	if (!file) throw new Error('missing file');

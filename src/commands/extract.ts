@@ -33,7 +33,9 @@ export async function extractToIncrementalNote(
 	const sourceLink = buildSourceLink(sourceFolder, sourceFile.basename);
 	const titleWords = options.titleWords ?? 5;
 	const childBasename = titleFromSelection(selection, titleWords);
-	const childPathBase = sourceFolder ? `${sourceFolder}/${childBasename}.md` : `${childBasename}.md`;
+	const childPathBase = sourceFolder
+		? `${sourceFolder}/${childBasename}.md`
+		: `${childBasename}.md`;
 	const childPath = await getAvailablePath(app, childPathBase);
 	const tag = normalizeTag(options.tag) || 'topic';
 	const priority = options.priority ?? 50;
@@ -46,7 +48,9 @@ export async function extractToIncrementalNote(
 		priority,
 	};
 
-	const childContent = ['---', stringifyYaml(frontmatter).trim(), '---', selection, ''].join('\n');
+	const childContent = ['---', stringifyYaml(frontmatter).trim(), '---', selection, ''].join(
+		'\n',
+	);
 	const childFile = await app.vault.create(childPath, childContent);
 
 	const from = editor.getCursor('from');
@@ -73,12 +77,7 @@ function buildSourceLink(folderPath: string, basename: string): string {
 }
 
 export function escapeMarkdownLinkText(text: string): string {
-	return text
-		.replace(/\r\n/g, '\n')
-		.replace(/\n/g, ' ')
-		.split(']')
-		.join('\\]')
-		.trim();
+	return text.replace(/\r\n/g, '\n').replace(/\n/g, ' ').split(']').join('\\]').trim();
 }
 
 export function titleFromSelection(selection: string, maxWords: number): string {

@@ -37,11 +37,10 @@ export async function ensureNoteId(app: App, file: TFile): Promise<string> {
 
 export async function readReviewItemFile(app: App, noteId: string): Promise<ReviewItemFile | null> {
 	const path = getReviewItemPath(noteId);
-	if (!await app.vault.adapter.exists(path)) return null;
+	if (!(await app.vault.adapter.exists(path))) return null;
 	const file = app.vault.getAbstractFileByPath(path);
-	const content = file instanceof TFile
-		? await app.vault.read(file)
-		: await app.vault.adapter.read(path);
+	const content =
+		file instanceof TFile ? await app.vault.read(file) : await app.vault.adapter.read(path);
 	const frontmatter = parseFrontmatterBlock(content);
 	if (!frontmatter) return null;
 	const parsed = parseYaml(frontmatter) as unknown;
@@ -67,7 +66,11 @@ export async function readReviewItemFile(app: App, noteId: string): Promise<Revi
 	};
 }
 
-export async function writeReviewItemFile(app: App, noteId: string, data: ReviewItemFile): Promise<void> {
+export async function writeReviewItemFile(
+	app: App,
+	noteId: string,
+	data: ReviewItemFile,
+): Promise<void> {
 	await ensureReviewItemsFolder(app);
 	const path = getReviewItemPath(noteId);
 

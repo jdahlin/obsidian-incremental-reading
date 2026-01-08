@@ -26,12 +26,12 @@ This plugin implements the core incremental reading workflow, allowing you to bu
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
+| Command               | Description                                           |
+| --------------------- | ----------------------------------------------------- |
 | Extract to topic note | Creates a new note from selection, replaces with link |
-| Cloze selection | Wraps selection in `{{c1::...}}` cloze syntax |
-| Open review | Opens the review panel |
-| Sync all notes | Re-syncs all tagged notes to sidecar files |
+| Cloze selection       | Wraps selection in `{{c1::...}}` cloze syntax         |
+| Open review           | Opens the review panel                                |
+| Sync all notes        | Re-syncs all tagged notes to sidecar files            |
 
 ## How It Works
 
@@ -46,6 +46,7 @@ This plugin implements the core incremental reading workflow, allowing you to bu
 ### Data Storage
 
 The plugin stores scheduling data in sidecar files:
+
 - `IR/Review Items/<note-id>.md` - Per-note scheduling state
 - `IR/Revlog/YYYY-MM.md` - Review history (JSONL format)
 
@@ -56,12 +57,14 @@ Your notes remain clean - all scheduling metadata is kept separate.
 **Alpha** - Core functionality works but expect rough edges.
 
 ### What Works
+
 - Extract and cloze commands
 - Basic review loop with FSRS scheduling
 - Deck-based organization (folder hierarchy)
 - Topic and cloze item review
 
 ### Known Limitations
+
 - No priority editing UI yet
 - No manual interval adjustments
 - Limited statistics display
@@ -77,7 +80,8 @@ Your notes remain clean - all scheduling metadata is kept separate.
 ## Installation
 
 ### From Obsidian Community Plugins
-*Coming soon*
+
+_Coming soon_
 
 ### Using BRAT (Recommended for Beta Testing)
 
@@ -120,14 +124,14 @@ npm run lint
 
 Settings available in the plugin options:
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Extract tag | `extract` | Tag that marks notes for incremental reading |
-| Title words | 5 | Words from selection used for extract filename |
-| New cards per day | 20 | Maximum new items introduced daily |
-| Maximum interval | 365 | Maximum days between reviews |
-| Request retention | 0.9 | Target retention rate (0.0-1.0) |
-| Show streak | true | Display streak in review summary |
+| Setting           | Default   | Description                                    |
+| ----------------- | --------- | ---------------------------------------------- |
+| Extract tag       | `extract` | Tag that marks notes for incremental reading   |
+| Title words       | 5         | Words from selection used for extract filename |
+| New cards per day | 20        | Maximum new items introduced daily             |
+| Maximum interval  | 365       | Maximum days between reviews                   |
+| Request retention | 0.9       | Target retention rate (0.0-1.0)                |
+| Show streak       | true      | Display streak in review summary               |
 
 ## Credits
 

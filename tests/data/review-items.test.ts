@@ -32,7 +32,10 @@ function makeState(overrides: Partial<ItemState> = {}): ItemState {
 describe('review item files', () => {
 	it('returns existing note id from frontmatter', async () => {
 		const app = new App();
-		const file = await app.vault.create('Notes/Note.md', ['---', 'ir_note_id: existing', 'tags: [topic]', '---', ''].join('\n'));
+		const file = await app.vault.create(
+			'Notes/Note.md',
+			['---', 'ir_note_id: existing', 'tags: [topic]', '---', ''].join('\n'),
+		);
 
 		const noteId = await ensureNoteId(app, file);
 		expect(noteId).toBe('existing');
@@ -40,7 +43,10 @@ describe('review item files', () => {
 
 	it('creates a note id when missing', async () => {
 		const app = new App();
-		const file = await app.vault.create('Notes/Note.md', ['---', 'tags: [topic]', '---', ''].join('\n'));
+		const file = await app.vault.create(
+			'Notes/Note.md',
+			['---', 'tags: [topic]', '---', ''].join('\n'),
+		);
 
 		const noteId = await ensureNoteId(app, file);
 		expect(noteId).toHaveLength(12);

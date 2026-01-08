@@ -6,7 +6,14 @@ import { ReviewScreen, type SessionStats } from './ReviewScreen';
 import { buildDeckTree, getCountsForFolder } from '../../core/decks';
 import { buildQueue, getNextItem, getQueueStats } from '../../core/queue';
 import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
-import type { DeckInfo, ReviewItem, ReviewQueue, ReviewRecord, StreakInfo, TodayStats } from '../../core/types';
+import type {
+	DeckInfo,
+	ReviewItem,
+	ReviewQueue,
+	ReviewRecord,
+	StreakInfo,
+	TodayStats,
+} from '../../core/types';
 import { formatDate } from '../../core/frontmatter';
 import { parseClozeIndices, formatClozeQuestion, formatClozeAnswer } from '../../core/cloze';
 import { appendReview } from '../../data/revlog';
@@ -38,7 +45,11 @@ export class ReviewItemView extends ItemView {
 	private mounted = false;
 	private onKeyDownBound = (event: KeyboardEvent) => this.onKeyDown(event);
 
-	constructor(leaf: WorkspaceLeaf, private appRef: App, private pluginRef: IncrementalReadingPlugin) {
+	constructor(
+		leaf: WorkspaceLeaf,
+		private appRef: App,
+		private pluginRef: IncrementalReadingPlugin,
+	) {
 		super(leaf);
 	}
 
@@ -107,18 +118,31 @@ export class ReviewItemView extends ItemView {
 					await syncNoteToSidecar(this.appRef, file, this.pluginRef.settings.extractTag);
 				}
 
-				const formatted = this.phase === 'question'
-					? formatClozeQuestion(rawContent, item.clozeIndex)
-					: formatClozeAnswer(rawContent, item.clozeIndex);
+				const formatted =
+					this.phase === 'question'
+						? formatClozeQuestion(rawContent, item.clozeIndex)
+						: formatClozeAnswer(rawContent, item.clozeIndex);
 
 				// Render markdown to HTML
 				const container = document.createElement('div');
-				await MarkdownRenderer.render(this.appRef, formatted, container, item.notePath, this);
+				await MarkdownRenderer.render(
+					this.appRef,
+					formatted,
+					container,
+					item.notePath,
+					this,
+				);
 				this.currentContent = container.innerHTML;
 			} else {
 				// For topics, render the full content
 				const container = document.createElement('div');
-				await MarkdownRenderer.render(this.appRef, rawContent, container, item.notePath, this);
+				await MarkdownRenderer.render(
+					this.appRef,
+					rawContent,
+					container,
+					item.notePath,
+					this,
+				);
 				this.currentContent = container.innerHTML;
 			}
 		} catch (error) {
@@ -157,13 +181,19 @@ export class ReviewItemView extends ItemView {
 						this.selectedPath = path;
 						this.renderView();
 					}}
-					onStudy={() => { void this.startReview(); }}
-					onStats={() => { new StatsModal(this.appRef, this.pluginRef.settings.extractTag).open(); }}
+					onStudy={() => {
+						void this.startReview();
+					}}
+					onStats={() => {
+						new StatsModal(this.appRef, this.pluginRef.settings.extractTag).open();
+					}}
 				/>,
 				this.contentEl,
 			);
 		} else {
-			const queueStats = this.queue ? getQueueStats(this.queue) : { learning: 0, due: 0, new: 0, total: 0 };
+			const queueStats = this.queue
+				? getQueueStats(this.queue)
+				: { learning: 0, due: 0, new: 0, total: 0 };
 			render(
 				<ReviewScreen
 					selectedDeck={this.selectedPath}
@@ -172,9 +202,13 @@ export class ReviewItemView extends ItemView {
 					queueStats={queueStats}
 					sessionStats={this.sessionStats}
 					content={this.currentContent}
-					onBack={() => { void this.backToSummary(); }}
+					onBack={() => {
+						void this.backToSummary();
+					}}
 					onShowAnswer={() => this.showAnswer()}
-					onGrade={(grade) => { void this.onGrade(grade); }}
+					onGrade={(grade) => {
+						void this.onGrade(grade);
+					}}
 				/>,
 				this.contentEl,
 			);
@@ -211,7 +245,6 @@ export class ReviewItemView extends ItemView {
 		}
 	}
 
-
 	private async onGrade(grade: number): Promise<void> {
 		const item = this.currentItem;
 		if (!item) return;
@@ -234,16 +267,23 @@ export class ReviewItemView extends ItemView {
 					maximumInterval: this.pluginRef.settings.maximumInterval,
 					requestRetention: this.pluginRef.settings.requestRetention,
 				});
-				await updateClozeState(this.appRef, item.noteId, item.clozeIndex ?? 1, nextState, item.notePath);
+				await updateClozeState(
+					this.appRef,
+					item.noteId,
+					item.clozeIndex ?? 1,
+					nextState,
+					item.notePath,
+				);
 			}
 		} catch (error) {
 			console.error('IR: failed to update item state', error);
 		}
 
 		item.state = nextState;
-		const elapsed = this.pluginRef.settings.trackReviewTime && this.currentStartedAt
-			? now.getTime() - this.currentStartedAt.getTime()
-			: undefined;
+		const elapsed =
+			this.pluginRef.settings.trackReviewTime && this.currentStartedAt
+				? now.getTime() - this.currentStartedAt.getTime()
+				: undefined;
 		const entry: ReviewRecord = {
 			ts: formatDate(now),
 			item_id: item.id,

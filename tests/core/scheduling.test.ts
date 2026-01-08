@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { mapGradeToRating, gradeTopic, calculateBurden, gradeItem } from '../../src/core/scheduling';
+import {
+	mapGradeToRating,
+	gradeTopic,
+	calculateBurden,
+	gradeItem,
+} from '../../src/core/scheduling';
 import type { ItemState, ReviewItem } from '../../src/core/types';
 
 const now = new Date('2024-01-02T10:00:00');
@@ -37,9 +42,30 @@ describe('scheduling helpers', () => {
 
 	it('calculates burden based on stability', () => {
 		const items: ReviewItem[] = [
-			{ id: 'a', noteId: 'a', notePath: 'a', type: 'topic', state: makeState({ stability: 0.5 }), priority: 0 },
-			{ id: 'b', noteId: 'b', notePath: 'b', type: 'topic', state: makeState({ stability: 2 }), priority: 0 },
-			{ id: 'c', noteId: 'c', notePath: 'c', type: 'topic', state: makeState({ stability: 0 }), priority: 0 },
+			{
+				id: 'a',
+				noteId: 'a',
+				notePath: 'a',
+				type: 'topic',
+				state: makeState({ stability: 0.5 }),
+				priority: 0,
+			},
+			{
+				id: 'b',
+				noteId: 'b',
+				notePath: 'b',
+				type: 'topic',
+				state: makeState({ stability: 2 }),
+				priority: 0,
+			},
+			{
+				id: 'c',
+				noteId: 'c',
+				notePath: 'c',
+				type: 'topic',
+				state: makeState({ stability: 0 }),
+				priority: 0,
+			},
 		];
 		const burden = calculateBurden(items);
 		expect(burden).toBeCloseTo(1 + 0.5 + 1, 5);

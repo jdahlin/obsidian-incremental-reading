@@ -24,8 +24,16 @@ describe('IncrementalReadingSettingTab', () => {
 		const types = Setting.createdComponents.map((entry) => entry.type);
 		expect(types).toEqual(['text', 'text', 'text', 'text', 'text', 'toggle', 'toggle']);
 
-		const [newCards, maxInterval, retention, tag, titleWords, trackToggle, streakToggle] = Setting.createdComponents
-			.map((entry) => entry.component) as [TextComponent, TextComponent, TextComponent, TextComponent, TextComponent, ToggleComponent, ToggleComponent];
+		const [newCards, maxInterval, retention, tag, titleWords, trackToggle, streakToggle] =
+			Setting.createdComponents.map((entry) => entry.component) as [
+				TextComponent,
+				TextComponent,
+				TextComponent,
+				TextComponent,
+				TextComponent,
+				ToggleComponent,
+				ToggleComponent,
+			];
 
 		newCards.triggerChange('25');
 		maxInterval.triggerChange('120');

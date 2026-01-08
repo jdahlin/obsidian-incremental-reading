@@ -39,7 +39,8 @@ describe('sync sidecar files', () => {
 		);
 
 		await syncAllNotes(app, 'topic');
-		const noteId = (app.metadataCache.getFileCache(note)?.frontmatter ?? {}).ir_note_id as string;
+		const noteId = (app.metadataCache.getFileCache(note)?.frontmatter ?? {})
+			.ir_note_id as string;
 		const sidecarPath = `IR/Review Items/${noteId}.md`;
 		expect(app.vault.getAbstractFileByPath(sidecarPath)).not.toBeNull();
 

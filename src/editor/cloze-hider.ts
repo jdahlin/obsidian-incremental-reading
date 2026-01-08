@@ -1,5 +1,12 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, type DecorationSet, type ViewUpdate, WidgetType } from '@codemirror/view';
+import {
+	Decoration,
+	EditorView,
+	ViewPlugin,
+	type DecorationSet,
+	type ViewUpdate,
+	WidgetType,
+} from '@codemirror/view';
 import { MarkdownView, type App } from 'obsidian';
 
 export type ClozePhase = 'question' | 'answer';
@@ -36,23 +43,26 @@ class ClozeWidget extends WidgetType {
 	}
 }
 
-const clozeHiderPlugin = ViewPlugin.fromClass(class {
-	decorations: DecorationSet;
+const clozeHiderPlugin = ViewPlugin.fromClass(
+	class {
+		decorations: DecorationSet;
 
-	constructor(view: EditorView) {
-		this.decorations = buildDecorations(view, view.state.field(clozeStateField));
-	}
-
-	update(update: ViewUpdate): void {
-		const prev = update.startState.field(clozeStateField);
-		const next = update.state.field(clozeStateField);
-		if (update.docChanged || prev !== next) {
-			this.decorations = buildDecorations(update.view, next);
+		constructor(view: EditorView) {
+			this.decorations = buildDecorations(view, view.state.field(clozeStateField));
 		}
-	}
-}, {
-	decorations: (value) => value.decorations,
-});
+
+		update(update: ViewUpdate): void {
+			const prev = update.startState.field(clozeStateField);
+			const next = update.state.field(clozeStateField);
+			if (update.docChanged || prev !== next) {
+				this.decorations = buildDecorations(update.view, next);
+			}
+		}
+	},
+	{
+		decorations: (value) => value.decorations,
+	},
+);
 
 export const clozeHiderExtension: Extension = [clozeStateField, clozeHiderPlugin];
 

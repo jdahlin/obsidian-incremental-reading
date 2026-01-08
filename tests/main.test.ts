@@ -27,7 +27,9 @@ describe('IncrementalReadingPlugin', () => {
 		expect(plugin.editorExtensions).toHaveLength(1);
 		expect(plugin.views.some((view) => view.type === VIEW_TYPE_REVIEW)).toBe(true);
 
-		const commandIds = (plugin.commands as { id: string }[]).map((command) => command.id).sort();
+		const commandIds = (plugin.commands as { id: string }[])
+			.map((command) => command.id)
+			.sort();
 		const expected = [
 			'cloze-selection',
 			'cloze-selection-same-index',
@@ -45,7 +47,9 @@ describe('IncrementalReadingPlugin', () => {
 		const leaf = new WorkspaceLeaf();
 		plugin.app.workspace.addLeaf(leaf);
 
-		await (plugin as unknown as { activateReviewView: () => Promise<void> }).activateReviewView();
+		await (
+			plugin as unknown as { activateReviewView: () => Promise<void> }
+		).activateReviewView();
 		expect(leaf.lastViewState?.type).toBe(VIEW_TYPE_REVIEW);
 	});
 

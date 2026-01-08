@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { App, Editor, Notice } from 'obsidian';
-import { clozeSelection, clozeSelectionNextIndex, clozeSelectionSameIndex } from '../../src/commands/cloze';
+import {
+	clozeSelection,
+	clozeSelectionNextIndex,
+	clozeSelectionSameIndex,
+} from '../../src/commands/cloze';
 
 const app = new App();
 

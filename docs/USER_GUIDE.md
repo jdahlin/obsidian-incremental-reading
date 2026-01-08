@@ -3,6 +3,7 @@
 ## What is Incremental Reading?
 
 Incremental reading is a learning method that combines:
+
 1. **Extracting** important passages from source material into separate notes
 2. **Creating cloze deletions** to test your understanding
 3. **Spaced repetition** to review material at optimal intervals
@@ -20,6 +21,7 @@ This plugin brings incremental reading to Obsidian, letting you build a knowledg
 3. Run command: **Extract to topic note**
 
 This creates a new note containing:
+
 - The selected text
 - A link back to the source
 - The `#topic` tag (makes it reviewable)
@@ -37,14 +39,18 @@ To test yourself on specific facts:
 The text transforms into: `{{c1::your selected text}}`
 
 **Cloze selection vs Cloze selection (same index):**
+
 - **Cloze selection**: Creates c1, then c2, then c3... Each cloze is reviewed separately.
 - **Cloze selection (same index)**: Reuses the last index. Multiple clozes with same index are hidden together.
 
 **Example:**
+
 ```
 The Krebs cycle produces {{c1::2 ATP}}, {{c2::6 NADH}}, and {{c3::2 FADH2}} per glucose molecule.
 ```
+
 This creates THREE separate review items:
+
 - Item c1: "The Krebs cycle produces [???], 6 NADH, and 2 FADH2..." → Answer: 2 ATP
 - Item c2: "The Krebs cycle produces 2 ATP, [???], and 2 FADH2..." → Answer: 6 NADH
 - Item c3: "The Krebs cycle produces 2 ATP, 6 NADH, and [???]..." → Answer: 2 FADH2
@@ -56,10 +62,12 @@ This creates THREE separate review items:
 3. Click a deck to select it, then click "Study Now"
 
 **For Topics (extracts without clozes):**
+
 - Read through the content
 - Grade 1-4 based on understanding
 
 **For Items (Clozes):**
+
 - See the text with the cloze hidden as `[...]`
 - Try to recall the answer
 - Click "Show Answer" to reveal
@@ -73,10 +81,10 @@ This creates THREE separate review items:
 
 The plugin has two types of reviewable content:
 
-| Type | What it is | How you review it |
-|------|------------|-------------------|
-| **Topic** | A note tagged with `#topic` without clozes | Read through, grade how well you understood |
-| **Item** | A cloze deletion in a note | See text with blank, recall the hidden answer |
+| Type      | What it is                                 | How you review it                             |
+| --------- | ------------------------------------------ | --------------------------------------------- |
+| **Topic** | A note tagged with `#topic` without clozes | Read through, grade how well you understood   |
+| **Item**  | A cloze deletion in a note                 | See text with blank, recall the hidden answer |
 
 A single note can contain multiple cloze deletions. Each cloze becomes a separate **item** to review independently.
 
@@ -137,15 +145,15 @@ For cloze items, you first see the question (cloze hidden), then click "Show Ans
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| Extract to topic note | Create topic from selection |
-| Cloze selection | Wrap selection as cloze, increment index |
+| Command                      | Description                               |
+| ---------------------------- | ----------------------------------------- |
+| Extract to topic note        | Create topic from selection               |
+| Cloze selection              | Wrap selection as cloze, increment index  |
 | Cloze selection (same index) | Wrap selection as cloze, reuse last index |
-| Open review | Start review session |
-| Set priority | Change priority of current note |
-| Open statistics | Show statistics modal |
-| Export review history | Export revlog to CSV |
+| Open review                  | Start review session                      |
+| Set priority                 | Change priority of current note           |
+| Open statistics              | Show statistics modal                     |
+| Export review history        | Export revlog to CSV                      |
 
 **Note:** No default hotkeys are assigned. Set your preferred hotkeys in **Settings → Hotkeys**.
 
@@ -169,25 +177,25 @@ Run **Open statistics** to see:
 
 Access via **Settings → Community plugins → Incremental Reading**.
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| New cards per day | 10 | Max new items introduced daily |
-| Maximum interval | 365 | Longest time between reviews (days) |
-| Request retention | 0.9 | Target probability of remembering |
-| Extract tag | `topic` | Tag that marks notes for review |
-| Extract title words | 5 | Words for auto-generated extract titles |
-| Track review time | On | Record time spent per review |
-| Show streak | On | Display streak in deck summary |
+| Setting             | Default | Description                             |
+| ------------------- | ------- | --------------------------------------- |
+| New cards per day   | 10      | Max new items introduced daily          |
+| Maximum interval    | 365     | Longest time between reviews (days)     |
+| Request retention   | 0.9     | Target probability of remembering       |
+| Extract tag         | `topic` | Tag that marks notes for review         |
+| Extract title words | 5       | Words for auto-generated extract titles |
+| Track review time   | On      | Record time spent per review            |
+| Show streak         | On      | Display streak in deck summary          |
 
 ---
 
 ## Data Storage
 
-| Data | Location |
-|------|----------|
-| Review item state | `IR/Review Items/<note-id>.md` |
-| Review history | `IR/Revlog/YYYY-MM.md` (JSONL format) |
-| Settings | `.obsidian/plugins/obsidian-incremental-reading/data.json` |
+| Data              | Location                                                   |
+| ----------------- | ---------------------------------------------------------- |
+| Review item state | `IR/Review Items/<note-id>.md`                             |
+| Review history    | `IR/Revlog/YYYY-MM.md` (JSONL format)                      |
+| Settings          | `.obsidian/plugins/obsidian-incremental-reading/data.json` |
 
 Your notes remain clean - all scheduling metadata is kept in separate sidecar files.
 
@@ -208,14 +216,17 @@ Your notes remain clean - all scheduling metadata is kept in separate sidecar fi
 - **Avoid trivial clozes**: Don't cloze common words or obvious facts.
 
 **Good cloze:**
+
 ```
 Glycolysis produces a net gain of {{c1::2 ATP}} per glucose molecule.
 ```
 
 **Bad cloze:**
+
 ```
 {{c1::Glycolysis}} produces a net gain of 2 ATP per glucose molecule.
 ```
+
 (Testing the word "Glycolysis" is trivial - the context gives it away)
 
 ### Reviewing

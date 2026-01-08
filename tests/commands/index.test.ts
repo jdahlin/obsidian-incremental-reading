@@ -25,20 +25,31 @@ function makePlugin(app: App): IncrementalReadingPlugin {
 describe('registerCommands', () => {
 	it('registers command metadata', () => {
 		const app = new App();
-		const plugin = makePlugin(app) as IncrementalReadingPlugin & { commands: { id: string; name: string }[] };
+		const plugin = makePlugin(app) as IncrementalReadingPlugin & {
+			commands: { id: string; name: string }[];
+		};
 
 		registerCommands(plugin);
 		const ids = plugin.commands.map((command) => command.id).sort();
 		expect(ids).toEqual([
 			'cloze-selection',
 			'cloze-selection-same-index',
+			'export-review-history',
 			'extract-to-incremental-note',
+			'open-review-view',
+			'open-statistics',
+			'set-priority',
 		]);
 	});
 
 	it('invokes the extract command with plugin settings', async () => {
 		const app = new App();
-		const plugin = makePlugin(app) as IncrementalReadingPlugin & { commands: { id: string; editorCallback: (editor: Editor, view: MarkdownView) => Promise<void> }[] };
+		const plugin = makePlugin(app) as IncrementalReadingPlugin & {
+			commands: {
+				id: string;
+				editorCallback: (editor: Editor, view: MarkdownView) => Promise<void>;
+			}[];
+		};
 		registerCommands(plugin);
 
 		const source = await app.vault.create('Folder/Source.md', 'Alpha Beta Gamma');

@@ -10,12 +10,12 @@ const BASE_FILES: Record<string, string> = {
 export async function ensureBasesFolder(app: App): Promise<void> {
 	const adapter = app.vault.adapter;
 	const root = 'IR';
-	if (!await adapter.exists(root)) {
+	if (!(await adapter.exists(root))) {
 		await adapter.mkdir(root);
 	}
 
 	for (const [path, content] of Object.entries(BASE_FILES)) {
-		if (!await adapter.exists(path)) {
+		if (!(await adapter.exists(path))) {
 			await adapter.write(path, content);
 		}
 	}

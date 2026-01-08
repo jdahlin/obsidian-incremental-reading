@@ -33,10 +33,54 @@ describe('deck helpers', () => {
 
 	it('computes counts for a folder', () => {
 		const items = [
-			makeItem({ notePath: 'A/One.md', state: { status: 'new', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
-			makeItem({ notePath: 'A/B/Two.md', state: { status: 'learning', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
-			makeItem({ notePath: 'A/B/Three.md', state: { status: 'review', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
-			makeItem({ notePath: 'C/Four.md', state: { status: 'review', due: new Date('2024-01-03T00:00:00'), stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
+			makeItem({
+				notePath: 'A/One.md',
+				state: {
+					status: 'new',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
+			makeItem({
+				notePath: 'A/B/Two.md',
+				state: {
+					status: 'learning',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
+			makeItem({
+				notePath: 'A/B/Three.md',
+				state: {
+					status: 'review',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
+			makeItem({
+				notePath: 'C/Four.md',
+				state: {
+					status: 'review',
+					due: new Date('2024-01-03T00:00:00'),
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
 		];
 
 		const counts = getCountsForFolder(items, 'A', now);
@@ -45,9 +89,42 @@ describe('deck helpers', () => {
 
 	it('builds a deck tree for nested folders', () => {
 		const items = [
-			makeItem({ notePath: 'A/One.md', state: { status: 'new', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
-			makeItem({ notePath: 'A/B/Two.md', state: { status: 'learning', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
-			makeItem({ notePath: 'C/Three.md', state: { status: 'review', due: now, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } }),
+			makeItem({
+				notePath: 'A/One.md',
+				state: {
+					status: 'new',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
+			makeItem({
+				notePath: 'A/B/Two.md',
+				state: {
+					status: 'learning',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
+			makeItem({
+				notePath: 'C/Three.md',
+				state: {
+					status: 'review',
+					due: now,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			}),
 		];
 
 		const tree = buildDeckTree(items, now);

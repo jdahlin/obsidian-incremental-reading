@@ -3,7 +3,11 @@ import { App, Modal, Setting, SliderComponent, TextComponent } from 'obsidian';
 export class PriorityModal extends Modal {
 	private onSubmit: (result: number) => void;
 
-	constructor(app: App, private currentPriority: number, onSubmit: (result: number) => void) {
+	constructor(
+		app: App,
+		private currentPriority: number,
+		onSubmit: (result: number) => void,
+	) {
 		super(app);
 		this.onSubmit = onSubmit;
 	}
@@ -55,15 +59,14 @@ export class PriorityModal extends Modal {
 				});
 			});
 
-		new Setting(contentEl)
-			.addButton((button) =>
-				button
-					.setButtonText('Save')
-					.setCta()
-					.onClick(() => {
-						this.submit(value);
-					}),
-			);
+		new Setting(contentEl).addButton((button) =>
+			button
+				.setButtonText('Save')
+				.setCta()
+				.onClick(() => {
+					this.submit(value);
+				}),
+		);
 
 		setTimeout(() => {
 			textComponent?.inputEl.focus();
