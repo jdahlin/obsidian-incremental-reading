@@ -1,0 +1,28 @@
+import type { FunctionalComponent } from 'preact';
+import type { SessionStats } from './review-screen-types';
+import { ReviewSessionSummary } from './ReviewSessionSummary';
+
+export interface ReviewEmptyStateProps {
+	sessionStats: SessionStats;
+	onBack: () => void;
+}
+
+export const ReviewEmptyState: FunctionalComponent<ReviewEmptyStateProps> = ({
+	sessionStats,
+	onBack,
+}) => {
+	return (
+		<div className="ir-review-screen">
+			<div className="ir-review-content">
+				<div className="ir-review-empty">
+					<div className="ir-review-empty-title">Done!</div>
+					<div className="ir-review-empty-body">No more reviews for now.</div>
+					<ReviewSessionSummary sessionStats={sessionStats} />
+					<button type="button" className="ir-secondary" onClick={onBack}>
+						Back to decks
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+};
