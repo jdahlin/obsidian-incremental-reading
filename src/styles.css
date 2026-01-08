@@ -25,6 +25,9 @@
 	flex-direction: column;
 	gap: 12px;
 	height: 100%;
+	max-width: 720px;
+	width: 100%;
+	margin: 0 auto;
 }
 
 .ir-deck-header {
@@ -49,6 +52,10 @@
 	border-radius: 6px;
 	cursor: pointer;
 	background: var(--background-secondary);
+}
+
+.ir-deck-row:hover {
+	background: var(--background-secondary-alt);
 }
 
 .ir-deck-row.is-selected {
