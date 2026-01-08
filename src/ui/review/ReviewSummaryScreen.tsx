@@ -1,8 +1,8 @@
-import type { JSX } from 'preact';
+import type { FunctionalComponent } from 'preact';
 import type { DeckInfo, StreakInfo, TodayStats } from '../../core/types';
 import { DeckSummary } from './DeckSummary';
 
-export function ReviewSummaryScreen(props: {
+export interface ReviewSummaryScreenProps {
 	decks: DeckInfo[];
 	selectedPath: string | null;
 	allCounts: { new: number; learning: number; due: number };
@@ -12,18 +12,30 @@ export function ReviewSummaryScreen(props: {
 	onSelect: (path: string | null) => void;
 	onStudy: () => void;
 	onStats: () => void;
-}): JSX.Element {
+}
+
+export const ReviewSummaryScreen: FunctionalComponent<ReviewSummaryScreenProps> = ({
+	decks,
+	selectedPath,
+	allCounts,
+	todayStats,
+	streak,
+	showStreak,
+	onSelect,
+	onStudy,
+	onStats,
+}) => {
 	return (
 		<DeckSummary
-			decks={props.decks}
-			selectedPath={props.selectedPath}
-			allCounts={props.allCounts}
-			todayStats={props.todayStats}
-			streak={props.streak}
-			showStreak={props.showStreak}
-			onSelect={props.onSelect}
-			onStudy={props.onStudy}
-			onStats={props.onStats}
+			decks={decks}
+			selectedPath={selectedPath}
+			allCounts={allCounts}
+			todayStats={todayStats}
+			streak={streak}
+			showStreak={showStreak}
+			onSelect={onSelect}
+			onStudy={onStudy}
+			onStats={onStats}
 		/>
 	);
-}
+};

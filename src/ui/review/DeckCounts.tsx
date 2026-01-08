@@ -1,13 +1,15 @@
-import type { JSX } from 'preact';
+import type { FunctionalComponent } from 'preact';
 
-export function DeckCounts(props: {
+export interface DeckCountsProps {
 	counts: { new: number; learning: number; due: number };
-}): JSX.Element {
+}
+
+export const DeckCounts: FunctionalComponent<DeckCountsProps> = ({ counts }) => {
 	return (
 		<span className="ir-deck-counts">
-			<span className="ir-count-new">{props.counts.new}</span>
-			<span className="ir-count-learning">{props.counts.learning}</span>
-			<span className="ir-count-due">{props.counts.due}</span>
+			<span className="ir-count-new">{counts.new}</span>
+			<span className="ir-count-learning">{counts.learning}</span>
+			<span className="ir-count-due">{counts.due}</span>
 		</span>
 	);
-}
+};
