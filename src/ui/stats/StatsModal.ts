@@ -18,7 +18,11 @@ export class StatsModal extends Modal {
 		super(app);
 	}
 
-	async onOpen(): Promise<void> {
+	onOpen(): void {
+		void this.render();
+	}
+
+	async render(): Promise<void> {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.addClass('ir-stats-modal');

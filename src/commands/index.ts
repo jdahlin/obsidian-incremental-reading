@@ -1,13 +1,18 @@
 import type IncrementalReadingPlugin from '../main';
 import { clozeSelectionNextIndex, clozeSelectionSameIndex } from './cloze';
 import { extractToIncrementalNote } from './extract';
-import { Notice } from 'obsidian';
+import { Notice, type Editor, type MarkdownFileInfo, type MarkdownView } from 'obsidian';
 import { exportReviewHistory } from '../data/export';
 import { normalizeNumber } from '../core/frontmatter';
 import { PriorityModal } from '../ui/PriorityModal';
 import { StatsModal } from '../ui/stats/StatsModal';
 
-export function registerCommands(plugin: IncrementalReadingPlugin): void {
+type CommandPlugin = Pick<
+	IncrementalReadingPlugin,
+	'app' | 'settings' | 'addCommand' | 'activateReviewView'
+>;
+
+export function registerCommands(plugin: CommandPlugin): void {
 	plugin.addCommand({
 		id: 'open-review-view',
 		name: 'Open review',
@@ -25,15 +30,20 @@ export function registerCommands(plugin: IncrementalReadingPlugin): void {
 			if (checking) return true;
 
 			const cache = plugin.app.metadataCache.getFileCache(file);
-			const frontmatter = cache?.frontmatter as Record<string, unknown> | undefined;
-			const current = normalizeNumber(frontmatter?.priority, 50);
+			const rawFrontmatter = cache?.frontmatter as unknown;
+			const current = normalizeNumber(
+				isRecord(rawFrontmatter) ? rawFrontmatter.priority : undefined,
+				50,
+			);
 
 			new PriorityModal(plugin.app, current, (newPriority) => {
 				void (async () => {
-					await plugin.app.fileManager.processFrontMatter(file, (fm) => {
-						const data = fm as Record<string, unknown>;
-						data.priority = newPriority;
-					});
+					await plugin.app.fileManager.processFrontMatter(
+						file,
+						(fm: Record<string, unknown>) => {
+							fm.priority = newPriority;
+						},
+					);
 					new Notice(`Priority set to ${newPriority}.`);
 				})();
 			}).open();
@@ -63,7 +73,7 @@ export function registerCommands(plugin: IncrementalReadingPlugin): void {
 	plugin.addCommand({
 		id: 'extract-to-incremental-note',
 		name: 'Extract to topic note',
-		editorCallback: async (editor, view) => {
+		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await extractToIncrementalNote(plugin.app, editor, view, {
 				titleWords: plugin.settings.extractTitleWords,
 				tag: plugin.settings.extractTag,
@@ -74,7 +84,7 @@ export function registerCommands(plugin: IncrementalReadingPlugin): void {
 	plugin.addCommand({
 		id: 'cloze-selection',
 		name: 'Cloze selection',
-		editorCallback: async (editor, view) => {
+		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await clozeSelectionNextIndex(plugin.app, editor, view.file, {
 				extractTag: plugin.settings.extractTag,
 			});
@@ -84,10 +94,14 @@ export function registerCommands(plugin: IncrementalReadingPlugin): void {
 	plugin.addCommand({
 		id: 'cloze-selection-same-index',
 		name: 'Cloze selection (same index)',
-		editorCallback: async (editor, view) => {
+		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await clozeSelectionSameIndex(plugin.app, editor, view.file, {
 				extractTag: plugin.settings.extractTag,
 			});
 		},
 	});
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return !!value && typeof value === 'object' && !Array.isArray(value);
 }

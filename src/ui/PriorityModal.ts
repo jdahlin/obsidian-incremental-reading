@@ -39,7 +39,7 @@ export class PriorityModal extends Modal {
 						}
 					}
 				});
-				text.inputEl.addEventListener('keydown', (event) => {
+				text.inputEl.addEventListener('keydown', (event: KeyboardEvent) => {
 					if (event.key === 'Enter') {
 						event.preventDefault();
 						this.submit(value);

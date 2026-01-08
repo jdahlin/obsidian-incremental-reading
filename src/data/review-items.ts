@@ -21,16 +21,16 @@ export interface ReviewItemFile {
 
 export async function ensureNoteId(app: App, file: TFile): Promise<string> {
 	const cache = app.metadataCache.getFileCache(file);
-	const frontmatter = cache?.frontmatter as Record<string, unknown> | undefined;
+	const rawFrontmatter = cache?.frontmatter as unknown;
+	const frontmatter = isRecord(rawFrontmatter) ? rawFrontmatter : undefined;
 	const existing = frontmatter?.ir_note_id;
 	if (typeof existing === 'string' && existing.trim()) {
 		return existing.trim();
 	}
 
 	const noteId = createId();
-	await app.fileManager.processFrontMatter(file, (fm) => {
-		const data = fm as Record<string, unknown>;
-		data.ir_note_id = noteId;
+	await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+		fm.ir_note_id = noteId;
 	});
 	return noteId;
 }
@@ -52,8 +52,8 @@ export async function readReviewItemFile(app: App, noteId: string): Promise<Revi
 	const type = raw.type === 'item' ? 'item' : raw.type === 'topic' ? 'topic' : undefined;
 	const priority = normalizeNumber(raw.priority, 50);
 	const cloze = Array.isArray(raw.cloze) ? raw.cloze.map((value) => String(value)) : undefined;
-	const topic = parseItemState(raw.topic as Record<string, unknown> | undefined);
-	const clozes = parseClozes(raw.clozes as Record<string, unknown> | undefined);
+	const topic = parseItemState(isRecord(raw.topic) ? raw.topic : undefined);
+	const clozes = parseClozes(isRecord(raw.clozes) ? raw.clozes : undefined);
 
 	return {
 		ir_note_id,
@@ -64,6 +64,10 @@ export async function readReviewItemFile(app: App, noteId: string): Promise<Revi
 		topic: topic ?? undefined,
 		clozes: clozes ?? undefined,
 	};
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 export async function writeReviewItemFile(

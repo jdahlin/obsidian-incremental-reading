@@ -41,7 +41,6 @@ export default tseslint.config(
 		'node_modules',
 		'dist',
 		'coverage',
-		'tests',
 		'build-css',
 		'css-tmp',
 		'esbuild.config.mjs',

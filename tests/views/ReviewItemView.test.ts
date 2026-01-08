@@ -18,6 +18,20 @@ function makeState(): ItemState {
 	};
 }
 
+function makeKeyEvent(key: string, target: EventTarget | null = null): KeyboardEvent {
+	let prevented = false;
+	return {
+		key,
+		get defaultPrevented() {
+			return prevented;
+		},
+		preventDefault() {
+			prevented = true;
+		},
+		target,
+	} as KeyboardEvent;
+}
+
 describe('ReviewItemView', () => {
 	function makePlugin(
 		app: App,
@@ -218,14 +232,7 @@ describe('ReviewItemView', () => {
 		view.phase = 'question';
 
 		await withDocument(() => {
-			view.onKeyDown({
-				key: 'Enter',
-				defaultPrevented: false,
-				preventDefault() {
-					this.defaultPrevented = true;
-				},
-				target: null,
-			} as unknown as KeyboardEvent);
+			view.onKeyDown(makeKeyEvent('Enter'));
 		});
 		expect(view.phase).toBe('answer');
 
@@ -234,14 +241,7 @@ describe('ReviewItemView', () => {
 			view.screen = 'summary';
 			escaped = true;
 		};
-		view.onKeyDown({
-			key: 'Escape',
-			defaultPrevented: false,
-			preventDefault() {
-				this.defaultPrevented = true;
-			},
-			target: null,
-		} as unknown as KeyboardEvent);
+		view.onKeyDown(makeKeyEvent('Escape'));
 
 		await Promise.resolve();
 		expect(escaped).toBe(true);
@@ -249,14 +249,15 @@ describe('ReviewItemView', () => {
 
 		view.screen = 'review';
 		view.phase = 'answer';
-		view.onKeyDown({
-			key: '1',
-			defaultPrevented: false,
-			preventDefault() {
-				this.defaultPrevented = true;
+		const inputTarget: EventTarget & { tagName: string } = {
+			tagName: 'INPUT',
+			addEventListener() {},
+			removeEventListener() {},
+			dispatchEvent() {
+				return false;
 			},
-			target: { tagName: 'INPUT' },
-		} as unknown as KeyboardEvent);
+		};
+		view.onKeyDown(makeKeyEvent('1', inputTarget));
 		expect(view.phase).toBe('answer');
 	});
 });

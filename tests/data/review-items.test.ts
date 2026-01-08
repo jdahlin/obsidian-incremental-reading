@@ -80,7 +80,7 @@ describe('review item files', () => {
 		expect(parsed?.ir_note_id).toBe(noteId);
 		expect(parsed?.note_path).toBe('Notes/Note.md');
 		expect(parsed?.priority).toBe(25);
-		expect(parsed?.clozes?.c1.cloze_uid).toBe('uid-1');
+		expect(parsed?.clozes?.c1?.cloze_uid).toBe('uid-1');
 		expect(parsed?.topic?.due?.getTime()).toBe(state.due?.getTime());
 	});
 
@@ -93,7 +93,7 @@ describe('review item files', () => {
 		await updateTopicState(app, noteId, state, 'Notes/Note.md');
 
 		const parsed = await readReviewItemFile(app, noteId);
-		expect(parsed?.clozes?.c1.status).toBe('learning');
+		expect(parsed?.clozes?.c1?.status).toBe('learning');
 		expect(parsed?.topic?.status).toBe('learning');
 	});
 

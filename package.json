@@ -7,6 +7,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
+		"typecheck": "tsc -p tsconfig.build.json -noEmit -skipLibCheck && tsc -p tests/tsconfig.json -noEmit -skipLibCheck",
 		"build": "tsc -p tsconfig.build.json -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint .",
