@@ -16,6 +16,22 @@
 		"format:check": "prettier --check .",
 		"prepare": "husky"
 	},
+	"prettier": {
+		"printWidth": 100,
+		"singleQuote": true,
+		"semi": true,
+		"trailingComma": "all",
+		"endOfLine": "lf"
+	},
+	"nano-staged": {
+		"**/*.{js,jsx,ts,tsx,mjs,cjs}": [
+			"prettier --write",
+			"eslint --fix"
+		],
+		"**/*.{json,md,css,scss,yml,yaml}": [
+			"prettier --write"
+		]
+	},
 	"keywords": [
 		"obsidian",
 		"incremental-reading",
