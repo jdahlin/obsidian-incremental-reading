@@ -25,9 +25,7 @@
 	flex-direction: column;
 	gap: 12px;
 	height: 100%;
-	max-width: 720px;
-	width: 100%;
-	margin: 0 auto;
+	margin-inline: clamp(12px, 6vw, 120px);
 }
 
 .ir-deck-header {
