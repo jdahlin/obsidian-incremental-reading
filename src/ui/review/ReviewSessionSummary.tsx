@@ -1,5 +1,6 @@
 import type { FunctionalComponent } from 'preact';
 import type { SessionStats } from './review-screen-types';
+import './ReviewSessionSummary.css';
 
 export interface ReviewSessionSummaryProps {
 	sessionStats: SessionStats;

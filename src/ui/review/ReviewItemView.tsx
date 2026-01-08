@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { App, ItemView, WorkspaceLeaf } from 'obsidian';
 import type IncrementalReadingPlugin from '../../main';
 import { ReviewRoot } from './ReviewRoot';
+import './ReviewItemView.css';
 
 export const VIEW_TYPE_REVIEW = 'ir-review';
 

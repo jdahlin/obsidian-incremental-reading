@@ -1,0 +1,18 @@
+.ir-deck-counts {
+	display: grid;
+	grid-auto-flow: column;
+	gap: 8px;
+	font-variant-numeric: tabular-nums;
+}
+
+.ir-count-new {
+	color: var(--text-accent);
+}
+
+.ir-count-learning {
+	color: var(--text-warning);
+}
+
+.ir-count-due {
+	color: var(--text-success);
+}

@@ -28,12 +28,8 @@ const external = [
 ];
 
 /** @type {import('esbuild').BuildOptions} */
-const buildOptions = {
+const baseOptions = {
 	banner: { js: banner },
-	entryPoints: {
-		main: 'src/main.ts',
-		styles: 'src/styles.css',
-	},
 	bundle: true,
 	external,
 	format: 'cjs',
@@ -53,16 +49,37 @@ const buildOptions = {
 	},
 	jsx: 'automatic',
 	jsxImportSource: 'preact',
+};
+
+/** @type {import('esbuild').BuildOptions} */
+const scriptOptions = {
+	...baseOptions,
+	entryPoints: {
+		main: 'src/main.ts',
+	},
+	loader: {
+		'.css': 'empty',
+	},
+};
+
+/** @type {import('esbuild').BuildOptions} */
+const styleOptions = {
+	...baseOptions,
+	entryPoints: {
+		styles: 'src/styles.css',
+	},
 	loader: {
 		'.css': 'css',
 	},
 };
 
-const context = await esbuild.context(buildOptions);
+const scriptContext = await esbuild.context(scriptOptions);
+const styleContext = await esbuild.context(styleOptions);
 
 if (prod) {
-	await context.rebuild();
+	await Promise.all([scriptContext.rebuild(), styleContext.rebuild()]);
 	process.exit(0);
 } else {
-	await context.watch();
+	await scriptContext.watch();
+	await styleContext.watch();
 }
