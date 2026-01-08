@@ -158,8 +158,7 @@ describe('ReviewScreen', () => {
 		expect(htmlContent).not.toContain('Paris');
 	});
 
-	// TODO: Remove .skip once cloze hiding is implemented in ReviewScreen
-	it.skip('should not display raw cloze syntax in question phase', () => {
+	it('should not display raw cloze syntax in question phase', () => {
 		// This test catches the bug where cloze content is passed through
 		// WITHOUT proper formatting, causing the raw cloze answer to be visible.
 		// If this test fails, it means the cloze answer is being shown to the user.

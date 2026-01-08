@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import type { QueueStats, ReviewItem } from '../../core/types';
+import { formatClozeQuestion } from '../../core/cloze';
 
 export interface SessionStats {
 	reviewed: number;
@@ -47,12 +48,19 @@ export function ReviewScreen(props: {
 		);
 	}
 
+	// Format cloze content in question phase to hide answers
+	const isClozeQuestion =
+		props.phase === 'question' && item.type === 'item' && item.clozeIndex != null;
+	const displayContent = isClozeQuestion
+		? formatClozeQuestion(props.content, item.clozeIndex)
+		: props.content;
+
 	return (
 		<div className="ir-review-screen">
 			<div className="ir-review-content">
 				<div
 					className="ir-review-card"
-					dangerouslySetInnerHTML={{ __html: props.content }}
+					dangerouslySetInnerHTML={{ __html: displayContent }}
 				/>
 			</div>
 			<div className="ir-review-footer">
