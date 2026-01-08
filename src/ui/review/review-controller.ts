@@ -109,6 +109,7 @@ export class ReviewController {
 
 	private onFileChange(file: TAbstractFile): void {
 		if (file.path.startsWith('IR/Review Items/')) {
+			if (this.model.screen === 'review') return;
 			if (this.refreshTimeout) clearTimeout(this.refreshTimeout);
 			this.refreshTimeout = setTimeout(() => {
 				void this.refreshSummary();
