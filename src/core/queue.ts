@@ -61,13 +61,22 @@ export function buildQueue(
 	const filtered = filterByFolder(items, options.folderFilter);
 	const categorized = categorizeItems(filtered, now);
 
+	const byType = (a: ReviewItem, b: ReviewItem): number => {
+		if (a.type === b.type) return 0;
+		return a.type === 'item' ? -1 : 1;
+	};
+
 	const byDueDate = (a: ReviewItem, b: ReviewItem): number => {
+		const typeDiff = byType(a, b);
+		if (typeDiff !== 0) return typeDiff;
 		const aDue = a.state.due?.getTime() ?? Number.POSITIVE_INFINITY;
 		const bDue = b.state.due?.getTime() ?? Number.POSITIVE_INFINITY;
 		return aDue - bDue;
 	};
 
 	const byCreated = (a: ReviewItem, b: ReviewItem): number => {
+		const typeDiff = byType(a, b);
+		if (typeDiff !== 0) return typeDiff;
 		const aCreated = a.created?.getTime() ?? 0;
 		const bCreated = b.created?.getTime() ?? 0;
 		return aCreated - bCreated;
