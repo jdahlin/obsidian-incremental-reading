@@ -479,8 +479,7 @@ export class MarkdownRenderer {
 		_path: string,
 		_source: unknown,
 	): Promise<void> {
-		// eslint-disable-next-line @microsoft/sdl/no-inner-html -- test stub rendering.
-		container.innerHTML = markdown;
+		container.textContent = markdown;
 	}
 }
 

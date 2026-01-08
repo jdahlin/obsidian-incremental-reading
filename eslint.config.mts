@@ -25,6 +25,16 @@ export default tseslint.config(
 			// detection can be flaky with TS projectService; avoid false positives for deps like react.
 			'import/no-extraneous-dependencies': 'off',
 
+			'@typescript-eslint/ban-ts-comment': [
+				'error',
+				{
+					'ts-ignore': true,
+					'ts-nocheck': true,
+					'ts-expect-error': true,
+					'ts-check': true,
+				},
+			],
+
 			// Make unused imports/vars a hard error so CI can't ignore them.
 			'@typescript-eslint/no-unused-vars': [
 				'error',
