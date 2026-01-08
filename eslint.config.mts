@@ -46,6 +46,12 @@ export default tseslint.config(
 			],
 		},
 	},
+	{
+		files: ['**/*.ts', '**/*.tsx'],
+		rules: {
+			'@typescript-eslint/no-unnecessary-type-assertion': 'error',
+		},
+	},
 	...obsidianmd.configs.recommended,
 	globalIgnores([
 		'node_modules',
