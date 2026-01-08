@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReviewScreen } from '../../src/views/review/ReviewScreen';
+import { ReviewScreen } from '../../src/ui/review/ReviewScreen';
 import type { ReviewItem } from '../../src/core/types';
 
 function collectText(node: unknown, acc: string[] = []): string[] {

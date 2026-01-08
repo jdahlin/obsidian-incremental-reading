@@ -1,7 +1,7 @@
 import { render } from 'preact';
-import { App, ItemView, MarkdownRenderer, TFile, WorkspaceLeaf } from 'obsidian';
+import { App, ItemView, WorkspaceLeaf } from 'obsidian';
 import type IncrementalReadingPlugin from '../../main';
-import { DeckSummary } from './DeckSummary';
+import { ReviewSummaryScreen } from './ReviewSummaryScreen';
 import { ReviewScreen, type SessionStats } from './ReviewScreen';
 import { buildDeckTree, getCountsForFolder } from '../../core/decks';
 import { buildQueue, getNextItem, getQueueStats } from '../../core/queue';
@@ -15,19 +15,18 @@ import type {
 	TodayStats,
 } from '../../core/types';
 import { formatDate } from '../../core/frontmatter';
-import { parseClozeIndices, formatClozeQuestion, formatClozeAnswer } from '../../core/cloze';
 import { appendReview } from '../../data/revlog';
 import { updateClozeState, updateTopicState } from '../../data/review-items';
 import { loadReviewItems } from '../../data/review-loader';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
-import { syncNoteToSidecar } from '../../data/sync';
 import { StatsModal } from '../stats/StatsModal';
+import { loadReviewItemHtml, type ReviewPhase } from '../../review/content';
 
 export const VIEW_TYPE_REVIEW = 'ir-review';
 
 type Screen = 'summary' | 'review';
 
-type Phase = 'question' | 'answer';
+type Phase = ReviewPhase;
 
 export class ReviewItemView extends ItemView {
 	private screen: Screen = 'summary';
@@ -96,59 +95,11 @@ export class ReviewItemView extends ItemView {
 	}
 
 	private async loadItemContent(): Promise<void> {
-		const item = this.currentItem;
-		if (!item) {
-			this.currentContent = '';
-			return;
-		}
-
-		const file = item.noteFile ?? this.appRef.vault.getAbstractFileByPath(item.notePath);
-		if (!(file instanceof TFile)) {
-			this.currentContent = '';
-			return;
-		}
-
-		try {
-			const rawContent = await this.appRef.vault.read(file);
-
-			// For cloze items, format the content based on phase
-			if (item.type === 'item' && item.clozeIndex) {
-				const indices = parseClozeIndices(rawContent);
-				if (!indices.includes(item.clozeIndex)) {
-					await syncNoteToSidecar(this.appRef, file, this.pluginRef.settings.extractTag);
-				}
-
-				const formatted =
-					this.phase === 'question'
-						? formatClozeQuestion(rawContent, item.clozeIndex)
-						: formatClozeAnswer(rawContent, item.clozeIndex);
-
-				// Render markdown to HTML
-				const container = document.createElement('div');
-				await MarkdownRenderer.render(
-					this.appRef,
-					formatted,
-					container,
-					item.notePath,
-					this,
-				);
-				this.currentContent = container.innerHTML;
-			} else {
-				// For topics, render the full content
-				const container = document.createElement('div');
-				await MarkdownRenderer.render(
-					this.appRef,
-					rawContent,
-					container,
-					item.notePath,
-					this,
-				);
-				this.currentContent = container.innerHTML;
-			}
-		} catch (error) {
-			console.error('IR: failed to load item content', error);
-			this.currentContent = '<p>Failed to load content</p>';
-		}
+		this.currentContent = await loadReviewItemHtml(
+			{ app: this.appRef, view: this, extractTag: this.pluginRef.settings.extractTag },
+			this.currentItem,
+			this.phase,
+		);
 	}
 
 	private getPreselectedPath(): string | null {
@@ -170,7 +121,7 @@ export class ReviewItemView extends ItemView {
 		const allCounts = getCountsForFolder(this.items, '', new Date());
 		if (this.screen === 'summary') {
 			render(
-				<DeckSummary
+				<ReviewSummaryScreen
 					decks={this.decks}
 					selectedPath={this.selectedPath}
 					allCounts={allCounts}

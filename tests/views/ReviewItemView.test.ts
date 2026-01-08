@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { App, FakeElement, WorkspaceLeaf } from 'obsidian';
 import type IncrementalReadingPlugin from '../../src/main';
-import { ReviewItemView } from '../../src/views/review/ReviewItemView';
+import { ReviewItemView } from '../../src/ui/review/ReviewItemView';
 import { writeReviewItemFile } from '../../src/data/review-items';
 import { readAllReviews } from '../../src/data/revlog';
 import type { ItemState } from '../../src/core/types';
