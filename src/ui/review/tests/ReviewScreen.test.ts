@@ -3,6 +3,16 @@ import { ReviewScreen } from '../ReviewScreen';
 import type { ReviewItem } from '../../../core/types';
 import { formatClozeQuestion } from '../../../core/cloze';
 
+type ComponentFn = (props: Record<string, unknown>) => unknown;
+
+type VNodeLike = {
+	type?: ComponentFn | string;
+	props?: Record<string, unknown> & {
+		children?: unknown;
+		dangerouslySetInnerHTML?: { __html: string };
+	};
+};
+
 function collectText(node: unknown, acc: string[] = []): string[] {
 	if (node == null || typeof node === 'boolean') return acc;
 	if (typeof node === 'string' || typeof node === 'number') {
@@ -14,12 +24,49 @@ function collectText(node: unknown, acc: string[] = []): string[] {
 		return acc;
 	}
 	if (typeof node === 'object') {
-		const props = (node as { props?: { children?: unknown } }).props;
-		if (props && 'children' in props) {
-			collectText(props.children, acc);
+		const vnode = node as VNodeLike;
+		const component = vnode.type;
+		if (typeof component === 'function') {
+			return collectText(component(vnode.props ?? {}), acc);
+		}
+		if (vnode.props && 'children' in vnode.props) {
+			collectText(vnode.props.children, acc);
 		}
 	}
 	return acc;
+}
+
+function findHtmlContent(node: unknown): string | null {
+	if (node == null || typeof node === 'boolean') return null;
+	if (Array.isArray(node)) {
+		for (const child of node) {
+			const result = findHtmlContent(child);
+			if (result) return result;
+		}
+		return null;
+	}
+	if (typeof node === 'object') {
+		const vnode = node as VNodeLike;
+		const component = vnode.type;
+		if (typeof component === 'function') {
+			return findHtmlContent(component(vnode.props ?? {}));
+		}
+		if (vnode.props?.dangerouslySetInnerHTML?.__html) {
+			return vnode.props.dangerouslySetInnerHTML.__html;
+		}
+		if (vnode.props && 'children' in vnode.props) {
+			return findHtmlContent(vnode.props.children);
+		}
+	}
+	return null;
+}
+
+function getHtmlContent(node: unknown): string {
+	const html = findHtmlContent(node);
+	if (html == null) {
+		throw new Error('Expected review content to contain HTML.');
+	}
+	return html;
 }
 
 const baseProps = {
@@ -149,10 +196,7 @@ describe('ReviewScreen', () => {
 
 		// The content prop should be passed through to dangerouslySetInnerHTML
 		// We verify the vnode structure contains our formatted content
-		const cardDiv = (vnode as { props: { children: unknown[] } }).props.children[0];
-		const innerDiv = (cardDiv as { props: { children: unknown } }).props.children;
-		const htmlContent = (innerDiv as { props: { dangerouslySetInnerHTML: { __html: string } } })
-			.props.dangerouslySetInnerHTML.__html;
+		const htmlContent = getHtmlContent(vnode);
 
 		expect(htmlContent).toContain('[...]');
 		expect(htmlContent).not.toContain('Paris');
@@ -191,10 +235,7 @@ describe('ReviewScreen', () => {
 		});
 
 		// Get the HTML content that would be rendered
-		const cardDiv = (vnode as { props: { children: unknown[] } }).props.children[0];
-		const innerDiv = (cardDiv as { props: { children: unknown } }).props.children;
-		const htmlContent = (innerDiv as { props: { dangerouslySetInnerHTML: { __html: string } } })
-			.props.dangerouslySetInnerHTML.__html;
+		const htmlContent = getHtmlContent(vnode);
 
 		// The raw cloze answer "Paris" should NOT be visible in question phase
 		// This assertion will FAIL if content is passed without formatting

@@ -1,7 +1,8 @@
 import type { FunctionalComponent } from 'preact';
+import type { DeckCountsValue } from './deck-summary-types';
 
 export interface DeckCountsProps {
-	counts: { new: number; learning: number; due: number };
+	counts: DeckCountsValue;
 }
 
 export const DeckCounts: FunctionalComponent<DeckCountsProps> = ({ counts }) => {

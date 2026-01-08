@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { DeckSummary } from '../DeckSummary';
 import type { DeckInfo } from '../../../core/types';
 
+type ComponentFn = (props: Record<string, unknown>) => unknown;
+
+type VNodeLike = {
+	type?: ComponentFn | string;
+	props?: Record<string, unknown> & { children?: unknown };
+};
+
 function collectText(node: unknown, acc: string[] = []): string[] {
 	if (node == null || typeof node === 'boolean') return acc;
 	if (typeof node === 'string' || typeof node === 'number') {
@@ -13,9 +20,13 @@ function collectText(node: unknown, acc: string[] = []): string[] {
 		return acc;
 	}
 	if (typeof node === 'object') {
-		const props = (node as { props?: { children?: unknown } }).props;
-		if (props && 'children' in props) {
-			collectText(props.children, acc);
+		const vnode = node as VNodeLike;
+		const component = vnode.type;
+		if (typeof component === 'function') {
+			return collectText(component(vnode.props ?? {}), acc);
+		}
+		if (vnode.props && 'children' in vnode.props) {
+			collectText(vnode.props.children, acc);
 		}
 	}
 	return acc;
