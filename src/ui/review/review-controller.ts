@@ -1,4 +1,4 @@
-import type { App } from 'obsidian';
+import type { App, EventRef, TAbstractFile } from 'obsidian';
 import { buildDeckTree, getCountsForFolder } from '../../core/decks';
 import { buildQueue, getNextItem } from '../../core/queue';
 import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
@@ -66,6 +66,8 @@ function createSessionStats(): SessionStats {
 
 export class ReviewController {
 	private listeners = new Set<Listener>();
+	private vaultEventRefs: EventRef[] = [];
+	private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 	private model: ReviewModel = {
 		screen: 'folder',
 		items: [],
@@ -86,6 +88,33 @@ export class ReviewController {
 	private contentRequestId = 0;
 
 	constructor(private deps: ReviewControllerDeps) {}
+
+	mount(): void {
+		const { vault } = this.deps.app;
+		this.vaultEventRefs.push(
+			vault.on('create', (file) => this.onFileChange(file)),
+			vault.on('delete', (file) => this.onFileChange(file)),
+			vault.on('modify', (file) => this.onFileChange(file)),
+		);
+	}
+
+	unmount(): void {
+		this.vaultEventRefs.forEach((ref) => this.deps.app.vault.offref(ref));
+		this.vaultEventRefs = [];
+		if (this.refreshTimeout) {
+			clearTimeout(this.refreshTimeout);
+			this.refreshTimeout = null;
+		}
+	}
+
+	private onFileChange(file: TAbstractFile): void {
+		if (file.path.startsWith('IR/Review Items/')) {
+			if (this.refreshTimeout) clearTimeout(this.refreshTimeout);
+			this.refreshTimeout = setTimeout(() => {
+				void this.refreshSummary();
+			}, 500);
+		}
+	}
 
 	subscribe(listener: Listener): () => void {
 		this.listeners.add(listener);

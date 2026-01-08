@@ -2,6 +2,11 @@ import type { ReviewItem, ReviewQueue, ReviewQueueOptions, QueueStats } from './
 
 export function filterByFolder(items: ReviewItem[], folderPath?: string | null): ReviewItem[] {
 	if (!folderPath) return items;
+
+	if (folderPath === '/') {
+		return items.filter((item) => !item.notePath.includes('/'));
+	}
+
 	const normalized = folderPath.replace(/\/$/, '');
 	return items.filter((item) => {
 		if (item.notePath === normalized) return true;

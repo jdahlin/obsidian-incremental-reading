@@ -62,7 +62,7 @@ class VaultAdapter {
 	}
 }
 
-class TAbstractFile {
+export class TAbstractFile {
 	path: string;
 	name: string;
 	parent: TFolder | null;
@@ -101,11 +101,33 @@ export class TFile extends TAbstractFile {
 
 type VaultEntry = { file: TAbstractFile; content?: string };
 
-export class Vault {
+export interface EventRef {
+	_eventRef?: boolean;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export class Events {
+	on(name: string, callback: (...data: any[]) => any, ctx?: any): EventRef {
+		return {};
+	}
+	off(name: string, callback: (...data: any[]) => any): void {
+		return;
+	}
+	offref(ref: EventRef): void {
+		return;
+	}
+	trigger(name: string, ...data: any[]): void {
+		return;
+	}
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export class Vault extends Events {
 	private entries: Map<string, VaultEntry> = new Map();
 	adapter: VaultAdapter;
 
 	constructor() {
+		super();
 		this.adapter = new VaultAdapter(this);
 	}
 

@@ -12,10 +12,21 @@ import {
 	type ReviewItemFile,
 } from './review-items';
 
-export async function syncNoteToSidecar(app: App, file: TFile, extractTag: string): Promise<void> {
-	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter ?? {};
+export async function syncNoteToSidecar(
+	app: App,
+	file: TFile,
+	extractTag: string,
+	frontmatterOverride?: Record<string, unknown>,
+): Promise<void> {
+	const frontmatter =
+		frontmatterOverride ?? app.metadataCache.getFileCache(file)?.frontmatter ?? {};
 	const parsed = parseFrontmatter(frontmatter, extractTag);
-	if (!parsed) return;
+	if (!parsed) {
+		console.warn(
+			`IR: Skipped syncing ${file.path} - frontmatter parsing failed (tag missing?)`,
+		);
+		return;
+	}
 
 	const noteId = parsed.ir_note_id || (await ensureNoteId(app, file));
 	const content = await app.vault.read(file);

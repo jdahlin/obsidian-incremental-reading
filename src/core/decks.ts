@@ -4,19 +4,30 @@ import type { DeckInfo, ReviewItem } from './types';
 export function buildDeckTree(items: ReviewItem[], now: Date): DeckInfo[] {
 	const paths = new Set<string>();
 	for (const item of items) {
-		const folder = getFolderPath(item.notePath);
-		if (!folder) continue;
-		const segments = folder.split('/');
-		for (let i = 1; i <= segments.length; i += 1) {
-			paths.add(segments.slice(0, i).join('/'));
+		let folder = getFolderPath(item.notePath);
+		if (!folder) folder = '/';
+
+		if (folder === '/') {
+			paths.add('/');
+		} else {
+			const segments = folder.split('/');
+			for (let i = 1; i <= segments.length; i += 1) {
+				paths.add(segments.slice(0, i).join('/'));
+			}
 		}
 	}
 
 	const nodes = new Map<string, DeckInfo>();
 	for (const path of paths) {
 		const segments = path.split('/');
-		const name = segments[segments.length - 1] ?? path;
-		const depth = Math.max(0, segments.length - 1);
+		let name = segments[segments.length - 1] || path;
+		let depth = Math.max(0, segments.length - 1);
+
+		if (path === '/') {
+			name = '/';
+			depth = 0;
+		}
+
 		const counts = getCountsForFolder(items, path, now);
 		nodes.set(path, {
 			path,

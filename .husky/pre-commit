@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
+npm run -s typecheck
 ./node_modules/.bin/nano-staged
 npm run -s lint
-npm run -s typecheck

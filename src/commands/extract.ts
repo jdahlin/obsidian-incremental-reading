@@ -9,6 +9,7 @@ import {
 } from 'obsidian';
 import { formatDate } from '../core/frontmatter';
 import { syncNoteToSidecar } from '../data/sync';
+import { createId } from '../data/ids';
 
 export interface ExtractOptions {
 	titleWords: number;
@@ -54,6 +55,7 @@ export async function extractToIncrementalNote(
 	const priority = options.priority ?? 50;
 
 	const frontmatter = {
+		ir_note_id: createId(),
 		source: sourceLink,
 		tags: [tag],
 		type: 'topic',
@@ -72,7 +74,7 @@ export async function extractToIncrementalNote(
 	editor.replaceSelection(`[${linkedText}](${linkTarget})`);
 	editor.setSelection(from, editor.getCursor('to'));
 
-	await syncNoteToSidecar(app, childFile, tag);
+	await syncNoteToSidecar(app, childFile, tag, frontmatter);
 	new Notice(`Created note: ${childFile.basename}`);
 }
 
