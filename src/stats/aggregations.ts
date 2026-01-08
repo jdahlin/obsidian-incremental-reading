@@ -95,7 +95,11 @@ export function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDist
 	return distribution;
 }
 
-export function buildHeatmapData(reviews: ReviewRecord[], days: number, today: Date = new Date()): HeatmapData[] {
+export function buildHeatmapData(
+	reviews: ReviewRecord[],
+	days: number,
+	today: Date = new Date(),
+): HeatmapData[] {
 	const byDay = new Map<string, number>();
 	for (const review of reviews) {
 		const date = new Date(review.ts);
@@ -114,7 +118,11 @@ export function buildHeatmapData(reviews: ReviewRecord[], days: number, today: D
 	return result;
 }
 
-export function buildForecastData(items: ReviewItem[], days: number, now: Date = new Date()): ForecastData[] {
+export function buildForecastData(
+	items: ReviewItem[],
+	days: number,
+	now: Date = new Date(),
+): ForecastData[] {
 	const byDay = new Map<string, number>();
 	for (const item of items) {
 		const due = item.state.due;

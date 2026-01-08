@@ -53,7 +53,15 @@ describe('ReviewScreen', () => {
 			notePath: 'a',
 			type: 'topic',
 			priority: 0,
-			state: { status: 'new', due: null, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null },
+			state: {
+				status: 'new',
+				due: null,
+				stability: 0,
+				difficulty: 0,
+				reps: 0,
+				lapses: 0,
+				last_review: null,
+			},
 		} satisfies ReviewItem;
 
 		const vnode = ReviewScreen({
@@ -73,7 +81,15 @@ describe('ReviewScreen', () => {
 			notePath: 'a',
 			type: 'topic',
 			priority: 0,
-			state: { status: 'new', due: null, stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null },
+			state: {
+				status: 'new',
+				due: null,
+				stability: 0,
+				difficulty: 0,
+				reps: 0,
+				lapses: 0,
+				last_review: null,
+			},
 		} satisfies ReviewItem;
 
 		const vnode = ReviewScreen({

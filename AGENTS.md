@@ -5,6 +5,7 @@
 This is an Obsidian plugin that implements SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
 
 **Key Documentation:**
+
 - `docs/ARCHITECTURE.md` - Technical design, data model, and implementation status
 - `docs/IMPLEMENTATION_SPEC.md` - Step-by-step implementation guide
 - `docs/USER_GUIDE.md` - User-facing documentation
@@ -13,17 +14,20 @@ This is an Obsidian plugin that implements SuperMemo-inspired incremental readin
 ## Core Concepts
 
 ### Incremental Reading Workflow
+
 1. **Extract** - Select text → create new note linked from source
 2. **Cloze** - Wrap text in `{{c1::answer}}` for active recall
 3. **Review** - Study due items with spaced repetition scheduling
 
 ### Data Model
+
 - **Topics** - Extracts without clozes (passive review)
 - **Items** - Cloze deletions (active recall with question/answer phases)
 - **Sidecar files** - Per-note scheduling state in `IR/Review Items/<id>.md`
 - **Revlog** - Review history in `IR/Revlog/YYYY-MM.md` (JSONL format)
 
 ### Key Architecture Decisions
+
 - Plain Anki-style cloze syntax: `{{c1::text}}` (no HTML wrapper)
 - Single-pane review: content rendered in review panel (no separate editor)
 - Per-cloze scheduling via sidecar files
@@ -84,30 +88,33 @@ npm test         # Run tests
 
 ## Key Files to Understand
 
-| File | Purpose |
-|------|---------|
+| File                                  | Purpose                                                          |
+| ------------------------------------- | ---------------------------------------------------------------- |
 | `src/views/review/ReviewItemView.tsx` | Main review controller - handles queue, grading, content loading |
-| `src/core/cloze.ts` | `formatClozeQuestion()` and `formatClozeAnswer()` for display |
-| `src/core/scheduling.ts` | FSRS grading logic |
-| `src/data/sync.ts` | Syncs note content to sidecar files |
-| `src/data/review-items.ts` | Reads/writes sidecar scheduling state |
+| `src/core/cloze.ts`                   | `formatClozeQuestion()` and `formatClozeAnswer()` for display    |
+| `src/core/scheduling.ts`              | FSRS grading logic                                               |
+| `src/data/sync.ts`                    | Syncs note content to sidecar files                              |
+| `src/data/review-items.ts`            | Reads/writes sidecar scheduling state                            |
 
 ## Patterns Used
 
 ### Race Condition Handling
+
 All file creation uses try/catch to handle concurrent operations:
+
 ```typescript
 try {
-    await app.vault.create(path, content);
+	await app.vault.create(path, content);
 } catch {
-    const file = app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) {
-        await app.vault.append(file, content);
-    }
+	const file = app.vault.getAbstractFileByPath(path);
+	if (file instanceof TFile) {
+		await app.vault.append(file, content);
+	}
 }
 ```
 
 ### Phase Detection for Review
+
 ```typescript
 // Topics skip question phase, cloze items show question first
 const isClozeItem = item?.type === 'item' && item?.clozeIndex;
@@ -115,17 +122,20 @@ this.phase = isClozeItem ? 'question' : 'answer';
 ```
 
 ### Content Rendering
+
 ```typescript
 // Load content with cloze formatting based on phase
-const formatted = this.phase === 'question'
-    ? formatClozeQuestion(content, item.clozeIndex)
-    : formatClozeAnswer(content, item.clozeIndex);
+const formatted =
+	this.phase === 'question'
+		? formatClozeQuestion(content, item.clozeIndex)
+		: formatClozeAnswer(content, item.clozeIndex);
 await MarkdownRenderer.render(app, formatted, container, notePath, this);
 ```
 
 ## Agent Guidelines
 
 ### Do
+
 - Read `docs/ARCHITECTURE.md` for design decisions and data model
 - Check `docs/IMPLEMENTATION_SPEC.md` for implementation status
 - Use pure functions in `src/core/` for testable logic
@@ -133,6 +143,7 @@ await MarkdownRenderer.render(app, formatted, container, notePath, this);
 - Keep UI components in Preact (not React)
 
 ### Don't
+
 - Store scheduling data in note frontmatter (use sidecars)
 - Open separate editor tabs during review (use single-pane design)
 - Wrap clozes in HTML (use plain `{{c1::text}}` syntax)
@@ -141,6 +152,7 @@ await MarkdownRenderer.render(app, formatted, container, notePath, this);
 ## Testing
 
 Manual install for testing:
+
 ```bash
 npm run build
 # Copy main.js, manifest.json, styles.css to:

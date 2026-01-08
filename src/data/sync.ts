@@ -3,14 +3,21 @@ import { parseClozeIndices } from '../core/cloze';
 import { parseFrontmatter } from '../core/frontmatter';
 import type { ItemState } from '../core/types';
 import { createId } from './ids';
-import { ensureNoteId, readReviewItemFile, writeReviewItemFile, deleteReviewItemFile, type ClozeEntry, type ReviewItemFile } from './review-items';
+import {
+	ensureNoteId,
+	readReviewItemFile,
+	writeReviewItemFile,
+	deleteReviewItemFile,
+	type ClozeEntry,
+	type ReviewItemFile,
+} from './review-items';
 
 export async function syncNoteToSidecar(app: App, file: TFile, extractTag: string): Promise<void> {
 	const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter ?? {};
 	const parsed = parseFrontmatter(frontmatter, extractTag);
 	if (!parsed) return;
 
-	const noteId = parsed.ir_note_id || await ensureNoteId(app, file);
+	const noteId = parsed.ir_note_id || (await ensureNoteId(app, file));
 	const content = await app.vault.read(file);
 	const indices = parseClozeIndices(content);
 	const clozeKeys = indices.map((index) => `c${index}`);
@@ -53,7 +60,9 @@ export async function syncAllNotes(app: App, extractTag: string): Promise<void> 
 		syncedPaths.add(file.path);
 	}
 
-	const reviewFiles = app.vault.getMarkdownFiles().filter((file) => file.path.startsWith('IR/Review Items/'));
+	const reviewFiles = app.vault
+		.getMarkdownFiles()
+		.filter((file) => file.path.startsWith('IR/Review Items/'));
 	for (const sidecar of reviewFiles) {
 		const noteId = sidecar.basename;
 		const data = await readReviewItemFile(app, noteId);

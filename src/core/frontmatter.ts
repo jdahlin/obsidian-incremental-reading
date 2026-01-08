@@ -2,9 +2,7 @@ import type { CardType, NoteFrontmatter, Status } from './types';
 
 export function normalizeTags(tags: unknown): string[] {
 	if (Array.isArray(tags)) {
-		return tags
-			.map((tag) => String(tag).trim().replace(/^#/, ''))
-			.filter(Boolean);
+		return tags.map((tag) => String(tag).trim().replace(/^#/, '')).filter(Boolean);
 	}
 	if (typeof tags === 'string') {
 		return tags

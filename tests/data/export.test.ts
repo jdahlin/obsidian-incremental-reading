@@ -7,7 +7,12 @@ import { formatDate } from '../../src/core/frontmatter';
 describe('review history export', () => {
 	it('writes a CSV file with review history', async () => {
 		const app = new App();
-		await appendReview(app, { ts: '2024-01-01T10:00:00', item_id: 'a', rating: 3, elapsed_ms: 1200 });
+		await appendReview(app, {
+			ts: '2024-01-01T10:00:00',
+			item_id: 'a',
+			rating: 3,
+			elapsed_ms: 1200,
+		});
 		await appendReview(app, { ts: '2024-01-02T10:00:00', item_id: 'b', rating: 1 });
 
 		const expectedDate = formatDate(new Date()).slice(0, 10);

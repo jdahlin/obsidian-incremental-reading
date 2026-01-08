@@ -13,6 +13,7 @@ Markdown notes are the source of truth for content. Users can edit, move, rename
 ### 2. Markdown for Review State (SQLite index optional)
 
 Canonical review state lives in Markdown sidecar files for readability and easy debugging:
+
 - Per-cloze scheduling (since a note can have N clozes)
 - Review history (append-only log)
 
@@ -87,17 +88,19 @@ ItemState (scheduling)
 
 A **Note** is a file. A **ReviewItem** is something you review.
 
-| Note Type | Creates ReviewItems |
-|-----------|---------------------|
-| Topic (no clozes) | 1 topic item |
+| Note Type          | Creates ReviewItems                                      |
+| ------------------ | -------------------------------------------------------- |
+| Topic (no clozes)  | 1 topic item                                             |
 | Note with N clozes | N item items (one per cloze index) + optional topic item |
 
 Example: `Biochemistry/Krebs Cycle/ATP yield per glucose.md` contains:
+
 ```
 The Krebs cycle produces {{c1::2 ATP}}, {{c2::6 NADH}}, and {{c3::2 FADH2}} per glucose.
 ```
 
 This creates three review items (IDs use `ir_note_id::cloze_uid`):
+
 - `Ab3Kp9Xr2QaL::G7uT2mQ9rW1z` - tests "2 ATP"
 - `Ab3Kp9Xr2QaL::p8Ls2ZQv6N4k` - tests "6 NADH"
 - `Ab3Kp9Xr2QaL::Q9rT2mX1pL7z` - tests "2 FADH2"
@@ -123,6 +126,7 @@ Biochemistry/                           # Course/Collection
 ```
 
 **Why folders:**
+
 - Native Obsidian concept (no extra metadata)
 - Extract command places notes in source's folder
 - Bases supports `file.inFolder()` filtering
@@ -179,24 +183,26 @@ StreakInfo {
 
 ```typescript
 function buildDeckTree(reviewItems: ReviewItem[]): DeckInfo[] {
-  // 1. Get all unique folder paths from sidecar note_path fields
-  // 2. Build hierarchical tree from paths
-  // 3. For each folder, count items by status
-  // 4. Return tree structure
+	// 1. Get all unique folder paths from sidecar note_path fields
+	// 2. Build hierarchical tree from paths
+	// 3. For each folder, count items by status
+	// 4. Return tree structure
 }
 
 function getCountsForFolder(items: ReviewItem[], folderPath: string): Counts {
-  // Filter by folder prefix, then count by status/due
+	// Filter by folder prefix, then count by status/due
 }
 ```
 
 **Preselection Logic:**
+
 1. Get active file's folder path
 2. Find matching deck in tree
 3. If found → select that deck
 4. If not → select "All Decks"
 
 **Data Sources:**
+
 - Deck tree + counts: Built from sidecar files under `IR/Review Items/` (or an optional SQLite index)
 - Today's stats: Calculated from revlog JSONL entries for today
 - Streak: Calculated from revlog daily review dates
@@ -206,6 +212,7 @@ function getCountsForFolder(items: ReviewItem[], folderPath: string): Counts {
 Standard card review with **always-editable content** (core IR principle).
 
 Unlike Anki (read-only during review), content is always editable - no mode switching:
+
 - Notes remain editable in Obsidian's normal editor while reviewing
 - Select text → Extract (`Alt+X`) or Cloze (`Alt+Z`)
 - Type to edit inline
@@ -263,18 +270,19 @@ No separate edit mode - content is always editable during review.
 
 ```typescript
 function buildQueue(
-  items: ReviewItem[],
-  now: Date,
-  options: {
-    newCardsPerDay: number,
-    newCardsToday: number,
-    folderFilter?: string,  // e.g., "Biochemistry/Krebs Cycle"
-    includeSubfolders?: boolean,  // default: true
-  }
-): ReviewQueue
+	items: ReviewItem[],
+	now: Date,
+	options: {
+		newCardsPerDay: number;
+		newCardsToday: number;
+		folderFilter?: string; // e.g., "Biochemistry/Krebs Cycle"
+		includeSubfolders?: boolean; // default: true
+	},
+): ReviewQueue;
 ```
 
 Folder filtering:
+
 - `folderFilter: null` → all items
 - `folderFilter: "Biochemistry"` + `includeSubfolders: true` → Krebs Cycle + Glycolysis + etc.
 - `folderFilter: "Biochemistry/Krebs Cycle"` + `includeSubfolders: false` → just Krebs Cycle
@@ -285,13 +293,13 @@ Folder filtering:
 
 ### Storage Strategy
 
-| Data | Primary Storage | Why |
-|------|-----------------|-----|
-| Note identity (`tags`, `source`, `type`, `ir_note_id`) | Frontmatter | Defines what's reviewable |
-| Note-level settings (`priority`) | Frontmatter | User-editable, shared by all clozes |
-| Reading position (`scroll_pos`) | Frontmatter | Topics only, persists across reviews |
-| Per-cloze scheduling | Sidecar Markdown (`IR/Review Items/<ir_note_id>.md`) | Readable, per-note state |
-| Review history | Markdown log (`IR/Revlog/YYYY-MM.md`) | Append-only, easy to inspect |
+| Data                                                   | Primary Storage                                      | Why                                  |
+| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------ |
+| Note identity (`tags`, `source`, `type`, `ir_note_id`) | Frontmatter                                          | Defines what's reviewable            |
+| Note-level settings (`priority`)                       | Frontmatter                                          | User-editable, shared by all clozes  |
+| Reading position (`scroll_pos`)                        | Frontmatter                                          | Topics only, persists across reviews |
+| Per-cloze scheduling                                   | Sidecar Markdown (`IR/Review Items/<ir_note_id>.md`) | Readable, per-note state             |
+| Review history                                         | Markdown log (`IR/Revlog/YYYY-MM.md`)                | Append-only, easy to inspect         |
 
 **Principle**: Notes + sidecars + revlogs are canonical. A SQLite index may be added later for speed.
 
@@ -302,29 +310,30 @@ Use Obsidian's vault events to keep in sync:
 ```typescript
 // Listen for file changes
 this.registerEvent(
-  app.vault.on('modify', (file) => {
-    if (hasTopicTag(file)) {
-      syncNoteToSidecar(app, file, extractTag);
-    }
-  })
+	app.vault.on('modify', (file) => {
+		if (hasTopicTag(file)) {
+			syncNoteToSidecar(app, file, extractTag);
+		}
+	}),
 );
 
 // Listen for file deletion
 this.registerEvent(
-  app.vault.on('delete', (file) => {
-    deleteSidecarForNote(file);
-  })
+	app.vault.on('delete', (file) => {
+		deleteSidecarForNote(file);
+	}),
 );
 
 // Listen for file rename
 this.registerEvent(
-  app.vault.on('rename', (file, oldPath) => {
-    updateSidecarNotePath(oldPath, file.path);
-  })
+	app.vault.on('rename', (file, oldPath) => {
+		updateSidecarNotePath(oldPath, file.path);
+	}),
 );
 ```
 
 **Sync triggers:**
+
 - Plugin load → full sync (notes → sidecars)
 - File modify → sync that note
 - File delete → remove orphaned items
@@ -335,34 +344,36 @@ this.registerEvent(
 
 **Only write non-default values to frontmatter** to keep notes clean.
 
-| Property | Default | Write if... |
-|----------|---------|-------------|
-| `tags` | - | Always (required) |
-| `source` | - | Has parent note |
-| `type` | `topic` | Has clozes → `item` |
-| `created` | - | Always (for sorting) |
-| `ir_note_id` | - | Always (stable identity) |
-| `priority` | `50` | Changed from default |
-| `scroll_pos` | `0` | Topic with scroll > 0 |
+| Property     | Default | Write if...              |
+| ------------ | ------- | ------------------------ |
+| `tags`       | -       | Always (required)        |
+| `source`     | -       | Has parent note          |
+| `type`       | `topic` | Has clozes → `item`      |
+| `created`    | -       | Always (for sorting)     |
+| `ir_note_id` | -       | Always (stable identity) |
+| `priority`   | `50`    | Changed from default     |
+| `scroll_pos` | `0`     | Topic with scroll > 0    |
 
 **Minimal frontmatter example** (new topic):
+
 ```yaml
 ---
 tags: [topic]
-source: "[[Slides]]"
+source: '[[Slides]]'
 created: 2024-01-15T10:30:00
-ir_note_id: "Ab3Kp9Xr2QaL"
+ir_note_id: 'Ab3Kp9Xr2QaL'
 ---
 ```
 
 **Full frontmatter example** (edited topic with custom priority):
+
 ```yaml
 ---
 tags: [topic]
-source: "[[Slides]]"
+source: '[[Slides]]'
 type: item
 created: 2024-01-15T10:30:00
-ir_note_id: "Ab3Kp9Xr2QaL"
+ir_note_id: 'Ab3Kp9Xr2QaL'
 priority: 20
 scroll_pos: 450
 ---
@@ -375,17 +386,19 @@ Bases can read frontmatter from Markdown files. Review state is stored in sideca
 Two options for what Bases sees:
 
 **Option A: Summary properties** (simple views)
+
 ```yaml
 cloze_count: 3
-due_count: 2           # How many clozes are due
-next_due: 2024-01-20   # Earliest due date
+due_count: 2 # How many clozes are due
+next_due: 2024-01-20 # Earliest due date
 ```
 
 **Option B: Per-cloze map** (full visibility)
+
 ```yaml
 clozes:
-  c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
-  c2: { cloze_uid: Q9rT2mX1pL7z, status: new }
+    c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
+    c2: { cloze_uid: Q9rT2mX1pL7z, status: new }
 ```
 
 For MVP/debuggability, Option B is acceptable; summary fields can be added later if needed.
@@ -396,25 +409,25 @@ For MVP/debuggability, Option B is acceptable; summary fields can be added later
 ---
 # Required
 tags: [topic]
-ir_note_id: "Ab3Kp9Xr2QaL"
+ir_note_id: 'Ab3Kp9Xr2QaL'
 
 # Optional - context
-source: "[[Parent Note]]"    # Where this was extracted from
+source: '[[Parent Note]]' # Where this was extracted from
 created: 2024-01-15T10:30:00 # Creation timestamp
 
 # Optional - classification
-type: topic | item           # Default: topic (inferred from clozes)
+type: topic | item # Default: topic (inferred from clozes)
 
 # Optional - user settings
-priority: 50                 # 0-100, default 50
+priority: 50 # 0-100, default 50
 
 # Optional - reading state (topics only)
-scroll_pos: 450              # Pixel offset, default 0
+scroll_pos: 450 # Pixel offset, default 0
 
 # Optional - Bases summary (written by plugin)
-cloze_count: 3               # Number of clozes in note
-due_count: 2                 # Clozes due for review
-next_due: 2024-01-20         # Earliest due date
+cloze_count: 3 # Number of clozes in note
+due_count: 2 # Clozes due for review
+next_due: 2024-01-20 # Earliest due date
 ---
 ```
 
@@ -424,24 +437,24 @@ Path: `IR/Review Items/<ir_note_id>.md`
 
 ```yaml
 ---
-ir_note_id: "Ab3Kp9Xr2QaL"
-note_path: "Biochemistry/Krebs Cycle/ATP.md"
+ir_note_id: 'Ab3Kp9Xr2QaL'
+note_path: 'Biochemistry/Krebs Cycle/ATP.md'
 clozes:
-  c1:
-    cloze_uid: "G7uT2mQ9rW1z"
-    status: review
-    due: 2024-01-20T10:00:00
-    stability: 15.2
-    difficulty: 5.5
-    reps: 8
-    lapses: 1
-    last_review: 2024-01-18T14:00:00
-  c2:
-    cloze_uid: "p8Ls2ZQv6N4k"
-    status: new
-    due: null
-    stability: 0
-    difficulty: 0
+    c1:
+        cloze_uid: 'G7uT2mQ9rW1z'
+        status: review
+        due: 2024-01-20T10:00:00
+        stability: 15.2
+        difficulty: 5.5
+        reps: 8
+        lapses: 1
+        last_review: 2024-01-18T14:00:00
+    c2:
+        cloze_uid: 'p8Ls2ZQv6N4k'
+        status: new
+        due: null
+        stability: 0
+        difficulty: 0
 ---
 ```
 
@@ -450,8 +463,17 @@ clozes:
 Path: `IR/Revlog/YYYY-MM.md`
 
 Format: JSONL, one object per line (no header/frontmatter):
+
 ```json
-{"ts":"2024-01-15T10:30:00.000Z","item_id":"Ab3Kp9Xr2QaL::G7uT2mQ9rW1z","rating":3,"elapsed_ms":2500,"state_before":"review","stability_before":15.2,"difficulty_before":5.5}
+{
+	"ts": "2024-01-15T10:30:00.000Z",
+	"item_id": "Ab3Kp9Xr2QaL::G7uT2mQ9rW1z",
+	"rating": 3,
+	"elapsed_ms": 2500,
+	"state_before": "review",
+	"stability_before": 15.2,
+	"difficulty_before": 5.5
+}
 ```
 
 ### Optional SQLite Index (Future)
@@ -509,25 +531,16 @@ src/
 
 ```typescript
 // Calculate new state after grading
-function gradeItem(
-  state: ItemState,
-  rating: Rating,
-  now: Date,
-  fsrsParams: FsrsParams
-): ItemState
+function gradeItem(state: ItemState, rating: Rating, now: Date, fsrsParams: FsrsParams): ItemState;
 
 // Topic-specific grading (simpler intervals)
-function gradeTopic(
-  state: ItemState,
-  rating: Rating,
-  now: Date
-): ItemState
+function gradeTopic(state: ItemState, rating: Rating, now: Date): ItemState;
 
 // Map user grade (1-4) to FSRS Rating
-function mapGradeToRating(grade: number): Rating
+function mapGradeToRating(grade: number): Rating;
 
 // Calculate burden (workload estimate)
-function calculateBurden(items: ItemState[]): number
+function calculateBurden(items: ItemState[]): number;
 ```
 
 ### core/queue.ts
@@ -535,105 +548,105 @@ function calculateBurden(items: ItemState[]): number
 ```typescript
 // Build queue from items
 function buildQueue(
-  items: ReviewItem[],
-  now: Date,
-  newCardsPerDay: number,
-  newCardsToday: number
-): ReviewQueue
+	items: ReviewItem[],
+	now: Date,
+	newCardsPerDay: number,
+	newCardsToday: number,
+): ReviewQueue;
 
 // Get next item to review
-function getNextItem(queue: ReviewQueue): ReviewItem | null
+function getNextItem(queue: ReviewQueue): ReviewItem | null;
 
 // Sort items by priority rules
-function sortByPriority(items: ReviewItem[]): ReviewItem[]
+function sortByPriority(items: ReviewItem[]): ReviewItem[];
 
 // Categorize items into queue buckets
 function categorizeItems(
-  items: ReviewItem[],
-  now: Date
-): { learning: ReviewItem[], due: ReviewItem[], new: ReviewItem[], upcoming: ReviewItem[] }
+	items: ReviewItem[],
+	now: Date,
+): { learning: ReviewItem[]; due: ReviewItem[]; new: ReviewItem[]; upcoming: ReviewItem[] };
 ```
 
 ### core/cloze.ts
 
 ```typescript
 // Extract cloze indices from note content
-function parseClozeIndices(content: string): number[]
+function parseClozeIndices(content: string): number[];
 
 // Get next available cloze index
-function getNextClozeIndex(content: string): number
+function getNextClozeIndex(content: string): number;
 
 // Get highest existing cloze index
-function getHighestClozeIndex(content: string): number | null
+function getHighestClozeIndex(content: string): number | null;
 
 // Format cloze for display (hiding answer)
-function formatClozeQuestion(content: string, clozeIndex: number): string
+function formatClozeQuestion(content: string, clozeIndex: number): string;
 
 // Format cloze with answer revealed
-function formatClozeAnswer(content: string, clozeIndex: number): string
+function formatClozeAnswer(content: string, clozeIndex: number): string;
 ```
 
 ### core/frontmatter.ts
 
 ```typescript
 // Parse frontmatter into typed object
-function parseFrontmatter(raw: Record<string, unknown>): NoteFrontmatter | null
+function parseFrontmatter(raw: Record<string, unknown>): NoteFrontmatter | null;
 
 // Serialize frontmatter for writing
-function serializeFrontmatter(fm: NoteFrontmatter): Record<string, unknown>
+function serializeFrontmatter(fm: NoteFrontmatter): Record<string, unknown>;
 
 // Normalize tags (handles #prefix, arrays, strings)
-function normalizeTags(tags: unknown): string[]
+function normalizeTags(tags: unknown): string[];
 
 // Parse date from various formats
-function parseDate(value: unknown): Date | null
+function parseDate(value: unknown): Date | null;
 
 // Format date for frontmatter
-function formatDate(date: Date): string
+function formatDate(date: Date): string;
 
 // Normalize number with fallback
-function normalizeNumber(value: unknown, fallback: number): number
+function normalizeNumber(value: unknown, fallback: number): number;
 ```
 
 ### core/dates.ts
 
 ```typescript
 // Add days to date
-function addDays(date: Date, days: number): Date
+function addDays(date: Date, days: number): Date;
 
 // Add minutes to date
-function addMinutes(date: Date, minutes: number): Date
+function addMinutes(date: Date, minutes: number): Date;
 
 // Check if date is today
-function isToday(date: Date, now: Date): boolean
+function isToday(date: Date, now: Date): boolean;
 
 // Get start of day
-function startOfDay(date: Date): Date
+function startOfDay(date: Date): Date;
 
 // Days between two dates
-function daysBetween(a: Date, b: Date): number
+function daysBetween(a: Date, b: Date): number;
 ```
 
 ### stats/aggregations.ts
 
 ```typescript
 // Calculate retention rate
-function calculateRetention(reviews: ReviewRecord[]): number
+function calculateRetention(reviews: ReviewRecord[]): number;
 
 // Calculate streak
-function calculateStreak(reviewDays: Date[], today: Date): StreakInfo
+function calculateStreak(reviewDays: Date[], today: Date): StreakInfo;
 
 // Group reviews by date
-function groupByDate(reviews: ReviewRecord[]): Map<string, ReviewRecord[]>
+function groupByDate(reviews: ReviewRecord[]): Map<string, ReviewRecord[]>;
 
 // Calculate answer distribution
-function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDistribution
+function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDistribution;
 
 // Build heatmap data
-function buildHeatmapData(reviews: ReviewRecord[], days: number): HeatmapData[]
+function buildHeatmapData(reviews: ReviewRecord[], days: number): HeatmapData[];
 
 // Build forecast data
-function buildForecastData(items: ItemState[], days: number, now: Date): ForecastData[]
+function buildForecastData(items: ItemState[], days: number, now: Date): ForecastData[];
 ```
 
 ---
@@ -764,6 +777,7 @@ The plugin creates Bases views for browsing items.
 File: `IR/All Items.base`
 
 Shows all review items with columns:
+
 - File (link to note)
 - Type (topic/item)
 - Cloze (c1, c2, ... or empty)
@@ -862,8 +876,8 @@ Bases reads frontmatter from Markdown files. For per-cloze data, the plugin stor
 
 ```yaml
 clozes:
-  c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
-  c2: { cloze_uid: Q9rT2mX1pL7z, status: new, due: null, stability: 0 }
+    c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
+    c2: { cloze_uid: Q9rT2mX1pL7z, status: new, due: null, stability: 0 }
 ```
 
 ---
@@ -871,10 +885,12 @@ clozes:
 ## Statistics Inputs
 
 Statistics are computed from:
+
 - Revlog entries parsed from `IR/Revlog/YYYY-MM.md` (JSONL)
 - Sidecar state from `IR/Review Items/<ir_note_id>.md`
 
 Aggregation is done by pure functions:
+
 - Heatmap data from daily review counts
 - Retention rate from ratings (>= 2)
 - Answer distribution by rating
@@ -917,12 +933,14 @@ This section documents what is actually implemented.
 ### Implemented (Working)
 
 **Cloze Syntax & Display:**
+
 - Plain Anki-style clozes: `{{c1::text}}` or `{{c1::text::hint}}` (no HTML wrapper)
 - Question phase: Cloze content replaced with `[...]` placeholder
 - Answer phase: Full text revealed
 - Cloze creation command inserts plain syntax
 
 **Review UI (Single-Pane Design):**
+
 - Two-screen flow: Deck Summary → Review
 - Review content rendered directly in review panel (no separate editor tab)
 - Topics (extracts without cloze): Show content + grade buttons immediately
@@ -932,38 +950,40 @@ This section documents what is actually implemented.
 - Session stats and completion screen
 
 **Data Storage:**
+
 - Per-cloze scheduling via sidecar files (`IR/Review Items/<ir_note_id>.md`)
 - Each cloze gets its own `cloze_uid` and scheduling state
 - JSONL revlog in `IR/Revlog/YYYY-MM.md`
 - Race condition handling for concurrent file operations
 
 **Scheduling:**
+
 - FSRS algorithm for cloze items
 - Simpler interval growth for topics (passive review)
 - Queue built from sidecar files with priority ordering
 
 ### File Locations
 
-| Component | Location |
-|-----------|----------|
-| Revlog | `IR/Revlog/YYYY-MM.md` (JSONL) |
-| Sidecar | `IR/Review Items/<ir_note_id>.md` |
-| Scheduling | Sidecar files (per-cloze state) |
+| Component  | Location                          |
+| ---------- | --------------------------------- |
+| Revlog     | `IR/Revlog/YYYY-MM.md` (JSONL)    |
+| Sidecar    | `IR/Review Items/<ir_note_id>.md` |
+| Scheduling | Sidecar files (per-cloze state)   |
 
 ### Source Tree Structure
 
-| File | Purpose |
-|------|---------|
-| `src/data/revlog.ts` | JSONL revlog in `IR/Revlog/YYYY-MM.md` |
-| `src/data/review-items.ts` | Sidecar files in `IR/Review Items/<id>.md` |
-| `src/data/sync.ts` | Note ↔ sidecar synchronization |
-| `src/core/types.ts` | Type definitions |
-| `src/core/cloze.ts` | Cloze parsing and formatting |
-| `src/views/review/ReviewItemView.tsx` | Review view controller |
-| `src/views/review/ReviewScreen.tsx` | Review UI component |
-| `src/views/review/DeckSummary.tsx` | Deck list UI component |
-| `src/commands/cloze.ts` | Cloze creation command |
-| `src/commands/extract.ts` | Extract command |
+| File                                  | Purpose                                    |
+| ------------------------------------- | ------------------------------------------ |
+| `src/data/revlog.ts`                  | JSONL revlog in `IR/Revlog/YYYY-MM.md`     |
+| `src/data/review-items.ts`            | Sidecar files in `IR/Review Items/<id>.md` |
+| `src/data/sync.ts`                    | Note ↔ sidecar synchronization             |
+| `src/core/types.ts`                   | Type definitions                           |
+| `src/core/cloze.ts`                   | Cloze parsing and formatting               |
+| `src/views/review/ReviewItemView.tsx` | Review view controller                     |
+| `src/views/review/ReviewScreen.tsx`   | Review UI component                        |
+| `src/views/review/DeckSummary.tsx`    | Deck list UI component                     |
+| `src/commands/cloze.ts`               | Cloze creation command                     |
+| `src/commands/extract.ts`             | Extract command                            |
 
 ### Race Condition Handling
 
@@ -973,33 +993,35 @@ All file creation operations use try/catch to handle race conditions:
 // Pattern for file creation
 const existing = app.vault.getAbstractFileByPath(path);
 if (existing instanceof TFile) {
-    await app.vault.append(existing, content);
-    return;
+	await app.vault.append(existing, content);
+	return;
 }
 try {
-    await app.vault.create(path, content);
+	await app.vault.create(path, content);
 } catch {
-    // File created between check and create - fallback
-    const file = app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) {
-        await app.vault.append(file, content);
-    }
+	// File created between check and create - fallback
+	const file = app.vault.getAbstractFileByPath(path);
+	if (file instanceof TFile) {
+		await app.vault.append(file, content);
+	}
 }
 ```
 
 This pattern is applied in:
+
 - `src/data/revlog.ts:appendReview()`
 - `src/data/review-items.ts:writeReviewItemFile()`
 
 Folder creation also handles races:
+
 ```typescript
 const folder = app.vault.getAbstractFileByPath(path);
 if (!folder) {
-    try {
-        await app.vault.createFolder(path);
-    } catch {
-        // Already created by another operation
-    }
+	try {
+		await app.vault.createFolder(path);
+	} catch {
+		// Already created by another operation
+	}
 }
 ```
 
@@ -1007,11 +1029,11 @@ if (!folder) {
 
 ## Dependencies
 
-| Package | Purpose | Size | Loaded |
-|---------|---------|------|--------|
-| ts-fsrs | Scheduling algorithm | ~15KB | Always |
-| frappe-charts | Statistics charts | ~17KB | Lazy (stats modal) |
-| preact | UI components | ~4KB | Always |
+| Package       | Purpose              | Size  | Loaded             |
+| ------------- | -------------------- | ----- | ------------------ |
+| ts-fsrs       | Scheduling algorithm | ~15KB | Always             |
+| frappe-charts | Statistics charts    | ~17KB | Lazy (stats modal) |
+| preact        | UI components        | ~4KB  | Always             |
 
 ---
 
@@ -1023,14 +1045,16 @@ Current: Note frontmatter stores all scheduling.
 New: Per-cloze scheduling moves to sidecar files under `IR/Review Items/`.
 
 Migration on first load:
+
 1. For each note with topic tag:
-   - Ensure `ir_note_id` exists
-   - Create/update sidecar with per-cloze entries
+    - Ensure `ir_note_id` exists
+    - Create/update sidecar with per-cloze entries
 2. Mark migration complete in settings
 
 ### Data Export
 
 Provide CSV export for revlog:
+
 ```
 timestamp,item_id,rating,elapsed_ms,state_before
 2024-01-15T10:30:00,notes/Cells.md::c1,3,2500,review
@@ -1049,22 +1073,26 @@ timestamp,item_id,rating,elapsed_ms,state_before
 #### Basic Q&A Cards
 
 Syntax option 1 (Anki-style):
+
 ```markdown
 Q: What is the capital of France?
 A: Paris
 ```
 
 Syntax option 2 (frontmatter):
+
 ```markdown
 ---
 type: qa
 ---
-What is the capital of France?
----
+
+## What is the capital of France?
+
 Paris
 ```
 
 Implementation:
+
 - Parse Q/A markers or separator
 - Item ID: `ir_note_id::qa` (one Q&A per note) or `ir_note_id::qa1` (multiple)
 - Question phase: show Q, hide A
@@ -1073,14 +1101,17 @@ Implementation:
 #### Image Occlusion Cards
 
 **Significant complexity** - requires:
+
 1. Image annotation editor (canvas overlay)
 2. Storage of occlusion regions (coordinates, shapes)
 3. Render-time masking of regions
 4. Per-region scheduling
 
 Syntax concept:
+
 ```markdown
 ![[diagram.png]]
+
 <!-- occlusions:
   - id: 1, type: rect, x: 100, y: 50, w: 80, h: 30, label: "mitochondria"
   - id: 2, type: rect, x: 200, y: 100, w: 60, h: 40, label: "nucleus"
@@ -1095,10 +1126,10 @@ Item IDs: `ir_note_id::img1::o1`, `ir_note_id::img1::o2`
 
 ```typescript
 function detectCardType(content: string, frontmatter: any): CardType {
-  if (hasClozes(content)) return 'cloze';
-  if (hasQAMarkers(content)) return 'qa';
-  if (hasOcclusionMarkers(content)) return 'occlusion';
-  return 'topic';  // Default: reading material
+	if (hasClozes(content)) return 'cloze';
+	if (hasQAMarkers(content)) return 'qa';
+	if (hasOcclusionMarkers(content)) return 'occlusion';
+	return 'topic'; // Default: reading material
 }
 ```
 

@@ -16,7 +16,7 @@ export async function exportReviewHistory(app: App): Promise<TFile> {
 	const folder = 'IR/Revlog';
 	const path = `${folder}/${fileName}`;
 
-	if (!await app.vault.adapter.exists(folder)) {
+	if (!(await app.vault.adapter.exists(folder))) {
 		await app.vault.createFolder(folder);
 	}
 

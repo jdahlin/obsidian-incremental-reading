@@ -64,8 +64,8 @@ async function convertToItem(app: App, file: TFile, extractTag: string): Promise
 		const data = fm as { tags?: unknown; type?: unknown };
 		const tags = normalizeTags(data.tags);
 		if (!tags.includes(extractTag)) return;
-		if (data.type !== "item") {
-			data.type = "item";
+		if (data.type !== 'item') {
+			data.type = 'item';
 		}
 	});
 }

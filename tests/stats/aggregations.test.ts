@@ -38,7 +38,12 @@ describe('stats aggregations', () => {
 			{ ts: '2024-01-01T00:00:00', item_id: 'a', rating: 3 },
 			{ ts: '2024-01-01T00:00:00', item_id: 'a', rating: 4 },
 		];
-		expect(calculateAnswerDistribution(reviews)).toEqual({ again: 1, hard: 1, good: 1, easy: 1 });
+		expect(calculateAnswerDistribution(reviews)).toEqual({
+			again: 1,
+			hard: 1,
+			good: 1,
+			easy: 1,
+		});
 	});
 
 	it('builds heatmap data', () => {
@@ -57,8 +62,38 @@ describe('stats aggregations', () => {
 
 	it('builds forecast data', () => {
 		const items: ReviewItem[] = [
-			{ id: 'a', noteId: 'a', notePath: 'a', type: 'topic', priority: 0, state: { status: 'review', due: new Date('2024-01-03T10:00:00'), stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } },
-			{ id: 'b', noteId: 'b', notePath: 'b', type: 'topic', priority: 0, state: { status: 'review', due: new Date('2024-01-04T10:00:00'), stability: 0, difficulty: 0, reps: 0, lapses: 0, last_review: null } },
+			{
+				id: 'a',
+				noteId: 'a',
+				notePath: 'a',
+				type: 'topic',
+				priority: 0,
+				state: {
+					status: 'review',
+					due: new Date('2024-01-03T10:00:00'),
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			},
+			{
+				id: 'b',
+				noteId: 'b',
+				notePath: 'b',
+				type: 'topic',
+				priority: 0,
+				state: {
+					status: 'review',
+					due: new Date('2024-01-04T10:00:00'),
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					last_review: null,
+				},
+			},
 		];
 		const forecast = buildForecastData(items, 2, today);
 		expect(forecast).toEqual([

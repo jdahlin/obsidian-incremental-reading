@@ -14,9 +14,7 @@ export default defineConfig({
 			provider: 'v8',
 			all: true,
 			include: ['src/**/*.ts', 'src/**/*.tsx'],
-			exclude: [
-				'src/css.d.ts',
-			],
+			exclude: ['src/css.d.ts'],
 		},
 	},
 });

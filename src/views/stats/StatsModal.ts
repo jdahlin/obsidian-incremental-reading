@@ -2,11 +2,19 @@ import { Modal } from 'obsidian';
 import type { App } from 'obsidian';
 import { loadReviewItems } from '../../data/review-loader';
 import { readAllReviews } from '../../data/revlog';
-import { calculateAnswerDistribution, calculateRetention, buildForecastData, buildHeatmapData } from '../../stats/aggregations';
+import {
+	calculateAnswerDistribution,
+	calculateRetention,
+	buildForecastData,
+	buildHeatmapData,
+} from '../../stats/aggregations';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
 
 export class StatsModal extends Modal {
-	constructor(app: App, private extractTag: string) {
+	constructor(
+		app: App,
+		private extractTag: string,
+	) {
 		super(app);
 	}
 

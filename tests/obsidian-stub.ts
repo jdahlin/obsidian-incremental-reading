@@ -171,7 +171,9 @@ export class Vault {
 		if (!entry) return;
 		this.entries.delete(normalized);
 		if (entry.file.parent) {
-			entry.file.parent.children = entry.file.parent.children.filter((child) => child !== entry.file);
+			entry.file.parent.children = entry.file.parent.children.filter(
+				(child) => child !== entry.file,
+			);
 		}
 	}
 
@@ -222,11 +224,15 @@ export class MetadataCache {
 export class FileManager {
 	constructor(private vault: Vault) {}
 
-	async processFrontMatter(file: TFile, callback: (fm: Record<string, unknown>) => void): Promise<void> {
+	async processFrontMatter(
+		file: TFile,
+		callback: (fm: Record<string, unknown>) => void,
+	): Promise<void> {
 		const content = this.vault.getContent(file.path);
 		const { frontmatter, body } = splitFrontmatter(content);
 		const parsed = frontmatter ? parseYaml(frontmatter) : null;
-		const record = parsed && typeof parsed === 'object' ? { ...(parsed as Record<string, unknown>) } : {};
+		const record =
+			parsed && typeof parsed === 'object' ? { ...(parsed as Record<string, unknown>) } : {};
 		callback(record);
 		const yaml = stringifyYaml(record).trim();
 		const bodyClean = body.replace(/^\n+/, '');
@@ -462,7 +468,13 @@ export class MarkdownFileInfo {
 }
 
 export class MarkdownRenderer {
-	static async render(_app: App, markdown: string, container: FakeElement, _path: string, _source: unknown): Promise<void> {
+	static async render(
+		_app: App,
+		markdown: string,
+		container: FakeElement,
+		_path: string,
+		_source: unknown,
+	): Promise<void> {
 		container.innerHTML = markdown;
 	}
 }
@@ -470,7 +482,10 @@ export class MarkdownRenderer {
 export class PluginSettingTab {
 	containerEl = new FakeElement();
 
-	constructor(public app: App, public plugin: Plugin) {}
+	constructor(
+		public app: App,
+		public plugin: Plugin,
+	) {}
 
 	display(): void {
 		return;

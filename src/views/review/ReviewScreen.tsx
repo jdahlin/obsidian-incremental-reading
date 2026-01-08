@@ -32,10 +32,15 @@ export function ReviewScreen(props: {
 						{props.sessionStats.reviewed > 0 && (
 							<div className="ir-review-session-summary">
 								<div>Reviewed: {props.sessionStats.reviewed}</div>
-								<div>Again: {props.sessionStats.again} | Good: {props.sessionStats.good}</div>
+								<div>
+									Again: {props.sessionStats.again} | Good:{' '}
+									{props.sessionStats.good}
+								</div>
 							</div>
 						)}
-						<button type="button" className="ir-secondary" onClick={props.onBack}>Back to decks</button>
+						<button type="button" className="ir-secondary" onClick={props.onBack}>
+							Back to decks
+						</button>
 					</div>
 				</div>
 			</div>
@@ -45,7 +50,10 @@ export function ReviewScreen(props: {
 	return (
 		<div className="ir-review-screen">
 			<div className="ir-review-content">
-				<div className="ir-review-card" dangerouslySetInnerHTML={{ __html: props.content }} />
+				<div
+					className="ir-review-card"
+					dangerouslySetInnerHTML={{ __html: props.content }}
+				/>
 			</div>
 			<div className="ir-review-footer">
 				{props.phase === 'question' ? (
@@ -54,10 +62,34 @@ export function ReviewScreen(props: {
 					</button>
 				) : (
 					<div className="ir-grade-buttons">
-						<button type="button" className="ir-grade ir-grade-again" onClick={() => props.onGrade(1)}>1</button>
-						<button type="button" className="ir-grade ir-grade-hard" onClick={() => props.onGrade(2)}>2</button>
-						<button type="button" className="ir-grade ir-grade-good" onClick={() => props.onGrade(3)}>3</button>
-						<button type="button" className="ir-grade ir-grade-easy" onClick={() => props.onGrade(4)}>4</button>
+						<button
+							type="button"
+							className="ir-grade ir-grade-again"
+							onClick={() => props.onGrade(1)}
+						>
+							1
+						</button>
+						<button
+							type="button"
+							className="ir-grade ir-grade-hard"
+							onClick={() => props.onGrade(2)}
+						>
+							2
+						</button>
+						<button
+							type="button"
+							className="ir-grade ir-grade-good"
+							onClick={() => props.onGrade(3)}
+						>
+							3
+						</button>
+						<button
+							type="button"
+							className="ir-grade ir-grade-easy"
+							onClick={() => props.onGrade(4)}
+						>
+							4
+						</button>
 					</div>
 				)}
 			</div>

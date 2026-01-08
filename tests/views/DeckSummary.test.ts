@@ -21,7 +21,13 @@ function collectText(node: unknown, acc: string[] = []): string[] {
 	return acc;
 }
 
-function makeDeck(path: string, name: string, depth: number, counts: { new: number; learning: number; due: number }, children: DeckInfo[] = []): DeckInfo {
+function makeDeck(
+	path: string,
+	name: string,
+	depth: number,
+	counts: { new: number; learning: number; due: number },
+	children: DeckInfo[] = [],
+): DeckInfo {
 	return { path, name, depth, counts, children, collapsed: false };
 }
 

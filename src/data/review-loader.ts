@@ -6,7 +6,9 @@ import { readReviewItemFile } from './review-items';
 const REVIEW_ITEMS_FOLDER = 'IR/Review Items/';
 
 export async function loadReviewItems(app: App, extractTag: string): Promise<ReviewItem[]> {
-	const files = app.vault.getMarkdownFiles().filter((file) => file.path.startsWith(REVIEW_ITEMS_FOLDER));
+	const files = app.vault
+		.getMarkdownFiles()
+		.filter((file) => file.path.startsWith(REVIEW_ITEMS_FOLDER));
 	const items: ReviewItem[] = [];
 	const now = new Date();
 

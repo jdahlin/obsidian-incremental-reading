@@ -19,8 +19,12 @@ export function DeckSummary(props: {
 			<div className="ir-deck-header">
 				<h2>Decks</h2>
 				<div className="ir-deck-actions">
-					<button type="button" className="ir-secondary" onClick={props.onStats}>Statistics</button>
-					<button type="button" className="ir-primary" onClick={props.onStudy}>Study now</button>
+					<button type="button" className="ir-secondary" onClick={props.onStats}>
+						Statistics
+					</button>
+					<button type="button" className="ir-primary" onClick={props.onStudy}>
+						Study now
+					</button>
 				</div>
 			</div>
 			<div className="ir-deck-list">
@@ -41,7 +45,10 @@ export function DeckSummary(props: {
 						data-depth={row.depth}
 						onClick={() => props.onSelect(row.path)}
 					>
-						<span className="ir-deck-name" style={{ marginLeft: `${row.depth * 16}px` }}>
+						<span
+							className="ir-deck-name"
+							style={{ marginLeft: `${row.depth * 16}px` }}
+						>
 							{row.name}
 						</span>
 						<Counts counts={row.counts} />

@@ -19,7 +19,10 @@ function makeState(): ItemState {
 }
 
 describe('ReviewItemView', () => {
-	function makePlugin(app: App, overrides?: Partial<IncrementalReadingPlugin['settings']>): IncrementalReadingPlugin {
+	function makePlugin(
+		app: App,
+		overrides?: Partial<IncrementalReadingPlugin['settings']>,
+	): IncrementalReadingPlugin {
 		return {
 			app,
 			settings: {
@@ -49,7 +52,15 @@ describe('ReviewItemView', () => {
 		const app = new App();
 		const note = await app.vault.create(
 			'Notes/Deck/Note.md',
-			['---', 'tags: [topic]', 'type: topic', 'priority: 10', 'created: 2024-01-01T00:00:00', '---', 'Body'].join('\n'),
+			[
+				'---',
+				'tags: [topic]',
+				'type: topic',
+				'priority: 10',
+				'created: 2024-01-01T00:00:00',
+				'---',
+				'Body',
+			].join('\n'),
 		);
 		app.workspace.setActiveFile(note);
 
@@ -101,7 +112,9 @@ describe('ReviewItemView', () => {
 		const app = new App();
 		const note = await app.vault.create(
 			'Notes/Cloze.md',
-			['---', 'tags: [topic]', 'type: item', '---', 'Start {{c1::alpha::hint}} End', ''].join('\n'),
+			['---', 'tags: [topic]', 'type: item', '---', 'Start {{c1::alpha::hint}} End', ''].join(
+				'\n',
+			),
 		);
 		const plugin = makePlugin(app);
 		const leaf = new WorkspaceLeaf();
