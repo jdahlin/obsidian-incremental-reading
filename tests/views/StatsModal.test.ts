@@ -44,7 +44,7 @@ describe('StatsModal', () => {
 		await appendReview(app, { ts: '2024-01-02T12:00:00', item_id: 'note-1', rating: 3 });
 
 		const modal = new StatsModal(app, 'topic');
-		await modal.onOpen();
+		await modal.render();
 
 		const text = collectText(modal.contentEl).join(' | ');
 		expect(text).toContain('Statistics');

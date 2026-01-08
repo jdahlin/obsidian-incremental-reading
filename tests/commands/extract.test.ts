@@ -10,8 +10,8 @@ import { formatDate } from '../../src/core/frontmatter';
 
 function getFrontmatter(app: App, path: string): Record<string, unknown> {
 	const file = app.vault.getAbstractFileByPath(path);
-	if (!file) return {};
-	return app.metadataCache.getFileCache(file as TFile)?.frontmatter ?? {};
+	if (!(file instanceof TFile)) return {};
+	return app.metadataCache.getFileCache(file)?.frontmatter ?? {};
 }
 
 describe('extract helpers', () => {

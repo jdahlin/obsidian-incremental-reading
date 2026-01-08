@@ -58,7 +58,7 @@ class VaultAdapter {
 	}
 
 	async mkdir(path: string): Promise<void> {
-		this.vault.createFolder(path);
+		await this.vault.createFolder(path);
 	}
 }
 
@@ -99,8 +99,10 @@ export class TFile extends TAbstractFile {
 	}
 }
 
+type VaultEntry = { file: TAbstractFile; content?: string };
+
 export class Vault {
-	private entries = new Map<string, { file: TAbstractFile; content?: string }>();
+	private entries: Map<string, VaultEntry> = new Map();
 	adapter: VaultAdapter;
 
 	constructor() {
@@ -198,8 +200,9 @@ export class Vault {
 				parent = currentExisting;
 				continue;
 			}
-			const folder = new TFolder(currentPath, parent);
-			this.entries.set(currentPath, { file: folder });
+			const folder: TFolder = new TFolder(currentPath, parent);
+			const entry: VaultEntry = { file: folder };
+			this.entries.set(currentPath, entry);
 			if (parent) parent.children.push(folder);
 			parent = folder;
 		}
@@ -283,7 +286,7 @@ export class Workspace {
 		this.activeFile = file;
 	}
 
-	getActiveViewOfType<T>(viewType: new (...args: any[]) => T): T | null {
+	getActiveViewOfType<T>(viewType: new (...args: unknown[]) => T): T | null {
 		const view = this.activeView;
 		if (view instanceof viewType) return view;
 		return null;
@@ -371,6 +374,7 @@ export class FakeElement {
 	textContent = '';
 	classList = new Set<string>();
 	className = '';
+	tabIndex = 0;
 	components: unknown[] = [];
 
 	createEl(_tag: string, options?: { text?: string }): FakeElement {
@@ -453,7 +457,7 @@ export class ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'stub';
+		return 'Stub';
 	}
 }
 
@@ -471,10 +475,11 @@ export class MarkdownRenderer {
 	static async render(
 		_app: App,
 		markdown: string,
-		container: FakeElement,
+		container: FakeElement | HTMLElement,
 		_path: string,
 		_source: unknown,
 	): Promise<void> {
+		// eslint-disable-next-line @microsoft/sdl/no-inner-html -- test stub rendering.
 		container.innerHTML = markdown;
 	}
 }

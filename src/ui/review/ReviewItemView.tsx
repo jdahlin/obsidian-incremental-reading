@@ -73,7 +73,7 @@ export class ReviewItemView extends ItemView {
 	async onClose(): Promise<void> {
 		this.contentEl.removeEventListener('keydown', this.onKeyDownBound);
 		if (this.mounted) {
-			render(null, this.contentEl);
+			render(null, this.getRenderContainer());
 			this.mounted = false;
 		}
 		this.contentEl.empty();
@@ -117,6 +117,10 @@ export class ReviewItemView extends ItemView {
 		return null;
 	}
 
+	private getRenderContainer(): HTMLElement {
+		return this.contentEl as unknown as HTMLElement;
+	}
+
 	private renderView(): void {
 		const allCounts = getCountsForFolder(this.items, '', new Date());
 		if (this.screen === 'summary') {
@@ -139,7 +143,7 @@ export class ReviewItemView extends ItemView {
 						new StatsModal(this.appRef, this.pluginRef.settings.extractTag).open();
 					}}
 				/>,
-				this.contentEl,
+				this.getRenderContainer(),
 			);
 		} else {
 			const queueStats = this.queue
@@ -161,7 +165,7 @@ export class ReviewItemView extends ItemView {
 						void this.onGrade(grade);
 					}}
 				/>,
-				this.contentEl,
+				this.getRenderContainer(),
 			);
 		}
 		this.mounted = true;
