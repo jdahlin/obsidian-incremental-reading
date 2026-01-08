@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import type { ReviewScreenActions, ReviewScreenState } from './review-screen-state';
 import { ReviewController, type ReviewControllerDeps } from './review-controller';
 
@@ -22,10 +22,14 @@ export function useReviewState(deps: ReviewControllerDeps): UseReviewStateResult
 	}, [controller]);
 
 	const actions = useMemo<ReviewScreenActions>(() => controller.getActions(), [controller]);
+	const onKeyDown = useCallback(
+		(event: KeyboardEvent) => controller.handleKeyDown(event),
+		[controller],
+	);
 
 	return {
 		state,
 		actions,
-		onKeyDown: (event) => controller.handleKeyDown(event),
+		onKeyDown,
 	};
 }
