@@ -162,9 +162,7 @@ export class Vault {
 		const existing = this.getAbstractFileByPath(path);
 		if (existing instanceof TFile) {
 			this.entries.set(existing.path, { file: existing, content });
-			return;
 		}
-		void this.create(path, content);
 	}
 
 	deletePath(path: string): void {
@@ -343,17 +341,11 @@ export class Plugin {
 		this.views.push({ type, creator });
 	}
 
-	registerEvent(_event: unknown): void {
-		return;
-	}
+	registerEvent(_event: unknown): void {}
 
-	registerDomEvent(_el: unknown, _type: string, _handler: unknown): void {
-		return;
-	}
+	registerDomEvent(_el: unknown, _type: string, _handler: unknown): void {}
 
-	registerInterval(_id: number): void {
-		return;
-	}
+	registerInterval(_id: number): void {}
 
 	async loadData(): Promise<unknown> {
 		return this.storedData;
@@ -412,9 +404,7 @@ export class FakeElement {
 		return;
 	}
 
-	removeEventListener(_type: string, _handler: unknown): void {
-		return;
-	}
+	removeEventListener(_type: string, _handler: unknown): void {}
 
 	focus(): void {
 		return;
@@ -438,27 +428,15 @@ export class Modal {
 		this.onClose();
 	}
 
-	onOpen(): void {
-		return;
-	}
+	onOpen(): void {}
 
-	onClose(): void {
-		return;
-	}
+	onClose(): void {}
 }
 
 export class ItemView {
 	contentEl = new FakeElement();
 
 	constructor(public leaf: WorkspaceLeaf) {}
-
-	getViewType(): string {
-		return 'stub';
-	}
-
-	getDisplayText(): string {
-		return 'Stub';
-	}
 }
 
 export class MarkdownView {
@@ -491,9 +469,7 @@ export class PluginSettingTab {
 		public plugin: Plugin,
 	) {}
 
-	display(): void {
-		return;
-	}
+	display(): void {}
 }
 
 export class Setting {
@@ -559,10 +535,6 @@ export class SliderComponent {
 		return this;
 	}
 
-	getValue(): number {
-		return this.value;
-	}
-
 	setDynamicTooltip(): this {
 		return this;
 	}
@@ -585,10 +557,6 @@ export class ToggleComponent {
 	setValue(value: boolean): this {
 		this.value = value;
 		return this;
-	}
-
-	getValue(): boolean {
-		return this.value;
 	}
 
 	onChange(handler: (value: boolean) => void): this {

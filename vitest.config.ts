@@ -15,6 +15,11 @@ export default defineConfig({
 			all: true,
 			include: ['src/**/*.ts', 'src/**/*.tsx'],
 			exclude: ['src/css.d.ts'],
+			thresholds: {
+				'src/tests/obsidian-stub.ts': {
+					lines: 100,
+				},
+			},
 		},
 	},
 });
