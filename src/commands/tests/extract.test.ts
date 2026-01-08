@@ -14,6 +14,83 @@ function getFrontmatter(app: App, path: string): Record<string, unknown> {
 	return app.metadataCache.getFileCache(file)?.frontmatter ?? {};
 }
 
+describe('Editor stub', () => {
+	it('handles multi-line cursor positions', () => {
+		const text = 'Line one\nLine two\nLine three';
+		// Select "Line two" (starts at index 9, ends at index 17)
+		const editor = new Editor(text, 9, 17);
+
+		const from = editor.getCursor('from');
+		expect(from).toEqual({ line: 1, ch: 0 });
+
+		const to = editor.getCursor('to');
+		expect(to).toEqual({ line: 1, ch: 8 });
+
+		// Set selection to line 3
+		editor.setSelection({ line: 2, ch: 0 }, { line: 2, ch: 10 });
+		expect(editor.getSelection()).toBe('Line three');
+	});
+});
+
+describe('Vault stub edge cases', () => {
+	it('handles files in root folder', async () => {
+		const app = new App();
+		const file = await app.vault.create('root-file.md', 'content');
+		expect(file.path).toBe('root-file.md');
+		expect(file.parent).toBeNull();
+	});
+
+	it('handles files without extension', async () => {
+		const app = new App();
+		const file = await app.vault.create('Folder/noext', 'content');
+		expect(file.extension).toBe('');
+		expect(file.basename).toBe('noext');
+	});
+
+	it('adapter.remove deletes files', async () => {
+		const app = new App();
+		await app.vault.create('test.md', 'content');
+		expect(await app.vault.adapter.exists('test.md')).toBe(true);
+		await app.vault.adapter.remove('test.md');
+		expect(await app.vault.adapter.exists('test.md')).toBe(false);
+	});
+
+	it('createFolder handles root folder', async () => {
+		const app = new App();
+		const folder = await app.vault.createFolder('');
+		expect(folder.path).toBe('');
+	});
+
+	it('adapter.write modifies existing files', async () => {
+		const app = new App();
+		await app.vault.create('test.md', 'original');
+		await app.vault.adapter.write('test.md', 'updated');
+		expect(await app.vault.adapter.read('test.md')).toBe('updated');
+	});
+
+	it('getFileCache handles content without frontmatter', () => {
+		const app = new App();
+		app.vault.setContent('test.md', 'No frontmatter here');
+		const file = app.vault.getAbstractFileByPath('test.md');
+		// File doesn't exist since we used setContent without create
+		expect(file).toBeNull();
+	});
+
+	it('getFileCache handles unclosed frontmatter', async () => {
+		const app = new App();
+		const file = await app.vault.create('test.md', '---\nkey: value\nno closing');
+		const cache = app.metadataCache.getFileCache(file);
+		expect(cache).toBeNull();
+	});
+
+	it('getFileCache handles content without frontmatter delimiter', async () => {
+		const app = new App();
+		const file = await app.vault.create('test.md', 'Just plain content');
+		const cache = app.metadataCache.getFileCache(file);
+		expect(cache).toBeNull();
+	});
+});
+
 describe('extract helpers', () => {
 	it('builds titles from selections', () => {
 		expect(titleFromSelection('one two three', 2)).toBe('one two');

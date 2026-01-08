@@ -19,7 +19,7 @@ describe('PriorityModal', () => {
 			submitted = value;
 		});
 
-		modal.onOpen();
+		modal.open();
 		const { text, slider, button } = getComponents();
 
 		slider.triggerChange(42);
@@ -33,9 +33,9 @@ describe('PriorityModal', () => {
 	it('empties content on close', () => {
 		const app = new App();
 		const modal = new PriorityModal(app, 10, () => undefined);
-		modal.onOpen();
+		modal.open();
 		expect(modal.contentEl.children.length).toBeGreaterThan(0);
-		modal.onClose();
+		modal.close();
 		expect(modal.contentEl.children).toHaveLength(0);
 	});
 });
