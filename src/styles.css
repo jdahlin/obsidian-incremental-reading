@@ -1,0 +1,225 @@
+.ir-review-view {
+	padding: 16px;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.ir-primary {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	padding: 6px 12px;
+	border-radius: 6px;
+}
+
+.ir-secondary {
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	padding: 6px 10px;
+	border-radius: 6px;
+}
+
+.ir-deck-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	height: 100%;
+}
+
+.ir-deck-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.ir-deck-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	overflow: auto;
+	padding-right: 6px;
+}
+
+.ir-deck-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px;
+	border-radius: 6px;
+	cursor: pointer;
+	background: var(--background-secondary);
+}
+
+.ir-deck-row.is-selected {
+	outline: 1px solid var(--interactive-accent);
+	background: var(--background-secondary-alt);
+}
+
+.ir-deck-name {
+	font-weight: 600;
+}
+
+.ir-deck-counts {
+	display: grid;
+	grid-auto-flow: column;
+	gap: 8px;
+	font-variant-numeric: tabular-nums;
+}
+
+.ir-count-new {
+	color: var(--text-accent);
+}
+
+.ir-count-learning {
+	color: var(--text-warning);
+}
+
+.ir-count-due {
+	color: var(--text-success);
+}
+
+.ir-deck-footer {
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-muted);
+}
+
+.ir-review-screen {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.ir-review-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow: auto;
+	padding: 24px;
+}
+
+.ir-review-card {
+	max-width: 600px;
+	width: 100%;
+	text-align: center;
+	font-size: 1.1em;
+	line-height: 1.6;
+}
+
+.ir-review-empty {
+	text-align: center;
+	margin: auto;
+}
+
+.ir-show-answer {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	padding: 8px 24px;
+	font-size: 1em;
+	cursor: pointer;
+}
+
+.ir-review-item-title {
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.ir-review-item-meta {
+	display: flex;
+	gap: 12px;
+	color: var(--text-muted);
+}
+
+.ir-review-footer {
+	display: flex;
+	justify-content: center;
+	padding: 16px 0;
+}
+
+.ir-grade-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+.ir-grade {
+	border: none;
+	border-radius: 6px;
+	padding: 10px 20px;
+	font-size: 1em;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ir-grade-again {
+	background: var(--color-red);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-hard {
+	background: var(--color-orange);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-good {
+	background: var(--color-green);
+	color: var(--text-on-accent);
+}
+
+.ir-grade-easy {
+	background: var(--color-blue);
+	color: var(--text-on-accent);
+}
+
+.ir-session-stats {
+	display: flex;
+	gap: 10px;
+	color: var(--text-muted);
+	font-size: 0.85em;
+}
+
+.ir-review-empty-title {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.ir-review-empty-body {
+	color: var(--text-muted);
+	margin-bottom: 16px;
+}
+
+.ir-review-session-summary {
+	color: var(--text-muted);
+	margin-bottom: 16px;
+}
+
+.ir-cloze-hidden {
+	background: var(--background-modifier-hover);
+	border-radius: 4px;
+	padding: 0 4px;
+}
+
+.ir-stats-modal {
+	padding: 12px;
+}
+
+.ir-stats-summary {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.ir-stats-block {
+	margin-bottom: 12px;
+}
+
+.ir-deck-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}

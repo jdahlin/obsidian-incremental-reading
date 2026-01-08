@@ -12,6 +12,9 @@ node_modules
 styles.css
 main.js
 
+# Keep the source stylesheet tracked (the root styles.css is a build artifact).
+!src/styles.css
+
 # Exclude sourcemaps
 *.map
 
