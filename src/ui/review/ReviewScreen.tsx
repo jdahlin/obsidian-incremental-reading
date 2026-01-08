@@ -1,4 +1,4 @@
-import type { JSX } from 'preact';
+import type { FunctionalComponent, JSX } from 'preact';
 import type { QueueStats, ReviewItem } from '../../core/types';
 import { formatClozeQuestion } from '../../core/cloze';
 
@@ -10,7 +10,7 @@ export interface SessionStats {
 	easy: number;
 }
 
-export function ReviewScreen(props: {
+export interface ReviewScreenProps {
 	selectedDeck: string | null;
 	currentItem: ReviewItem | null;
 	phase: 'question' | 'answer';
@@ -20,87 +20,138 @@ export function ReviewScreen(props: {
 	onBack: () => void;
 	onShowAnswer: () => void;
 	onGrade: (grade: number) => void;
-}): JSX.Element {
-	const item = props.currentItem;
+}
+
+interface EmptyStateProps {
+	sessionStats: SessionStats;
+	onBack: () => void;
+}
+
+interface SessionSummaryProps {
+	sessionStats: SessionStats;
+}
+
+interface ReviewCardProps {
+	content: string;
+}
+
+interface ReviewFooterProps {
+	phase: 'question' | 'answer';
+	onShowAnswer: () => void;
+	onGrade: (grade: number) => void;
+}
+
+interface ShowAnswerButtonProps {
+	onShowAnswer: () => void;
+}
+
+interface GradeButtonsProps {
+	onGrade: (grade: number) => void;
+}
+
+export const ReviewScreen: FunctionalComponent<ReviewScreenProps> = ({
+	currentItem,
+	phase,
+	sessionStats,
+	content,
+	onBack,
+	onShowAnswer,
+	onGrade,
+}) => {
+	const item = currentItem;
 
 	if (!item) {
-		return (
-			<div className="ir-review-screen">
-				<div className="ir-review-content">
-					<div className="ir-review-empty">
-						<div className="ir-review-empty-title">Done!</div>
-						<div className="ir-review-empty-body">No more reviews for now.</div>
-						{props.sessionStats.reviewed > 0 && (
-							<div className="ir-review-session-summary">
-								<div>Reviewed: {props.sessionStats.reviewed}</div>
-								<div>
-									Again: {props.sessionStats.again} | Good:{' '}
-									{props.sessionStats.good}
-								</div>
-							</div>
-						)}
-						<button type="button" className="ir-secondary" onClick={props.onBack}>
-							Back to decks
-						</button>
-					</div>
-				</div>
-			</div>
-		);
+		return renderEmptyState({ sessionStats, onBack });
 	}
 
 	// Format cloze content in question phase to hide answers
-	const isClozeQuestion =
-		props.phase === 'question' && item.type === 'item' && item.clozeIndex != null;
+	const isClozeQuestion = phase === 'question' && item.type === 'item' && item.clozeIndex != null;
 	const displayContent = isClozeQuestion
-		? formatClozeQuestion(props.content, item.clozeIndex)
-		: props.content;
+		? formatClozeQuestion(content, item.clozeIndex)
+		: content;
 
 	return (
 		<div className="ir-review-screen">
+			{renderReviewCard({ content: displayContent })}
+			{renderReviewFooter({ phase, onShowAnswer, onGrade })}
+		</div>
+	);
+};
+
+function renderEmptyState({ sessionStats, onBack }: EmptyStateProps): JSX.Element {
+	return (
+		<div className="ir-review-screen">
 			<div className="ir-review-content">
-				<div
-					className="ir-review-card"
-					dangerouslySetInnerHTML={{ __html: displayContent }}
-				/>
-			</div>
-			<div className="ir-review-footer">
-				{props.phase === 'question' ? (
-					<button type="button" className="ir-show-answer" onClick={props.onShowAnswer}>
-						Show Answer
+				<div className="ir-review-empty">
+					<div className="ir-review-empty-title">Done!</div>
+					<div className="ir-review-empty-body">No more reviews for now.</div>
+					{renderSessionSummary({ sessionStats })}
+					<button type="button" className="ir-secondary" onClick={onBack}>
+						Back to decks
 					</button>
-				) : (
-					<div className="ir-grade-buttons">
-						<button
-							type="button"
-							className="ir-grade ir-grade-again"
-							onClick={() => props.onGrade(1)}
-						>
-							1
-						</button>
-						<button
-							type="button"
-							className="ir-grade ir-grade-hard"
-							onClick={() => props.onGrade(2)}
-						>
-							2
-						</button>
-						<button
-							type="button"
-							className="ir-grade ir-grade-good"
-							onClick={() => props.onGrade(3)}
-						>
-							3
-						</button>
-						<button
-							type="button"
-							className="ir-grade ir-grade-easy"
-							onClick={() => props.onGrade(4)}
-						>
-							4
-						</button>
-					</div>
-				)}
+				</div>
 			</div>
+		</div>
+	);
+}
+
+function renderSessionSummary({ sessionStats }: SessionSummaryProps): JSX.Element | null {
+	if (sessionStats.reviewed <= 0) return null;
+	return (
+		<div className="ir-review-session-summary">
+			<div>Reviewed: {sessionStats.reviewed}</div>
+			<div>
+				Again: {sessionStats.again} | Good: {sessionStats.good}
+			</div>
+		</div>
+	);
+}
+
+function renderReviewCard({ content }: ReviewCardProps): JSX.Element {
+	return (
+		<div className="ir-review-content">
+			<div className="ir-review-card" dangerouslySetInnerHTML={{ __html: content }} />
+		</div>
+	);
+}
+
+function renderReviewFooter({ phase, onShowAnswer, onGrade }: ReviewFooterProps): JSX.Element {
+	return (
+		<div className="ir-review-footer">
+			{phase === 'question'
+				? renderShowAnswerButton({ onShowAnswer })
+				: renderGradeButtons({ onGrade })}
+		</div>
+	);
+}
+
+function renderShowAnswerButton({ onShowAnswer }: ShowAnswerButtonProps): JSX.Element {
+	return (
+		<button type="button" className="ir-show-answer" onClick={onShowAnswer}>
+			Show Answer
+		</button>
+	);
+}
+
+function renderGradeButtons({ onGrade }: GradeButtonsProps): JSX.Element {
+	const grades = [
+		{ value: 1, className: 'ir-grade ir-grade-again' },
+		{ value: 2, className: 'ir-grade ir-grade-hard' },
+		{ value: 3, className: 'ir-grade ir-grade-good' },
+		{ value: 4, className: 'ir-grade ir-grade-easy' },
+	];
+	return (
+		<div className="ir-grade-buttons">
+			{grades.map((grade) => (
+				<button
+					key={grade.value}
+					type="button"
+					className={grade.className}
+					onClick={() => onGrade(grade.value)}
+				>
+					{grade.value}
+				</button>
+			))}
 		</div>
 	);
 }
