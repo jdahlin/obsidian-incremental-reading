@@ -6,7 +6,6 @@ import { exportReviewHistory } from '../data/export';
 import { normalizeNumber } from '../core/frontmatter';
 import { PriorityModal } from '../ui/PriorityModal';
 import { StatsModal } from '../views/stats/StatsModal';
-import { VIEW_TYPE_REVIEW } from '../views/review/ReviewItemView';
 
 export function registerCommands(plugin: IncrementalReadingPlugin): void {
 	plugin.addCommand({
