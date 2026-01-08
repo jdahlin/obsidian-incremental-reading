@@ -4,12 +4,12 @@ import path from 'node:path';
 export default defineConfig({
 	resolve: {
 		alias: {
-			obsidian: path.resolve(__dirname, 'tests/obsidian-stub.ts'),
+			obsidian: path.resolve(__dirname, 'src/tests/obsidian-stub.ts'),
 		},
 	},
 	test: {
 		environment: 'node',
-		include: ['tests/**/*.test.ts'],
+		include: ['src/**/tests/**/*.test.ts'],
 		coverage: {
 			provider: 'v8',
 			all: true,

@@ -727,5 +727,5 @@ src/
 ├── settings.ts              # Settings (Phase 7)
 └── main.ts                  # Plugin entry
 
-tests/ (deferred)
+src/**/tests/               # Vitest suites colocated with modules
 ```
