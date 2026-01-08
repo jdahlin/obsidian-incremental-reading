@@ -65,10 +65,10 @@ export const ReviewScreen: FunctionalComponent<ReviewScreenProps> = ({
 	}
 
 	// Format cloze content in question phase to hide answers
-	const isClozeQuestion = phase === 'question' && item.type === 'item' && item.clozeIndex != null;
-	const displayContent = isClozeQuestion
-		? formatClozeQuestion(content, item.clozeIndex)
-		: content;
+	let displayContent = content;
+	if (phase === 'question' && item.type === 'item' && item.clozeIndex != null) {
+		displayContent = formatClozeQuestion(content, item.clozeIndex);
+	}
 
 	return (
 		<div className="ir-review-screen">
