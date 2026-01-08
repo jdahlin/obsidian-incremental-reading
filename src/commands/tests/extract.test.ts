@@ -47,6 +47,16 @@ describe('Vault stub edge cases', () => {
 		expect(file.basename).toBe('noext');
 	});
 
+	it('renameFile handles files without extension', async () => {
+		const app = new App();
+		const file = await app.vault.create('Folder/noext', 'content');
+		await app.fileManager.renameFile(file, 'Folder2/noext2');
+		expect(file.extension).toBe('');
+		expect(file.basename).toBe('noext2');
+		expect(app.vault.getAbstractFileByPath('Folder/noext')).toBeNull();
+		expect(app.vault.getAbstractFileByPath('Folder2/noext2')).toBe(file);
+	});
+
 	it('adapter.remove deletes files', async () => {
 		const app = new App();
 		await app.vault.create('test.md', 'content');
@@ -162,5 +172,92 @@ describe('extractToIncrementalNote', () => {
 		const noteId = frontmatter.ir_note_id as string;
 		const sidecarPath = `IR/Review Items/${noteId}.md`;
 		expect(app.vault.getAbstractFileByPath(sidecarPath)).not.toBeNull();
+	});
+
+	it('optionally converts source note to folder note', async () => {
+		const app = new App();
+		await app.vault.create('Folder/Source Note.md', 'Source content');
+		const source = app.vault.getAbstractFileByPath('Folder/Source Note.md') as TFile;
+		const view = new MarkdownView(source);
+		const selection = 'Line one\r\nLine two';
+		const editor = new Editor(selection);
+		Notice.clear();
+
+		await extractToIncrementalNote(app, editor, view, {
+			titleWords: 2,
+			tag: '#topic',
+			createFolderForExtractedTopics: true,
+		});
+
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note.md')).toBeNull();
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note/Source Note.md')).not.toBeNull();
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note/Line one.md')).not.toBeNull();
+
+		const frontmatter = getFrontmatter(app, 'Folder/Source Note/Line one.md');
+		expect(frontmatter.source).toBe('[[Folder/Source Note/Source Note]]');
+
+		const linkText = '[Line one Line two](Folder/Source%20Note/Line%20one.md)';
+		expect(editor.getValue()).toBe(linkText);
+	});
+
+	it('does not convert when source already is a folder note', async () => {
+		const app = new App();
+		const source = await app.vault.create(
+			'Folder/Source Note/Source Note.md',
+			'Source content',
+		);
+		const view = new MarkdownView(source);
+		const selection = 'Line one\r\nLine two';
+		const editor = new Editor(selection);
+		Notice.clear();
+
+		await extractToIncrementalNote(app, editor, view, {
+			titleWords: 2,
+			tag: '#topic',
+			createFolderForExtractedTopics: true,
+		});
+
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note/Source Note.md')).toBe(source);
+		expect(
+			app.vault.getAbstractFileByPath('Folder/Source Note/Source Note/Source Note.md'),
+		).toBeNull();
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note/Line one.md')).not.toBeNull();
+
+		const frontmatter = getFrontmatter(app, 'Folder/Source Note/Line one.md');
+		expect(frontmatter.source).toBe('[[Folder/Source Note/Source Note]]');
+
+		const linkText = '[Line one Line two](Folder/Source%20Note/Line%20one.md)';
+		expect(editor.getValue()).toBe(linkText);
+	});
+
+	it('skips conversion when a folder note with same name already exists', async () => {
+		const app = new App();
+		const existingFolderNote = await app.vault.create(
+			'Folder/Source Note/Source Note.md',
+			'Existing folder note',
+		);
+		const source = await app.vault.create('Folder/Source Note.md', 'Source content');
+		const view = new MarkdownView(source);
+		const selection = 'Line one\r\nLine two';
+		const editor = new Editor(selection);
+		Notice.clear();
+
+		await extractToIncrementalNote(app, editor, view, {
+			titleWords: 2,
+			tag: '#topic',
+			createFolderForExtractedTopics: true,
+		});
+
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note.md')).toBe(source);
+		expect(app.vault.getAbstractFileByPath('Folder/Source Note/Source Note.md')).toBe(
+			existingFolderNote,
+		);
+		expect(app.vault.getAbstractFileByPath('Folder/Line one.md')).not.toBeNull();
+
+		const frontmatter = getFrontmatter(app, 'Folder/Line one.md');
+		expect(frontmatter.source).toBe('[[Folder/Source Note]]');
+
+		const linkText = '[Line one Line two](Folder/Line%20one.md)';
+		expect(editor.getValue()).toBe(linkText);
 	});
 });

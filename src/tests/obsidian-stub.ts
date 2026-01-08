@@ -109,6 +109,40 @@ export class Vault {
 		this.adapter = new VaultAdapter(this);
 	}
 
+	async rename(file: TFile, newPath: string): Promise<void> {
+		const oldPath = normalizePath(file.path);
+		const normalizedNewPath = normalizePath(newPath);
+		if (!normalizedNewPath) throw new Error('Invalid path');
+		if (oldPath === normalizedNewPath) return;
+		if (this.entries.has(normalizedNewPath)) throw new Error('Path already exists');
+
+		const existing = this.entries.get(oldPath);
+		if (!existing || !(existing.file instanceof TFile)) throw new Error('File not found');
+
+		const parentPath = normalizedNewPath.split('/').slice(0, -1).join('/');
+		const parent = parentPath ? this.ensureFolder(parentPath) : null;
+
+		if (file.parent) {
+			file.parent.children = file.parent.children.filter((child) => child !== file);
+		}
+
+		file.path = normalizedNewPath;
+		file.name = normalizedNewPath.split('/').pop() ?? normalizedNewPath;
+		const dot = file.name.lastIndexOf('.');
+		if (dot >= 0) {
+			file.extension = file.name.slice(dot + 1);
+			file.basename = file.name.slice(0, dot);
+		} else {
+			file.extension = '';
+			file.basename = file.name;
+		}
+		file.parent = parent;
+
+		this.entries.delete(oldPath);
+		this.entries.set(normalizedNewPath, { file, content: existing.content });
+		if (parent) parent.children.push(file);
+	}
+
 	getAbstractFileByPath(path: string): TAbstractFile | null {
 		const normalized = normalizePath(path);
 		return this.entries.get(normalized)?.file ?? null;
@@ -244,6 +278,10 @@ export class FileManager {
 
 	async trashFile(file: TFile): Promise<void> {
 		this.vault.deletePath(file.path);
+	}
+
+	async renameFile(file: TFile, newPath: string): Promise<void> {
+		await this.vault.rename(file, newPath);
 	}
 }
 

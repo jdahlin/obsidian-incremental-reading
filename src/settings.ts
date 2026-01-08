@@ -7,6 +7,7 @@ export interface IncrementalReadingSettings {
 	requestRetention: number;
 	extractTag: string;
 	extractTitleWords: number;
+	createFolderForExtractedTopics: boolean;
 	trackReviewTime: boolean;
 	showStreak: boolean;
 }
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: IncrementalReadingSettings = {
 	requestRetention: 0.9,
 	extractTag: 'topic',
 	extractTitleWords: 5,
+	createFolderForExtractedTopics: false,
 	trackReviewTime: true,
 	showStreak: true,
 };
@@ -93,6 +95,20 @@ export class IncrementalReadingSettingTab extends PluginSettingTab {
 						void this.plugin.saveSettings();
 					}
 				});
+			});
+
+		new Setting(containerEl)
+			.setName('Create folder for extracted topics')
+			.setDesc(
+				'When extracting from a note that is not a folder note, create a folder and move the source note into it.',
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.createFolderForExtractedTopics)
+					.onChange((value) => {
+						this.plugin.settings.createFolderForExtractedTopics = value;
+						void this.plugin.saveSettings();
+					});
 			});
 
 		new Setting(containerEl)

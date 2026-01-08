@@ -1,10 +1,19 @@
-import { App, Editor, MarkdownFileInfo, MarkdownView, Notice, stringifyYaml } from 'obsidian';
+import {
+	App,
+	Editor,
+	MarkdownFileInfo,
+	MarkdownView,
+	Notice,
+	TFile,
+	stringifyYaml,
+} from 'obsidian';
 import { formatDate } from '../core/frontmatter';
 import { syncNoteToSidecar } from '../data/sync';
 
 export interface ExtractOptions {
 	titleWords: number;
 	tag?: string;
+	createFolderForExtractedTopics?: boolean;
 	now?: Date;
 	priority?: number;
 }
@@ -22,10 +31,14 @@ export async function extractToIncrementalNote(
 		return;
 	}
 
-	const sourceFile = view.file;
+	let sourceFile = view.file;
 	if (!sourceFile) {
 		new Notice('No active file.');
 		return;
+	}
+
+	if (options.createFolderForExtractedTopics && !isFolderNote(sourceFile)) {
+		sourceFile = await convertNoteToFolderNote(app, sourceFile);
 	}
 
 	const createdAt = options.now ?? new Date();
@@ -61,6 +74,34 @@ export async function extractToIncrementalNote(
 
 	await syncNoteToSidecar(app, childFile, tag);
 	new Notice(`Created note: ${childFile.basename}`);
+}
+
+function isFolderNote(file: TFile): boolean {
+	const parent = file.parent;
+	if (!parent) return false;
+	return parent.name === file.basename;
+}
+
+async function convertNoteToFolderNote(app: App, file: TFile): Promise<TFile> {
+	const fileName = file.basename;
+	const parentPath = file.parent?.path ?? '';
+	const newFolderPath = parentPath ? `${parentPath}/${fileName}` : fileName;
+	const newFilePath = `${newFolderPath}/${fileName}.md`;
+
+	if (file.path === newFilePath) return file;
+
+	const existing = app.vault.getAbstractFileByPath(newFilePath);
+	if (existing instanceof TFile) return file;
+
+	try {
+		await app.vault.createFolder(newFolderPath);
+	} catch {
+		// Folder may already exist
+	}
+
+	await app.fileManager.renameFile(file, newFilePath);
+	const moved = app.vault.getAbstractFileByPath(newFilePath);
+	return moved instanceof TFile ? moved : file;
 }
 
 function normalizeSelection(selection: string): string {

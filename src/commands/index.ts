@@ -77,6 +77,7 @@ export function registerCommands(plugin: CommandPlugin): void {
 			await extractToIncrementalNote(plugin.app, editor, view, {
 				titleWords: plugin.settings.extractTitleWords,
 				tag: plugin.settings.extractTag,
+				createFolderForExtractedTopics: plugin.settings.createFolderForExtractedTopics,
 			});
 		},
 	});

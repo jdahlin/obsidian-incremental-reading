@@ -22,24 +22,43 @@ describe('IncrementalReadingSettingTab', () => {
 		tab.display();
 
 		const types = Setting.createdComponents.map((entry) => entry.type);
-		expect(types).toEqual(['text', 'text', 'text', 'text', 'text', 'toggle', 'toggle']);
+		expect(types).toEqual([
+			'text',
+			'text',
+			'text',
+			'text',
+			'text',
+			'toggle',
+			'toggle',
+			'toggle',
+		]);
 
-		const [newCards, maxInterval, retention, tag, titleWords, trackToggle, streakToggle] =
-			Setting.createdComponents.map((entry) => entry.component) as [
-				TextComponent,
-				TextComponent,
-				TextComponent,
-				TextComponent,
-				TextComponent,
-				ToggleComponent,
-				ToggleComponent,
-			];
+		const [
+			newCards,
+			maxInterval,
+			retention,
+			tag,
+			titleWords,
+			createFolderToggle,
+			trackToggle,
+			streakToggle,
+		] = Setting.createdComponents.map((entry) => entry.component) as [
+			TextComponent,
+			TextComponent,
+			TextComponent,
+			TextComponent,
+			TextComponent,
+			ToggleComponent,
+			ToggleComponent,
+			ToggleComponent,
+		];
 
 		newCards.triggerChange('25');
 		maxInterval.triggerChange('120');
 		retention.triggerChange('0.75');
 		tag.triggerChange('  custom  ');
 		titleWords.triggerChange('3');
+		createFolderToggle.triggerChange(true);
 		trackToggle.triggerChange(false);
 		streakToggle.triggerChange(false);
 
@@ -48,6 +67,7 @@ describe('IncrementalReadingSettingTab', () => {
 		expect(plugin.settings.requestRetention).toBe(0.75);
 		expect(plugin.settings.extractTag).toBe('custom');
 		expect(plugin.settings.extractTitleWords).toBe(3);
+		expect(plugin.settings.createFolderForExtractedTopics).toBe(true);
 		expect(plugin.settings.trackReviewTime).toBe(false);
 		expect(plugin.settings.showStreak).toBe(false);
 		expect(plugin.saveSettingsCalls).toBeGreaterThan(0);
