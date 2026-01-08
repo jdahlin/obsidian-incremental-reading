@@ -2,12 +2,12 @@ import type { FunctionalComponent } from 'preact';
 import type { SessionStats } from './review-screen-types';
 import { ReviewSessionSummary } from './ReviewSessionSummary';
 
-export interface ReviewEmptyStateProps {
+export interface ReviewFinishedScreenProps {
 	sessionStats: SessionStats;
 	onBack: () => void;
 }
 
-export const ReviewEmptyState: FunctionalComponent<ReviewEmptyStateProps> = ({
+export const ReviewFinishedScreen: FunctionalComponent<ReviewFinishedScreenProps> = ({
 	sessionStats,
 	onBack,
 }) => {

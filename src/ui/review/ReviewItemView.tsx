@@ -1,11 +1,10 @@
 import { render } from 'preact';
 import { App, ItemView, WorkspaceLeaf } from 'obsidian';
 import type IncrementalReadingPlugin from '../../main';
-import { ReviewSummaryScreen } from './ReviewSummaryScreen';
-import { ReviewScreen } from './ReviewScreen';
+import { ReviewScreenRouter } from './ReviewScreenRouter';
 import type { SessionStats } from './review-screen-types';
 import { buildDeckTree, getCountsForFolder } from '../../core/decks';
-import { buildQueue, getNextItem, getQueueStats } from '../../core/queue';
+import { buildQueue, getNextItem } from '../../core/queue';
 import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
 import type {
 	DeckInfo,
@@ -22,6 +21,7 @@ import { loadReviewItems } from '../../data/review-loader';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
 import { StatsModal } from '../stats/StatsModal';
 import { loadReviewItemHtml, type ReviewPhase } from '../../review/content';
+import type { ReviewScreenActions, ReviewScreenState } from './review-screen-state';
 
 export const VIEW_TYPE_REVIEW = 'ir-review';
 
@@ -123,53 +123,62 @@ export class ReviewItemView extends ItemView {
 	}
 
 	private renderView(): void {
-		const allCounts = getCountsForFolder(this.items, '', new Date());
-		if (this.screen === 'summary') {
-			render(
-				<ReviewSummaryScreen
-					decks={this.decks}
-					selectedPath={this.selectedPath}
-					allCounts={allCounts}
-					todayStats={this.todayStats}
-					streak={this.streak}
-					showStreak={this.pluginRef.settings.showStreak}
-					onSelect={(path) => {
-						this.selectedPath = path;
-						this.renderView();
-					}}
-					onStudy={() => {
-						void this.startReview();
-					}}
-					onStats={() => {
-						new StatsModal(this.appRef, this.pluginRef.settings.extractTag).open();
-					}}
-				/>,
-				this.getRenderContainer(),
-			);
-		} else {
-			const queueStats = this.queue
-				? getQueueStats(this.queue)
-				: { learning: 0, due: 0, new: 0, total: 0 };
-			render(
-				<ReviewScreen
-					selectedDeck={this.selectedPath}
-					currentItem={this.currentItem}
-					phase={this.phase}
-					queueStats={queueStats}
-					sessionStats={this.sessionStats}
-					content={this.currentContent}
-					onBack={() => {
-						void this.backToSummary();
-					}}
-					onShowAnswer={() => this.showAnswer()}
-					onGrade={(grade) => {
-						void this.onGrade(grade);
-					}}
-				/>,
-				this.getRenderContainer(),
-			);
-		}
+		const screenState = this.getScreenState();
+		const actions: ReviewScreenActions = {
+			onSelectDeck: (path) => {
+				this.selectedPath = path;
+				this.renderView();
+			},
+			onStudy: () => {
+				void this.startReview();
+			},
+			onStats: () => {
+				new StatsModal(this.appRef, this.pluginRef.settings.extractTag).open();
+			},
+			onBack: () => {
+				void this.backToSummary();
+			},
+			onShowAnswer: () => this.showAnswer(),
+			onGrade: (grade) => {
+				void this.onGrade(grade);
+			},
+		};
+
+		render(
+			<ReviewScreenRouter state={screenState} actions={actions} />,
+			this.getRenderContainer(),
+		);
 		this.mounted = true;
+	}
+
+	private getScreenState(): ReviewScreenState {
+		if (this.screen === 'summary') {
+			const allCounts = getCountsForFolder(this.items, '', new Date());
+			return {
+				type: 'folder',
+				decks: this.decks,
+				selectedPath: this.selectedPath,
+				allCounts,
+				todayStats: this.todayStats,
+				streak: this.streak,
+				showStreak: this.pluginRef.settings.showStreak,
+			};
+		}
+
+		if (!this.currentItem) {
+			return { type: 'finished', sessionStats: this.sessionStats };
+		}
+
+		if (this.phase === 'question') {
+			return {
+				type: 'question',
+				content: this.currentContent,
+				clozeIndex:
+					this.currentItem.type === 'item' ? (this.currentItem.clozeIndex ?? null) : null,
+			};
+		}
+
+		return { type: 'answer', content: this.currentContent };
 	}
 
 	private async startReview(): Promise<void> {

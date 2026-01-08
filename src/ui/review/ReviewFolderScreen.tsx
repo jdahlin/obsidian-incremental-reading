@@ -1,11 +1,12 @@
 import type { FunctionalComponent } from 'preact';
 import type { DeckInfo, StreakInfo, TodayStats } from '../../core/types';
+import type { DeckCountsValue } from './deck-summary-types';
 import { DeckSummary } from './DeckSummary';
 
-export interface ReviewSummaryScreenProps {
+export interface ReviewFolderScreenProps {
 	decks: DeckInfo[];
 	selectedPath: string | null;
-	allCounts: { new: number; learning: number; due: number };
+	allCounts: DeckCountsValue;
 	todayStats: TodayStats;
 	streak: StreakInfo;
 	showStreak: boolean;
@@ -14,7 +15,7 @@ export interface ReviewSummaryScreenProps {
 	onStats: () => void;
 }
 
-export const ReviewSummaryScreen: FunctionalComponent<ReviewSummaryScreenProps> = ({
+export const ReviewFolderScreen: FunctionalComponent<ReviewFolderScreenProps> = ({
 	decks,
 	selectedPath,
 	allCounts,
