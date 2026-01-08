@@ -1,3 +1,5 @@
 #!/usr/bin/env sh
 
-npx nano-staged
+npx --no-install nano-staged
+npm run -s lint
+npm run -s typecheck
