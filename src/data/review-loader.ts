@@ -26,7 +26,7 @@ export async function loadReviewItems(app: App, extractTag: string): Promise<Rev
 		const priority = parsed.priority;
 		const created = parsed.created ?? null;
 
-		if (data.topic) {
+		if (data.topic && (!data.clozes || Object.keys(data.clozes).length === 0)) {
 			items.push({
 				id: data.ir_note_id,
 				noteId: data.ir_note_id,

@@ -45,10 +45,9 @@ describe('review loader', () => {
 		});
 
 		const items = await loadReviewItems(app, 'topic');
-		expect(items).toHaveLength(2);
-		const topic = items.find((item) => item.type === 'topic');
+		expect(items).toHaveLength(1);
 		const cloze = items.find((item) => item.type === 'item');
-		expect(topic?.notePath).toBe(noteFile.path);
+		expect(cloze?.notePath).toBe(noteFile.path);
 		expect(cloze?.id).toBe('note-1::uid-1');
 		expect(cloze?.clozeIndex).toBe(1);
 	});

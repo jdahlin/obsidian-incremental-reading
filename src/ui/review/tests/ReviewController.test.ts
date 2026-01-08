@@ -72,13 +72,18 @@ describe('ReviewController', () => {
 
 		await withDocument(() => controller.refreshSummary());
 		const model = controller.getModel();
-		expect(model.items).toHaveLength(2);
+		expect(model.items).toHaveLength(1);
 		expect(model.selectedPath).toBe('Notes/Deck');
 
 		await withDocument(() => controller.startReview());
 		expect(controller.getModel().screen).toBe('review');
 		expect(controller.getModel().currentItem).not.toBeNull();
 
+		// First grade on a cloze item reveals the answer.
+		await withDocument(() => controller.gradeCurrentItem(3));
+		expect(controller.getModel().phase).toBe('answer');
+
+		// Second grade records the review and advances the queue.
 		await withDocument(() => controller.gradeCurrentItem(3));
 		expect(controller.getModel().sessionStats.reviewed).toBe(1);
 	});
