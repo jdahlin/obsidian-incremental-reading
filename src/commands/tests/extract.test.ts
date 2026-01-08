@@ -176,8 +176,7 @@ describe('extractToIncrementalNote', () => {
 
 	it('optionally converts source note to folder note', async () => {
 		const app = new App();
-		await app.vault.create('Folder/Source Note.md', 'Source content');
-		const source = app.vault.getAbstractFileByPath('Folder/Source Note.md') as TFile;
+		const source = await app.vault.create('Folder/Source Note.md', 'Source content');
 		const view = new MarkdownView(source);
 		const selection = 'Line one\r\nLine two';
 		const editor = new Editor(selection);

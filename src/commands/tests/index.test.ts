@@ -28,6 +28,7 @@ function makePlugin(app: App): CommandPlugin & { commands: TestCommand[] } {
 			requestRetention: 0.9,
 			extractTag: 'topic',
 			extractTitleWords: 2,
+			createFolderForExtractedTopics: false,
 			trackReviewTime: true,
 			showStreak: true,
 		},
