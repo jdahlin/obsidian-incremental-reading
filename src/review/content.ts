@@ -62,5 +62,6 @@ async function renderMarkdownToHtml(
 ): Promise<string> {
 	const container = document.createElement('div');
 	await MarkdownRenderer.render(app, markdown, container, sourcePath, view as never);
-	return container.innerHTML;
+	const html = container.innerHTML;
+	return html || container.textContent || '';
 }
