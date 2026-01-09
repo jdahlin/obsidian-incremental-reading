@@ -9,10 +9,7 @@ export interface UseReviewStateResult {
 }
 
 export function useReviewState(deps: ReviewControllerDeps): UseReviewStateResult {
-	const controller = useMemo(
-		() => new ReviewController(deps),
-		[deps.app, deps.view, deps.settings],
-	);
+	const controller = useMemo(() => new ReviewController(deps), [deps.platform, deps.settings]);
 	const [state, setState] = useState<ReviewScreenState>(controller.getState());
 
 	useEffect(() => {
@@ -27,7 +24,9 @@ export function useReviewState(deps: ReviewControllerDeps): UseReviewStateResult
 
 	const actions = useMemo<ReviewScreenActions>(() => controller.getActions(), [controller]);
 	const onKeyDown = useCallback(
-		(event: KeyboardEvent) => controller.handleKeyDown(event),
+		(event: KeyboardEvent) => {
+			void controller.handleKeyDown(event);
+		},
 		[controller],
 	);
 

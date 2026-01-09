@@ -1,9 +1,10 @@
 import type { FunctionalComponent } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
 import type { App } from 'obsidian';
 import { ReviewScreenRouter } from './ReviewScreenRouter';
 import { useReviewState } from './useReviewState';
 import type { ReviewSettings } from './review-controller';
+import { ObsidianReviewAdapter } from './obsidian-adapter';
 
 export interface ReviewRootProps {
 	app: App;
@@ -12,11 +13,22 @@ export interface ReviewRootProps {
 }
 
 export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, settings }) => {
-	const { state, actions, onKeyDown } = useReviewState({ app, view, settings });
+	const platform = useMemo(() => new ObsidianReviewAdapter(app, view), [app, view]);
+	const { state, actions, onKeyDown } = useReviewState({ platform, settings });
 	const rootRef = useRef<HTMLDivElement | null>(null);
 
+	const focusRoot = (): void => {
+		const root = rootRef.current;
+		if (!root) return;
+		try {
+			root.focus({ preventScroll: true });
+		} catch {
+			root.focus();
+		}
+	};
+
 	useEffect(() => {
-		rootRef.current?.focus();
+		focusRoot();
 	}, []);
 
 	useEffect(() => {
@@ -34,7 +46,7 @@ export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, se
 	}, [onKeyDown]);
 
 	return (
-		<div className="ir-review-root" tabIndex={0} ref={rootRef}>
+		<div className="ir-review-root" tabIndex={0} ref={rootRef} onPointerDownCapture={focusRoot}>
 			<ReviewScreenRouter state={state} actions={actions} />
 		</div>
 	);
