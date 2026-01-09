@@ -86,13 +86,16 @@ export class MemoryDataStore implements EngineStore, DataStore {
 
 	// --- EngineStore Implementation ---
 
-	createNote(content: string, options: { title?: string; priority?: number } = {}): string {
+	async createNote(
+		content: string,
+		options: { title?: string; priority?: number } = {},
+	): Promise<string> {
 		const noteId = this.nextNoteId();
 		this.state.notes[noteId] = { id: noteId, content, ...options };
 		return noteId;
 	}
 
-	createExtract(sourceId: string, start: number, end: number): string {
+	async createExtract(sourceId: string, start: number, end: number): Promise<string> {
 		const noteId = this.nextNoteId();
 		this.state.notes[noteId] = {
 			id: noteId,
@@ -101,13 +104,13 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		return noteId;
 	}
 
-	addCloze(noteId: string, start: number, end: number, hint?: string): string {
+	async addCloze(noteId: string, start: number, end: number, hint?: string): Promise<string> {
 		const clozeId = this.nextClozeId(noteId);
 		this.state.clozes[clozeId] = { id: clozeId, noteId, start, end, hint };
 		return clozeId;
 	}
 
-	recordGrade(itemId: string, rating: number): void {
+	async recordGrade(itemId: string, rating: number): Promise<void> {
 		this.state.grades.push({ itemId, rating });
 		if (itemId) this.state.history.push(itemId);
 		if (itemId) {
@@ -133,44 +136,40 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		}
 	}
 
-	recordAgain(itemId: string): void {
+	async recordAgain(itemId: string): Promise<void> {
 		if (itemId) this.state.again.push(itemId);
 	}
 
-	recordPostpone(itemId: string, days: number): void {
+	async recordPostpone(itemId: string, days: number): Promise<void> {
 		this.state.postponed.push({ itemId, days });
 
 		const now = this.getNow();
 		const currentState = this.state.states[itemId] || this.getInitialState();
 		const newDue = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
-		const newState = {
+		const newState: ReviewState = {
 			...currentState,
 			due: newDue,
-			// If it was 'new', it's now 'scheduled' or 'review' technically,
-			// but for postponing 'new' items, we might want to keep status 'new' but with a due date?
-			// FSRS usually expects 'review' or 'learning' if it has a due date.
-			// Let's assume postpone makes it 'review' status if it wasn't already.
-			status: (currentState.status === 'new' ? 'review' : currentState.status) as unknown,
+			status: currentState.status === 'new' ? 'review' : currentState.status,
 		};
 
 		this.state.states[itemId] = newState;
 		this.state.due[itemId] = formatDate(newDue);
 	}
 
-	recordDismiss(itemId: string): void {
+	async recordDismiss(itemId: string): Promise<void> {
 		if (itemId) this.state.dismissed.push(itemId);
 	}
 
-	recordPriority(itemId: string, value: number): void {
+	async recordPriority(itemId: string, value: number): Promise<void> {
 		if (itemId) this.state.priority[itemId] = value;
 	}
 
-	recordScroll(itemId: string, value: number): void {
+	async recordScroll(itemId: string, value: number): Promise<void> {
 		if (itemId) this.state.scroll[itemId] = value;
 	}
 
-	recordShow(itemId: string, phase?: string): void {
+	async recordShow(itemId: string, phase?: string): Promise<void> {
 		this.state.shown.push({ itemId, phase });
 	}
 
@@ -196,7 +195,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		this.state.clock = value;
 	}
 
-	snapshot(): EngineSnapshot {
+	async snapshot(): Promise<EngineSnapshot> {
 		return {
 			notes: sortRecord(this.state.notes),
 			clozes: sortRecord(this.state.clozes),

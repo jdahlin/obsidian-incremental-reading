@@ -26,7 +26,7 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 
 	it('loads pool from data store', async () => {
 		// Setup data
-		const noteId = dataStore.createNote('content', { priority: 50 });
+		const noteId = await dataStore.createNote('content', { priority: 50 });
 
 		const sm = new SessionManager(dataStore, notePlatform, config);
 		await sm.loadPool();
@@ -39,11 +39,11 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 		config.strategy = 'Anki';
 
 		// Create New item
-		dataStore.createNote('New Topic', { priority: 50 });
+		await dataStore.createNote('New Topic', { priority: 50 });
 
 		// Create Due item (Review status, past due)
-		const dueNoteId = dataStore.createNote('Due Cloze Source', { priority: 50 });
-		const dueClozeId = dataStore.addCloze(dueNoteId, 0, 5);
+		const dueNoteId = await dataStore.createNote('Due Cloze Source', { priority: 50 });
+		const dueClozeId = await dataStore.addCloze(dueNoteId, 0, 5);
 
 		await dataStore.setState(dueClozeId, {
 			status: 'review',
@@ -64,8 +64,8 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 	});
 
 	it('JD1 strategy uses priority', async () => {
-		dataStore.createNote('Low Priority', { priority: 10 });
-		const highId = dataStore.createNote('High Priority', { priority: 90 });
+		await dataStore.createNote('Low Priority', { priority: 10 });
+		const highId = await dataStore.createNote('High Priority', { priority: 90 });
 
 		const sm = new SessionManager(dataStore, notePlatform, config);
 		await sm.loadPool();
@@ -75,12 +75,12 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 	});
 
 	it('JD1 strategy applies affinity boost', async () => {
-		dataStore.createNote('Other', { priority: 50 });
-		const linkedId = dataStore.createNote('Linked', { priority: 50 });
+		await dataStore.createNote('Other', { priority: 50 });
+		const linkedId = await dataStore.createNote('Linked', { priority: 50 });
 
 		// Setup link from "prev" note to "Linked" note
 		// First we need a "prev" note that was just reviewed.
-		const prevId = dataStore.createNote('Previous', { priority: 50 });
+		const prevId = await dataStore.createNote('Previous', { priority: 50 });
 		notePlatform.addLink(prevId, linkedId);
 
 		const sm = new SessionManager(dataStore, notePlatform, config);
@@ -103,9 +103,9 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 		// Reset store for cleaner setup
 		dataStore = new MemoryDataStore();
 
-		const pId = dataStore.createNote('Previous', { priority: 90 });
-		dataStore.createNote('Other', { priority: 50 });
-		const lId = dataStore.createNote('Linked', { priority: 50 });
+		const pId = await dataStore.createNote('Previous', { priority: 90 });
+		await dataStore.createNote('Other', { priority: 50 });
+		const lId = await dataStore.createNote('Linked', { priority: 50 });
 
 		notePlatform.addLink(pId, lId);
 
@@ -129,7 +129,7 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 		const examDate = new Date(2025, 0, 10); // 9 days away
 		config.examDate = examDate;
 
-		const noteId = dataStore.createNote('Exam Topic', { priority: 50 });
+		const noteId = await dataStore.createNote('Exam Topic', { priority: 50 });
 
 		// Set state: due far in future (2026)
 		await dataStore.setState(noteId, {
@@ -156,12 +156,12 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 
 	it('respects volatile queue and cooldown', async () => {
 		// We need enough items to cycle through cooldown
-		const id1 = dataStore.createNote('1', { priority: 50 });
-		const id2 = dataStore.createNote('2', { priority: 50 });
-		dataStore.createNote('3', { priority: 50 });
-		dataStore.createNote('4', { priority: 50 });
-		dataStore.createNote('5', { priority: 50 });
-		dataStore.createNote('6', { priority: 50 });
+		const id1 = await dataStore.createNote('1', { priority: 50 });
+		const id2 = await dataStore.createNote('2', { priority: 50 });
+		await dataStore.createNote('3', { priority: 50 });
+		await dataStore.createNote('4', { priority: 50 });
+		await dataStore.createNote('5', { priority: 50 });
+		await dataStore.createNote('6', { priority: 50 });
 
 		const sm = new SessionManager(dataStore, notePlatform, config);
 		await sm.loadPool();
@@ -195,14 +195,14 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 	it('applies clump limit', async () => {
 		config.clumpLimit = 3;
 
-		const noteA = dataStore.createNote('Note A');
+		const noteA = await dataStore.createNote('Note A');
 		// Add 4 clozes to Note A
-		dataStore.addCloze(noteA, 0, 1); // c1
-		dataStore.addCloze(noteA, 2, 3); // c2
-		dataStore.addCloze(noteA, 4, 5); // c3
-		dataStore.addCloze(noteA, 6, 7); // c4
+		await dataStore.addCloze(noteA, 0, 1); // c1
+		await dataStore.addCloze(noteA, 2, 3); // c2
+		await dataStore.addCloze(noteA, 4, 5); // c3
+		await dataStore.addCloze(noteA, 6, 7); // c4
 
-		const noteB = dataStore.createNote('Note B', { priority: 10 }); // c5 (topic)
+		const noteB = await dataStore.createNote('Note B', { priority: 10 }); // c5 (topic)
 
 		// Ensure Note A clozes come first (IDs note-1::c1 etc come before note-2)
 		// Wait, topic note-2 vs clozes of note-1.
@@ -234,8 +234,8 @@ describe('SessionManager (Integration with MemoryDataStore)', () => {
 	});
 
 	it('applies 80/20 rule in JD1', async () => {
-		const lowId = dataStore.createNote('Low', { priority: 10 });
-		dataStore.createNote('High', { priority: 90 });
+		const lowId = await dataStore.createNote('Low', { priority: 10 });
+		await dataStore.createNote('High', { priority: 90 });
 
 		const sm = new SessionManager(dataStore, notePlatform, config);
 		await sm.loadPool();

@@ -1,28 +1,53 @@
 import type { RvCommand } from './types';
-import type { EngineSnapshot, EngineStore } from '../memory/types';
+import type { EngineStore, EngineSnapshot } from '../memory/types';
 import { MemoryDataStore } from '../memory/MemoryDataStore';
 import { SessionManager } from '../SessionManager';
 import { InMemoryNotePlatform } from '../tests/InMemoryNotePlatform';
-import type { SessionConfig, Rating, SessionStrategyId } from '../types';
+import type { SessionConfig, Rating, SessionStrategyId, NotePlatform } from '../types';
 
 export interface RvRunResult {
 	outputs: string[];
 }
 
-export async function runRvCommands(commands: RvCommand[]): Promise<RvRunResult> {
+export async function runRvCommands(
+	commands: RvCommand[],
+	storeFactory?: () => Promise<{
+		store: EngineStore;
+		sessionManager: SessionManager;
+		platform: NotePlatform;
+	}>,
+): Promise<RvRunResult> {
 	const outputs: string[] = [];
-	const store = new MemoryDataStore();
-	const platform = new InMemoryNotePlatform();
-	// Default config
+
+	let store: EngineStore;
+	let sessionManager: SessionManager;
+	let platform: NotePlatform;
+
+	if (storeFactory) {
+		const result = await storeFactory();
+		store = result.store;
+		sessionManager = result.sessionManager;
+		platform = result.platform;
+	} else {
+		const memStore = new MemoryDataStore();
+		store = memStore;
+		platform = new InMemoryNotePlatform();
+		const config: SessionConfig = {
+			strategy: 'JD1',
+			mode: 'review',
+			examDate: null,
+			deterministic: true,
+		};
+		sessionManager = new SessionManager(memStore, platform, config);
+	}
+
+	let lastNoteId: string | null = null;
 	let config: SessionConfig = {
 		strategy: 'JD1',
 		mode: 'review',
 		examDate: null,
 		deterministic: true,
 	};
-	const sessionManager = new SessionManager(store, platform, config);
-
-	let lastNoteId: string | null = null;
 
 	for (const command of commands) {
 		if (command.name === 'expect') {
@@ -31,7 +56,7 @@ export async function runRvCommands(commands: RvCommand[]): Promise<RvRunResult>
 			if (!path || !expectedRaw) {
 				throw new Error(`Missing expected state at line ${command.line}`);
 			}
-			const snapshot = store.snapshot();
+			const snapshot = await store.snapshot();
 			const actualValue = readPath(snapshot, path);
 			const expectedValue = parseExpectedValue(expectedRaw);
 			if (!isEqual(actualValue, expectedValue)) {
@@ -63,8 +88,8 @@ interface CommandContext {
 }
 
 async function applyCommand(
-	store: MemoryDataStore, // Use concrete type to access setNextItem if not in interface yet? No, added to interface.
-	platform: InMemoryNotePlatform,
+	store: EngineStore,
+	platform: NotePlatform,
 	sessionManager: SessionManager,
 	command: RvCommand,
 	ctx: CommandContext,
@@ -73,7 +98,7 @@ async function applyCommand(
 		case 'topic': {
 			const { options, positional } = parseArgs(command.args);
 			const content = positional[0] ?? '';
-			const noteId = store.createNote(content, {
+			const noteId = await store.createNote(content, {
 				title: options.title,
 				priority: options.priority ? Number(options.priority) : undefined,
 			});
@@ -84,12 +109,10 @@ async function applyCommand(
 		case 'extract': {
 			const { positional } = parseArgs(command.args);
 			const source = resolveNoteId(positional[0], ctx);
-			const noteId = store.createExtract(
-				source,
-				Number(positional[1] ?? 0),
-				Number(positional[2] ?? 0),
-			);
-			await platform.setNote(noteId, `extract from ${source}`); // Dummy content
+			const start = Number(positional[1] ?? 0);
+			const end = Number(positional[2] ?? 0);
+			const noteId = await store.createExtract(source, start, end);
+			await platform.setNote(noteId, `extract:${source}:${start}-${end}`);
 			ctx.setLastNoteId(noteId);
 			break;
 		}
@@ -98,14 +121,14 @@ async function applyCommand(
 			const noteId = resolveNoteId(positional[0], ctx);
 			const start = Number(positional[1] ?? 0);
 			const end = Number(positional[2] ?? 0);
-			store.addCloze(noteId, start, end, options.hint);
+			await store.addCloze(noteId, start, end, options.hint);
 			break;
 		}
 		case 'grade': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const rating = Number(positional[1] ?? 0);
-			const snapshot = store.snapshot();
+			const snapshot = await store.snapshot();
 			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
 			await sessionManager.loadPool(now);
 			await sessionManager.recordReview(itemId, rating as Rating, now);
@@ -114,7 +137,7 @@ async function applyCommand(
 		case 'again': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
-			const snapshot = store.snapshot();
+			const snapshot = await store.snapshot();
 			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
 			await sessionManager.loadPool(now);
 			await sessionManager.recordReview(itemId, 1, now);
@@ -123,9 +146,10 @@ async function applyCommand(
 		case 'inspect-next': {
 			const { options } = parseArgs(command.args);
 			await sessionManager.loadPool();
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const limit = options.limit ? Number(options.limit) : 1;
 			// We only support peeking 1 for now via getNext().
-			const snapshot = store.snapshot();
+			const snapshot = await store.snapshot();
 			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
 			const next = await sessionManager.getNext(now);
 			store.setNextItem(next ? next.item.id : null);
@@ -135,33 +159,33 @@ async function applyCommand(
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const days = Number(positional[1] ?? 0);
-			store.recordPostpone(itemId, days);
+			await store.recordPostpone(itemId, days);
 			break;
 		}
 		case 'dismiss': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
-			store.recordDismiss(itemId);
+			await store.recordDismiss(itemId);
 			break;
 		}
 		case 'priority': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const value = Number(positional[1] ?? 0);
-			store.recordPriority(itemId, value);
+			await store.recordPriority(itemId, value);
 			break;
 		}
 		case 'scroll': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const value = Number(positional[1] ?? 0);
-			store.recordScroll(itemId, value);
+			await store.recordScroll(itemId, value);
 			break;
 		}
 		case 'show': {
 			const { positional, options } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
-			store.recordShow(itemId, options.phase);
+			await store.recordShow(itemId, options.phase);
 			break;
 		}
 		case 'session': {
@@ -250,9 +274,8 @@ function readPath(state: EngineSnapshot, path: string): unknown {
 		.filter(Boolean);
 	let current: unknown = state;
 	for (const segment of segments) {
-		if (current == null) return undefined;
-		const value = (current as Record<string, unknown>)[segment];
-		current = value;
+		if (current == null || typeof current !== 'object') return undefined;
+		current = (current as Record<string, unknown>)[segment];
 	}
 	return current;
 }
