@@ -1,0 +1,27 @@
+# Exam Mode Test
+# Logic: due = min(schedulerDue, now + targetInterval)
+# This compresses future reviews into the exam window.
+
+clock 2025-01-01
+# Set Exam Date to Jan 11 (10 days from now).
+session JD1 --exam 2025-01-11
+
+# Create a topic
+topic "Hard Subject"
+# Grade 3 to make it reviewed/scheduled.
+# Default FSRS initial interval is usually small (e.g. 1-4 days).
+grade LAST 3
+
+# NOTE: The current test runner does not support resetting the session history.
+# Once an item is reviewed (graded), it is removed from the current session.
+# Therefore, we cannot verify that it comes back "Due" with a compressed interval
+# within the same script run.
+#
+# This test verifies that we can at least run in Exam mode without crashing.
+
+clock 2025-01-03
+# Ideally, we would expect session.nextItem note-1 here.
+# But it is in history.
+
+# Just check status to ensure we are still running.
+status

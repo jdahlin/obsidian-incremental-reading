@@ -1,0 +1,61 @@
+# Volatile Cooldown Test
+# Setup:
+# Note A (note-1, P100)
+# Note B (note-2, P90)
+# Note C (note-3, P80)
+# Note D (note-4, P70)
+
+session JD1 --cooldown 2
+clock 2025-01-01
+
+topic "Note A" --priority 100
+cloze LAST 0 1
+
+topic "Note B" --priority 90
+cloze LAST 0 1
+
+topic "Note C" --priority 80
+cloze LAST 0 1
+
+topic "Note D" --priority 70
+cloze LAST 0 1
+
+# 1. Topic A (note-1)
+inspect-next
+expect session.nextItem note-1
+grade note-1 3
+
+# 2. A::c1 (note-1::c1)
+inspect-next
+expect session.nextItem note-1::c1
+grade note-1::c1 1
+# A::c1 -> volatile. Cooldown 2.
+
+# 3. Topic B (note-2) - Score 9050
+inspect-next
+expect session.nextItem note-2
+grade note-2 3
+
+# 4. B::c1 (note-2::c1) - Score 9000
+inspect-next
+expect session.nextItem note-2::c1
+grade note-2::c1 3
+
+# Cooldown check:
+# History: [note-1, note-1::c1, note-2, note-2::c1]
+# Index of A::c1 is 1.
+# Length is 4.
+# Items since A::c1 = 4 - 1 - 1 = 2.
+# Cooldown is 2. So A::c1 should be ready?
+# A::c1 (Volatile) vs Topic C (8050).
+# Ready volatile items are candidates.
+# A::c1 Score?
+# Priority 100 -> 10000.
+# + Urgency (failed) -> +25.
+# Score ~10025.
+# Topic C -> 8050.
+# A::c1 wins.
+
+inspect-next
+expect session.nextItem note-1::c1
+grade note-1::c1 3

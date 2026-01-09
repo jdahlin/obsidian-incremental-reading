@@ -1,14 +1,27 @@
 import type { RvCommand } from './types';
 import type { EngineSnapshot, EngineStore } from '../memory/types';
 import { MemoryDataStore } from '../memory/MemoryDataStore';
+import { SessionManager } from '../SessionManager';
+import { InMemoryNotePlatform } from '../tests/InMemoryNotePlatform';
+import type { SessionConfig, Rating, SessionStrategyId } from '../types';
 
 export interface RvRunResult {
 	outputs: string[];
 }
 
-export function runRvCommands(commands: RvCommand[]): RvRunResult {
+export async function runRvCommands(commands: RvCommand[]): Promise<RvRunResult> {
 	const outputs: string[] = [];
-	const store: EngineStore = new MemoryDataStore();
+	const store = new MemoryDataStore();
+	const platform = new InMemoryNotePlatform();
+	// Default config
+	let config: SessionConfig = {
+		strategy: 'JD1',
+		mode: 'review',
+		examDate: null,
+		deterministic: true,
+	};
+	const sessionManager = new SessionManager(store, platform, config);
+
 	let lastNoteId: string | null = null;
 
 	for (const command of commands) {
@@ -28,10 +41,14 @@ export function runRvCommands(commands: RvCommand[]): RvRunResult {
 			}
 			continue;
 		}
-		applyCommand(store, command, {
+		await applyCommand(store, platform, sessionManager, command, {
 			getLastNoteId: () => lastNoteId,
 			setLastNoteId: (noteId: string) => {
 				lastNoteId = noteId;
+			},
+			updateConfig: (newConfig) => {
+				config = { ...config, ...newConfig };
+				sessionManager.setConfig(config);
 			},
 		});
 	}
@@ -42,9 +59,16 @@ export function runRvCommands(commands: RvCommand[]): RvRunResult {
 interface CommandContext {
 	getLastNoteId(): string | null;
 	setLastNoteId(noteId: string): void;
+	updateConfig(config: Partial<SessionConfig>): void;
 }
 
-function applyCommand(store: EngineStore, command: RvCommand, ctx: CommandContext): void {
+async function applyCommand(
+	store: MemoryDataStore, // Use concrete type to access setNextItem if not in interface yet? No, added to interface.
+	platform: InMemoryNotePlatform,
+	sessionManager: SessionManager,
+	command: RvCommand,
+	ctx: CommandContext,
+): Promise<void> {
 	switch (command.name) {
 		case 'topic': {
 			const { options, positional } = parseArgs(command.args);
@@ -53,6 +77,7 @@ function applyCommand(store: EngineStore, command: RvCommand, ctx: CommandContex
 				title: options.title,
 				priority: options.priority ? Number(options.priority) : undefined,
 			});
+			await platform.setNote(noteId, content);
 			ctx.setLastNoteId(noteId);
 			break;
 		}
@@ -64,6 +89,7 @@ function applyCommand(store: EngineStore, command: RvCommand, ctx: CommandContex
 				Number(positional[1] ?? 0),
 				Number(positional[2] ?? 0),
 			);
+			await platform.setNote(noteId, `extract from ${source}`); // Dummy content
 			ctx.setLastNoteId(noteId);
 			break;
 		}
@@ -79,13 +105,30 @@ function applyCommand(store: EngineStore, command: RvCommand, ctx: CommandContex
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const rating = Number(positional[1] ?? 0);
-			store.recordGrade(itemId, rating);
+			const snapshot = store.snapshot();
+			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			await sessionManager.loadPool(now);
+			await sessionManager.recordReview(itemId, rating as Rating, now);
 			break;
 		}
 		case 'again': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
-			store.recordAgain(itemId);
+			const snapshot = store.snapshot();
+			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			await sessionManager.loadPool(now);
+			await sessionManager.recordReview(itemId, 1, now);
+			break;
+		}
+		case 'inspect-next': {
+			const { options } = parseArgs(command.args);
+			await sessionManager.loadPool();
+			const limit = options.limit ? Number(options.limit) : 1;
+			// We only support peeking 1 for now via getNext().
+			const snapshot = store.snapshot();
+			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			const next = await sessionManager.getNext(now);
+			store.setNextItem(next ? next.item.id : null);
 			break;
 		}
 		case 'postpone': {
@@ -123,13 +166,22 @@ function applyCommand(store: EngineStore, command: RvCommand, ctx: CommandContex
 		}
 		case 'session': {
 			const { options, positional } = parseArgs(command.args);
+			const newConfig: Partial<SessionConfig> = {};
+			if (positional[0]) newConfig.strategy = positional[0] as SessionStrategyId;
+			if (options.exam) newConfig.examDate = new Date(options.exam);
+			if (options.capacity) newConfig.capacity = Number(options.capacity);
+
+			if (options.clump) newConfig.clumpLimit = Number(options.clump);
+			if (options.cooldown) newConfig.cooldown = Number(options.cooldown);
+
 			store.setSession({
-				strategy: positional[0] ?? 'JD1',
-				examDate: options.exam ?? null,
-				capacity: options.capacity ? Number(options.capacity) : undefined,
-				clump: options.clump ? Number(options.clump) : undefined,
-				cooldown: options.cooldown ? Number(options.cooldown) : undefined,
+				strategy: newConfig.strategy,
+				examDate: newConfig.examDate ? newConfig.examDate.toISOString() : null,
+				capacity: newConfig.capacity,
+				clump: newConfig.clumpLimit,
+				cooldown: newConfig.cooldown,
 			});
+			ctx.updateConfig(newConfig);
 			break;
 		}
 		case 'scheduler': {

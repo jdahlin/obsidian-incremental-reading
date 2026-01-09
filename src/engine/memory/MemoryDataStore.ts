@@ -56,6 +56,7 @@ interface EngineState {
 	clock: string | null;
 	session: SessionConfig;
 	scheduler: string;
+	nextItem: string | null;
 	// New field for persistent review logs (DataStore.appendReview)
 	reviewLogs: ReviewRecord[];
 }
@@ -79,6 +80,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		clock: null,
 		session: { strategy: 'JD1', examDate: null },
 		scheduler: 'fsrs',
+		nextItem: null,
 		reviewLogs: [],
 	};
 
@@ -155,6 +157,10 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		this.state.shown.push({ itemId, phase });
 	}
 
+	setNextItem(itemId: string | null): void {
+		this.state.nextItem = itemId;
+	}
+
 	setSession(config: Record<string, unknown>): void {
 		this.state.session = {
 			strategy: String((config.strategy as string) ?? this.state.session.strategy),
@@ -188,7 +194,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			shown: this.state.shown.slice() as unknown as Record<string, unknown>[],
 			due: sortRecord(this.state.due),
 			clock: this.state.clock,
-			session: { ...this.state.session },
+			session: { ...this.state.session, nextItem: this.state.nextItem },
 			scheduler: this.state.scheduler,
 			stats: buildStats(this.state),
 		};
@@ -218,13 +224,17 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		for (const cloze of Object.values(this.state.clozes)) {
 			if (this.state.dismissed.includes(cloze.id)) continue;
 
+			const notePriority =
+				this.state.priority[cloze.noteId] ?? this.state.notes[cloze.noteId]?.priority ?? 50;
+			const clozePriority = this.state.priority[cloze.id] ?? notePriority;
+
 			items.push({
 				id: cloze.id,
 				noteId: cloze.noteId,
 				notePath: `memory://${cloze.noteId}`,
 				type: 'cloze',
 				clozeIndex: parseInt(cloze.id.split('::c')[1] ?? '0', 10),
-				priority: this.state.priority[cloze.id] ?? 50,
+				priority: clozePriority,
 				created: new Date(), // Dummy
 			});
 		}
@@ -238,10 +248,21 @@ export class MemoryDataStore implements EngineStore, DataStore {
 
 	async setState(itemId: string, state: ReviewState): Promise<void> {
 		this.state.states[itemId] = state;
+		if (state.due) {
+			this.state.due[itemId] = formatDate(state.due);
+		}
 	}
 
 	async appendReview(record: ReviewRecord): Promise<void> {
 		this.state.reviewLogs.push(record);
+		// Update legacy tracking for tests
+		this.state.grades.push({ itemId: record.itemId, rating: record.rating });
+		if (record.itemId) {
+			this.state.history.push(record.itemId);
+		}
+		if (record.rating === 1 && record.itemId) {
+			this.state.again.push(record.itemId);
+		}
 	}
 
 	async setScrollPos(itemId: string, pos: number): Promise<void> {
