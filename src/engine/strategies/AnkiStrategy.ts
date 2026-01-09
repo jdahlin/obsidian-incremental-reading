@@ -5,8 +5,8 @@ export class AnkiStrategy implements SessionStrategy {
 	rank(items: SessionItem[], config: SessionConfig, context: StrategyContext): SessionItem[] {
 		return [...items].sort((a, b) => {
 			// Bucket order: learning -> due -> new
-			const aBucket = this.getBucket(a);
-			const bBucket = this.getBucket(b);
+			const aBucket = this.getBucket(a, context.now);
+			const bBucket = this.getBucket(b, context.now);
 
 			if (aBucket !== bBucket) {
 				return bBucket - aBucket;
@@ -22,9 +22,9 @@ export class AnkiStrategy implements SessionStrategy {
 		});
 	}
 
-	private getBucket(item: SessionItem): number {
+	private getBucket(item: SessionItem, now: Date): number {
 		if (item.state.status === 'learning' || item.state.status === 'relearning') return 3;
-		if (item.state.due && item.state.due <= new Date()) return 2;
+		if (item.state.due && item.state.due <= now) return 2;
 		if (item.state.status === 'new') return 1;
 		return 0; // Default/Review not yet due
 	}

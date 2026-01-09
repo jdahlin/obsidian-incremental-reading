@@ -139,6 +139,23 @@ export class MemoryDataStore implements EngineStore, DataStore {
 
 	recordPostpone(itemId: string, days: number): void {
 		this.state.postponed.push({ itemId, days });
+
+		const now = this.getNow();
+		const currentState = this.state.states[itemId] || this.getInitialState();
+		const newDue = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+		const newState = {
+			...currentState,
+			due: newDue,
+			// If it was 'new', it's now 'scheduled' or 'review' technically,
+			// but for postponing 'new' items, we might want to keep status 'new' but with a due date?
+			// FSRS usually expects 'review' or 'learning' if it has a due date.
+			// Let's assume postpone makes it 'review' status if it wasn't already.
+			status: (currentState.status === 'new' ? 'review' : currentState.status) as unknown,
+		};
+
+		this.state.states[itemId] = newState;
+		this.state.due[itemId] = formatDate(newDue);
 	}
 
 	recordDismiss(itemId: string): void {
