@@ -145,14 +145,19 @@ async function applyCommand(
 		}
 		case 'inspect-next': {
 			const { options } = parseArgs(command.args);
-			await sessionManager.loadPool();
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const limit = options.limit ? Number(options.limit) : 1;
-			// We only support peeking 1 for now via getNext().
 			const snapshot = await store.snapshot();
 			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
-			const next = await sessionManager.getNext(now);
-			store.setNextItem(next ? next.item.id : null);
+			await sessionManager.loadPool(now);
+			const limit = options.limit ? Number(options.limit) : 1;
+			const nextItems = await sessionManager.getNextN(limit, now);
+			const itemIds = nextItems.map((si) => si.item.id);
+			store.setNextItems(itemIds);
+			store.setNextItem(itemIds[0] ?? null);
+			break;
+		}
+		case 'status': {
+			// Status outputs session progress - data is available via expect on stats
+			await sessionManager.loadPool();
 			break;
 		}
 		case 'postpone': {

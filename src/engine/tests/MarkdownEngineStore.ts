@@ -31,6 +31,7 @@ export class MarkdownEngineStore implements EngineStore {
 		>,
 		scheduler: 'fsrs',
 		nextItem: null as string | null,
+		nextItems: [] as string[],
 		dismissed: [] as string[],
 		postponed: [] as { itemId: string; days: number }[],
 		shown: [] as { itemId: string; phase?: string }[],
@@ -195,6 +196,10 @@ extract:${sourceId}:${start}-${end}`,
 		this.runtime.nextItem = itemId;
 	}
 
+	setNextItems(itemIds: string[]): void {
+		this.runtime.nextItems = itemIds;
+	}
+
 	setSession(config: Record<string, unknown>): void {
 		this.runtime.session = { ...this.runtime.session, ...config };
 	}
@@ -324,6 +329,7 @@ extract:${sourceId}:${start}-${end}`,
 			clock: this.runtime.clock,
 			session: { ...this.runtime.session, nextItem: this.runtime.nextItem },
 			scheduler: this.runtime.scheduler,
+			queue: this.runtime.nextItems.slice(),
 			stats: {
 				session: {
 					poolSize: items.length,
