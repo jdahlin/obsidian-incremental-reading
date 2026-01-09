@@ -3,6 +3,7 @@ import { App, Editor, FakeElement, MarkdownView } from 'obsidian';
 import { writeReviewItemFile } from '../../../data/review-items';
 import type { ItemState } from '../../../core/types';
 import { ReviewController } from '../review-controller';
+import { ObsidianReviewAdapter } from '../obsidian-adapter';
 import { extractToIncrementalNote } from '../../../commands/extract';
 
 function makeState(): ItemState {
@@ -58,8 +59,7 @@ describe('ReviewController', () => {
 		});
 
 		const controller = new ReviewController({
-			app,
-			view: {},
+			platform: new ObsidianReviewAdapter(app, {}),
 			settings: {
 				newCardsPerDay: 10,
 				maximumInterval: 30,
@@ -88,6 +88,71 @@ describe('ReviewController', () => {
 		expect(controller.getModel().sessionStats.reviewed).toBe(1);
 	});
 
+	it('Space reveals then grades by default', async () => {
+		const app = new App();
+		const note = await app.vault.create(
+			'Notes/Deck/Note.md',
+			[
+				'---',
+				'ir_note_id: note-1',
+				'tags: [topic]',
+				'type: topic',
+				'priority: 10',
+				'created: 2024-01-01T00:00:00',
+				'---',
+				'Body {{c1::cloze}}',
+			].join('\n'),
+		);
+		app.workspace.setActiveFile(note);
+
+		const state = makeState();
+		await writeReviewItemFile(app, 'note-1', {
+			ir_note_id: 'note-1',
+			note_path: note.path,
+			type: 'topic',
+			priority: 10,
+			topic: state,
+			clozes: {
+				c1: { cloze_uid: 'uid-1', ...state },
+			},
+		});
+
+		const controller = new ReviewController({
+			platform: new ObsidianReviewAdapter(app, {}),
+			settings: {
+				newCardsPerDay: 10,
+				maximumInterval: 30,
+				requestRetention: 0.9,
+				extractTag: 'topic',
+				trackReviewTime: false,
+				showStreak: true,
+			},
+		});
+
+		await withDocument(() => controller.refreshSummary());
+		await withDocument(() => controller.startReview());
+		expect(controller.getModel().phase).toBe('question');
+
+		// First Space shows answer (does not count as a review).
+		await withDocument(() =>
+			controller.handleKeyDown({
+				key: ' ',
+				preventDefault: () => undefined,
+			} as unknown as KeyboardEvent),
+		);
+		expect(controller.getModel().phase).toBe('answer');
+		expect(controller.getModel().sessionStats.reviewed).toBe(0);
+
+		// Second Space grades (default "Good") and advances.
+		await withDocument(async () => {
+			await controller.handleKeyDown({
+				key: ' ',
+				preventDefault: () => undefined,
+			} as unknown as KeyboardEvent);
+		});
+		expect(controller.getModel().sessionStats.reviewed).toBe(1);
+	});
+
 	it.each(['topic', 'extract'])(
 		'%s: includes newly created review items (via extract command)',
 		async (type: string) => {
@@ -107,8 +172,7 @@ describe('ReviewController', () => {
 			const noteId = reviewFiles[0]?.basename;
 
 			const controller = new ReviewController({
-				app,
-				view: {},
+				platform: new ObsidianReviewAdapter(app, {}),
 				settings: {
 					newCardsPerDay: 10,
 					maximumInterval: 30,
@@ -136,8 +200,7 @@ describe('ReviewController', () => {
 		await extractToIncrementalNote(app, editor, view, { titleWords: 5, tag: 'topic' });
 
 		const controller = new ReviewController({
-			app,
-			view: {},
+			platform: new ObsidianReviewAdapter(app, {}),
 			settings: {
 				newCardsPerDay: 10,
 				maximumInterval: 30,
