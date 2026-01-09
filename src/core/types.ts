@@ -1,5 +1,3 @@
-import type { TFile } from 'obsidian';
-
 export type Status = 'new' | 'learning' | 'review' | 'relearning';
 export type CardType = 'topic' | 'item';
 export type Rating = 1 | 2 | 3 | 4;
@@ -18,12 +16,30 @@ export interface ReviewItem {
 	id: string;
 	noteId: string;
 	notePath: string;
-	noteFile?: TFile;
+	noteFile?: unknown;
 	type: CardType;
 	clozeIndex?: number | null;
 	state: ItemState;
 	priority: number;
 	created?: Date | null;
+}
+
+export interface ReviewPlatformAdapter {
+	loadItems(extractTag: string): Promise<ReviewItem[]>;
+	getTodayStats(now: Date): Promise<TodayStats>;
+	getStreakInfo(now: Date): Promise<StreakInfo>;
+	updateTopicState(noteId: string, state: ItemState, notePath: string): Promise<void>;
+	updateClozeState(
+		noteId: string,
+		clozeIndex: number,
+		state: ItemState,
+		notePath: string,
+	): Promise<void>;
+	appendReview(entry: ReviewRecord): Promise<void>;
+	renderItem(item: ReviewItem, phase: 'question' | 'answer', extractTag: string): Promise<string>;
+	openStats(extractTag: string): void;
+	getPreselectedPath(decks: DeckInfo[]): string | null;
+	onDataChange(handler: () => void): () => void;
 }
 
 export interface ReviewQueue {
