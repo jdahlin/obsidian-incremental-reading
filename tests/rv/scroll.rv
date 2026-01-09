@@ -1,0 +1,10 @@
+# scroll command
+# Intent: scroll position is persisted for long-form topics.
+expect stats.session.poolSize 0
+expect stats.scroll.count 0
+topic "Source"
+expect stats.session.poolSize 1
+scroll note-1 120
+# Scroll position stored
+expect scroll.note-1 120
+expect stats.scroll.count 1

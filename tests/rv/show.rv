@@ -1,0 +1,12 @@
+# show command
+# Intent: show tracks rendered phase for a specific item.
+expect stats.session.poolSize 0
+expect stats.shown.count 0
+topic "Source"
+cloze note-1 1 3
+expect stats.session.poolSize 2
+show note-1::c1 --phase question
+# Render record stored
+expect shown[0].itemId note-1::c1
+expect shown[0].phase question
+expect stats.shown.count 1

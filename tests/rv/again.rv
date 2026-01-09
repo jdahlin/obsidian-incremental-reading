@@ -1,0 +1,13 @@
+# again command
+# Intent: again places the item into the volatile queue.
+expect stats.session.poolSize 0
+expect stats.again.count 0
+topic "Source"
+cloze note-1 1 3
+expect stats.session.poolSize 2
+again note-1::c1
+# Volatile queue contains item
+expect again[0] note-1::c1
+# Volatile size increments
+expect stats.session.volatileSize 1
+expect stats.again.count 1

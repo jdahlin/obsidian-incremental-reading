@@ -1,0 +1,26 @@
+# Simulating recovery: Failure followed by success
+clock 2025-01-01
+topic "Recovery"
+cloze note-1 0 1
+
+# Day 1: Fail immediately
+grade note-1::c1 1
+# Day 1: Fail again
+grade note-1::c1 1
+
+# Day 2: Finally get it right (Good)
+clock 2025-01-02
+grade note-1::c1 3
+
+# Should graduate to Review
+expect states.note-1::c1.status review
+expect states.note-1::c1.reps 3
+expect states.note-1::c1.lapses 0
+
+# Check Stability (should be low due to failures)
+expect states.note-1::c1.stability 0.10314065
+# Check Difficulty (should be high)
+expect states.note-1::c1.difficulty 8.79272653
+
+# Next due date should be conservative
+expect due.note-1::c1 2025-01-03

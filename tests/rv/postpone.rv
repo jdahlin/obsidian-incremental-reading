@@ -1,0 +1,11 @@
+# postpone command
+# Intent: postpone logs a defer action without scheduler penalty.
+expect stats.session.poolSize 0
+expect stats.postponed.count 0
+topic "Source"
+cloze note-1 1 3
+expect stats.session.poolSize 2
+postpone note-1::c1 7
+# Postpone record stored
+expect postponed[0].days 7
+expect stats.postponed.count 1

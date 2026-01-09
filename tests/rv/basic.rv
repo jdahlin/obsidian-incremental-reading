@@ -1,0 +1,25 @@
+# Baseline: covers parsing, note creation, cloze creation, grading, and stats.
+# Intent: validate the minimal end-to-end flow before engine logic exists.
+topic "Krebs cycle overview" --priority 10
+cloze LAST 0 5
+grade note-1::c1 3
+inspect-next --limit 5
+# Note identity and payload
+expect notes.note-1.id note-1
+expect notes.note-1.content Krebs cycle overview
+expect notes.note-1.priority 10
+# Cloze linkage
+expect clozes.note-1::c1.noteId note-1
+# Grade tracking
+expect grades[0].itemId note-1::c1
+expect grades[0].rating 3
+# Session config defaults
+expect session.strategy JD1
+expect scheduler fsrs
+# Derived stats
+expect stats.notes.count 1
+expect stats.clozes.count 1
+expect stats.queue.total 2
+expect stats.session.historySize 1
+expect stats.grades.count 1
+expect stats.history.count 1

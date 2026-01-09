@@ -1,0 +1,11 @@
+# dismiss command
+# Intent: dismiss marks an item as removed from review.
+expect stats.session.poolSize 0
+expect stats.dismissed.count 0
+topic "Source"
+cloze note-1 1 3
+expect stats.session.poolSize 2
+dismiss note-1::c1
+# Dismiss list contains item
+expect dismissed[0] note-1::c1
+expect stats.dismissed.count 1

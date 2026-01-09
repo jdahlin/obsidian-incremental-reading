@@ -1,0 +1,37 @@
+# Simulating a "suffering" student: Repeated failures and Hard ratings
+clock 2025-01-01
+topic "Suffering"
+cloze note-1 0 1
+
+# Day 1: First attempt -> Fail (Again)
+# FSRS: New -> Learning
+grade note-1::c1 1
+expect states.note-1::c1.status learning
+expect states.note-1::c1.reps 1
+expect states.note-1::c1.lapses 0
+# Expect due today (short minute step)
+expect due.note-1::c1 2025-01-01
+
+# Day 1: Second attempt -> Fail (Again)
+grade note-1::c1 1
+expect states.note-1::c1.reps 2
+expect states.note-1::c1.lapses 0
+# Still due today
+expect due.note-1::c1 2025-01-01
+
+# Day 2: Student tries again -> Hard
+clock 2025-01-02
+grade note-1::c1 2
+expect states.note-1::c1.reps 3
+expect states.note-1::c1.difficulty 9.19279765
+# Interval should be small (next day or close)
+expect due.note-1::c1 2025-01-02
+
+# Day 3: Student tries again -> Hard
+clock 2025-01-03
+grade note-1::c1 2
+expect states.note-1::c1.reps 4
+# Difficulty increases or stays high
+expect states.note-1::c1.difficulty 9.44936983
+# Interval stays tight
+expect due.note-1::c1 2025-01-03

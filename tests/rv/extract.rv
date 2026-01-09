@@ -1,0 +1,14 @@
+# extract command
+# Intent: extracting produces a new note and records source span.
+expect stats.session.poolSize 0
+expect stats.notes.count 0
+topic "Source"
+expect stats.session.poolSize 1
+expect stats.notes.count 1
+extract note-1 0 6
+# Two notes should exist: source + extract
+expect stats.notes.count 2
+# Extract payload includes source/span marker
+expect notes.note-2.content extract:note-1:0-6
+expect stats.session.poolSize 2
+expect stats.queue.total 2

@@ -1,0 +1,8 @@
+# status command
+# Intent: status exposes session pool sizing.
+expect stats.session.poolSize 0
+topic "Source"
+cloze note-1 1 3
+status
+# Pool size includes note + cloze
+expect stats.session.poolSize 2
