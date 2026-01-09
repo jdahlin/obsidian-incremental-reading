@@ -24,5 +24,5 @@
 		"lib": ["DOM", "ES5", "ES6", "ES7"]
 	},
 	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
-	"exclude": ["src/**/tests/**"]
+	"exclude": ["src/**/tests/**", "src/engine/cli/**"]
 }

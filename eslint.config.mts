@@ -45,6 +45,7 @@ export default tseslint.config(
 	},
 	{
 		files: ['src/**/*.ts', 'src/**/*.tsx'],
+		ignores: ['src/engine/cli/**'],
 		languageOptions: {
 			parserOptions: {
 				project: ['tsconfig.json', 'src/tests/tsconfig.json'],
@@ -56,6 +57,22 @@ export default tseslint.config(
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		files: ['src/engine/cli/**/*.ts', 'src/engine/cli/**/*.tsx'],
+		languageOptions: {
+			globals: {
+				...globals.node,
+			},
+			parserOptions: {
+				project: ['src/engine/cli/tsconfig.json'],
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+		rules: {
+			'@typescript-eslint/no-unnecessary-type-assertion': 'error',
+			'import/no-nodejs-modules': 'off',
+		},
+	},
 	{
 		files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
 		rules: {
