@@ -36,7 +36,8 @@ export default class IncrementalReadingPlugin extends Plugin {
 			leaf = mostRecent;
 			await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true });
 		}
-		void workspace.revealLeaf(leaf);
+		await workspace.revealLeaf(leaf);
+		workspace.setActiveLeaf(leaf, { focus: true });
 	}
 
 	async loadSettings(): Promise<void> {
