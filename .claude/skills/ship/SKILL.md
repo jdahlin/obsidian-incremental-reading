@@ -17,12 +17,6 @@ Before pushing, run all checks locally to catch issues early:
 npm run typecheck && npm run lint && npm test
 ```
 
-For targeted testing on a specific module:
-
-```bash
-npm run test -- src/engine --coverage.include src/engine
-```
-
 ### 2. Fix Any Failures
 
 If checks fail:
@@ -32,87 +26,61 @@ If checks fail:
 
 Re-run checks after each fix until all pass locally.
 
-### 3. Commit Changes
+### 3. Commit and Push
 
-Use conventional commit format:
+Use conventional commit format and push:
 
 ```bash
-git add -A
-git commit -m "<type>(<scope>): <description>"
+git add -A && git commit -m "<type>(<scope>): <description>" && git push
 ```
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
-Scopes: `core`, `ui`, `data`, `commands`, `engine`, `editor`, `settings`
 
-### 4. Push to Remote
+### 4. Monitor CI with gh
 
-```bash
-git push
-```
-
-### 5. Wait for GitHub Actions
-
-Check the CI status:
+After pushing, immediately check CI status:
 
 ```bash
 gh run list --limit 1
 ```
 
-Watch a specific run:
+If status is "in_progress", watch until completion:
 
 ```bash
 gh run watch
 ```
 
-If the run is still in progress, wait and check again.
+### 5. Handle CI Failures
 
-### 6. If CI Fails, Fix and Repeat
+If CI fails, get the failure details and fix:
 
-If GitHub Actions fail:
+```bash
+gh run view --log-failed
+```
 
-1. Get the failure details:
-   ```bash
-   gh run view --log-failed
-   ```
+Then fix locally, re-run checks, commit, push, and monitor again:
 
-2. Identify the failing step and error
+```bash
+npm run typecheck && npm run lint && npm test
+git add -A && git commit -m "fix: <describe fix>" && git push
+gh run watch
+```
 
-3. Fix the issue locally
+Repeat until CI is green.
 
-4. Run local checks again: `npm run typecheck && npm run lint && npm test`
-
-5. Commit the fix:
-   ```bash
-   git add -A
-   git commit -m "fix: <describe what was fixed>"
-   ```
-
-6. Push and wait for CI again:
-   ```bash
-   git push
-   gh run watch
-   ```
-
-7. Repeat until CI is green
-
-## Commands Reference
+## gh Commands
 
 | Command | Purpose |
 |---------|---------|
-| `npm run typecheck` | TypeScript type checking |
-| `npm run lint` | ESLint code quality |
-| `npm test` | Run all tests with coverage |
-| `npm run test -- <path> --coverage.include <path>` | Targeted tests |
-| `npm run format` | Auto-fix formatting |
-| `npm run build` | Production build |
 | `gh run list --limit 1` | Check latest CI run status |
-| `gh run watch` | Watch CI run in real-time |
+| `gh run watch` | Watch CI run until completion |
 | `gh run view --log-failed` | Get failed step logs |
+| `gh pr create --fill` | Create PR from current branch |
+| `gh pr view --web` | Open PR in browser |
+| `gh pr checks` | View PR check status |
 
-## Don't Stop Until
+## Success Criteria
 
 - All local checks pass (typecheck, lint, test)
-- Git push succeeds
-- GitHub Actions workflow shows green checkmark
-
-Keep iterating through the fix → commit → push → check cycle until everything passes.
+- `git push` succeeds
+- `gh run list --limit 1` shows status "completed" with conclusion "success"
