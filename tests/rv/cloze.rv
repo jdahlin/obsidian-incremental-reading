@@ -1,0 +1,23 @@
+# cloze command
+# Intent: cloze creation registers per-note cloze state.
+topic "Source"
+# No clozes before insertion
+expect stats.clozes.count 0
+expect stats.session.poolSize 1
+expect stats.queue.total 1
+cloze note-1 1 3
+# Cloze registry increments
+expect stats.clozes.count 1
+# Pool size includes note + cloze
+expect stats.session.poolSize 2
+expect stats.queue.total 2
+# Cloze range and linkage
+expect clozes.note-1::c1.start 1
+expect clozes.note-1::c1.end 3
+expect clozes.note-1::c1.noteId note-1
+cloze note-1 4 6
+expect stats.clozes.count 2
+expect stats.session.poolSize 3
+expect stats.queue.total 3
+expect clozes.note-1::c2.start 4
+expect clozes.note-1::c2.end 6

@@ -1,0 +1,5 @@
+# scheduler command
+# Intent: scheduler selection is persisted for grading math.
+expect stats.session.poolSize 0
+scheduler sm2
+expect scheduler sm2

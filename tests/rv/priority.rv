@@ -1,0 +1,10 @@
+# priority command
+# Intent: priority updates are captured for later ordering.
+expect stats.session.poolSize 0
+expect stats.priority.count 0
+topic "Source"
+expect stats.session.poolSize 1
+priority note-1 42
+# Priority value stored
+expect priority.note-1 42
+expect stats.priority.count 1

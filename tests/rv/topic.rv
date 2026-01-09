@@ -1,0 +1,12 @@
+# topic command
+# Intent: creating a topic yields one note and preserves priority.
+# Pool size starts empty
+expect stats.session.poolSize 0
+expect stats.notes.count 0
+topic "Intro" --priority 5
+# Note registry count
+expect stats.notes.count 1
+# Priority persisted on note
+expect notes.note-1.priority 5
+expect stats.session.poolSize 1
+expect stats.queue.total 1

@@ -1,0 +1,8 @@
+# inspect-next command
+# Intent: inspect-next can be used to assert queue sizing.
+expect stats.session.poolSize 0
+topic "Source"
+cloze note-1 1 3
+inspect-next --limit 2
+# Queue reflects total items
+expect stats.queue.total 2

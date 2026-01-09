@@ -1,0 +1,18 @@
+# due dates for ratings
+# Intent: rating 1/2/3/4 produce distinct due dates.
+clock 2025-01-01
+topic "Source"
+cloze note-1 0 1
+cloze note-1 2 3
+cloze note-1 4 5
+cloze note-1 6 7
+grade note-1::c1 1
+grade note-1::c2 2
+grade note-1::c3 3
+grade note-1::c4 4
+# Due dates are deterministic for the harness
+expect due.note-1::c1 2025-01-01
+expect due.note-1::c2 2025-01-01
+expect due.note-1::c3 2025-01-01
+expect due.note-1::c4 2025-01-09
+expect stats.due.count 4
