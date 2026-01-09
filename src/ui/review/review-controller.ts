@@ -1,25 +1,20 @@
-import type { App, EventRef, TAbstractFile } from 'obsidian';
 import { buildDeckTree, getCountsForFolder } from '../../core/decks';
 import { buildQueue, getNextItem } from '../../core/queue';
 import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
 import type {
-	DeckInfo,
 	ReviewItem,
 	ReviewQueue,
 	ReviewRecord,
-	StreakInfo,
+	ReviewPlatformAdapter,
+	DeckInfo,
 	TodayStats,
+	StreakInfo,
 } from '../../core/types';
 import { formatDate } from '../../core/frontmatter';
-import { appendReview } from '../../data/revlog';
-import { updateClozeState, updateTopicState } from '../../data/review-items';
-import { loadReviewItems } from '../../data/review-loader';
-import { getStreakInfo, getTodayStats } from '../../data/review-stats';
-import { loadReviewItemHtml, type ReviewPhase } from '../../review/content';
+import type { ReviewPhase } from '../../review/content';
 import type { DeckCountsValue } from './deck-summary-types';
-import type { ReviewScreenActions, ReviewScreenState } from './review-screen-state';
+import type { DebugInfo, ReviewScreenActions, ReviewScreenState } from './review-screen-state';
 import type { SessionStats } from './review-screen-types';
-import { StatsModal } from '../stats/StatsModal';
 
 export interface ReviewSettings {
 	newCardsPerDay: number;
@@ -31,8 +26,7 @@ export interface ReviewSettings {
 }
 
 export interface ReviewControllerDeps {
-	app: App;
-	view: unknown;
+	platform: ReviewPlatformAdapter;
 	settings: ReviewSettings;
 }
 
@@ -56,9 +50,9 @@ type Listener = (state: ReviewScreenState) => void;
 
 const emptyCounts: DeckCountsValue = { new: 0, learning: 0, due: 0 };
 
-const emptyTodayStats: TodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
+const emptyTodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 
-const emptyStreak: StreakInfo = { current: 0, longest: 0 };
+const emptyStreak = { current: 0, longest: 0 };
 
 function createSessionStats(): SessionStats {
 	return { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
@@ -66,8 +60,9 @@ function createSessionStats(): SessionStats {
 
 export class ReviewController {
 	private listeners = new Set<Listener>();
-	private vaultEventRefs: EventRef[] = [];
+	private unbindDataChange: (() => void) | null = null;
 	private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+	private static readonly SPACE_GRADE: 1 | 2 | 3 | 4 = 3;
 	private model: ReviewModel = {
 		screen: 'folder',
 		items: [],
@@ -90,30 +85,23 @@ export class ReviewController {
 	constructor(private deps: ReviewControllerDeps) {}
 
 	mount(): void {
-		const { vault } = this.deps.app;
-		this.vaultEventRefs.push(
-			vault.on('create', (file) => this.onFileChange(file)),
-			vault.on('delete', (file) => this.onFileChange(file)),
-			vault.on('modify', (file) => this.onFileChange(file)),
-		);
-	}
-
-	unmount(): void {
-		this.vaultEventRefs.forEach((ref) => this.deps.app.vault.offref(ref));
-		this.vaultEventRefs = [];
-		if (this.refreshTimeout) {
-			clearTimeout(this.refreshTimeout);
-			this.refreshTimeout = null;
-		}
-	}
-
-	private onFileChange(file: TAbstractFile): void {
-		if (file.path.startsWith('IR/Review Items/')) {
+		this.unbindDataChange = this.deps.platform.onDataChange(() => {
 			if (this.model.screen === 'review') return;
 			if (this.refreshTimeout) clearTimeout(this.refreshTimeout);
 			this.refreshTimeout = setTimeout(() => {
 				void this.refreshSummary();
 			}, 500);
+		});
+	}
+
+	unmount(): void {
+		if (this.unbindDataChange) {
+			this.unbindDataChange();
+			this.unbindDataChange = null;
+		}
+		if (this.refreshTimeout) {
+			clearTimeout(this.refreshTimeout);
+			this.refreshTimeout = null;
 		}
 	}
 
@@ -144,7 +132,7 @@ export class ReviewController {
 		};
 	}
 
-	handleKeyDown(event: KeyboardEvent): void {
+	handleKeyDown(event: KeyboardEvent): void | Promise<void> {
 		if (event.defaultPrevented) return;
 		const target = event.target as HTMLElement | null;
 		if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
@@ -157,27 +145,31 @@ export class ReviewController {
 
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
-			this.onShowAnswer();
+			if (this.model.phase === 'question') {
+				this.onShowAnswer();
+			} else {
+				return this.onGrade(ReviewController.SPACE_GRADE);
+			}
 			return;
 		}
 
 		if (['1', '2', '3', '4'].includes(event.key)) {
 			event.preventDefault();
-			void this.onGrade(Number(event.key));
+			return this.onGrade(Number(event.key));
 		}
 	}
 
 	async refreshSummary(): Promise<void> {
 		const requestId = ++this.refreshRequestId;
 		const now = new Date();
-		const items = await loadReviewItems(this.deps.app, this.deps.settings.extractTag);
+		const items = await this.deps.platform.loadItems(this.deps.settings.extractTag);
 		const decks = buildDeckTree(items, now);
 		const allCounts = getCountsForFolder(items, '', now);
-		const todayStats = await getTodayStats(this.deps.app, now);
-		const streak = await getStreakInfo(this.deps.app, now);
+		const todayStats = await this.deps.platform.getTodayStats(now);
+		const streak = await this.deps.platform.getStreakInfo(now);
 		if (requestId !== this.refreshRequestId) return;
 
-		const selectedPath = getPreselectedPath(this.deps.app, decks);
+		const selectedPath = this.deps.platform.getPreselectedPath(decks);
 		this.setModel((prev) => ({
 			...prev,
 			screen: 'folder',
@@ -235,14 +227,13 @@ export class ReviewController {
 		try {
 			if (item.type === 'topic') {
 				nextState = gradeTopic(item.state, grade, now);
-				await updateTopicState(this.deps.app, item.noteId, nextState, item.notePath);
+				await this.deps.platform.updateTopicState(item.noteId, nextState, item.notePath);
 			} else {
 				nextState = gradeItem(item.state, rating, now, {
 					maximumInterval: this.deps.settings.maximumInterval,
 					requestRetention: this.deps.settings.requestRetention,
 				});
-				await updateClozeState(
-					this.deps.app,
+				await this.deps.platform.updateClozeState(
 					item.noteId,
 					item.clozeIndex ?? 1,
 					nextState,
@@ -267,7 +258,7 @@ export class ReviewController {
 			stability_before: previous.stability,
 			difficulty_before: previous.difficulty,
 		};
-		await appendReview(this.deps.app, entry);
+		await this.deps.platform.appendReview(entry);
 
 		const sessionStats = updateSessionStats(this.model.sessionStats, grade);
 		this.setModel((prev) => ({ ...prev, sessionStats }));
@@ -276,10 +267,14 @@ export class ReviewController {
 
 	private async loadItemContent(item: ReviewItem | null, phase: ReviewPhase): Promise<void> {
 		const requestId = ++this.contentRequestId;
-		const html = await loadReviewItemHtml(
-			{ app: this.deps.app, view: this.deps.view, extractTag: this.deps.settings.extractTag },
+		if (!item) {
+			this.setModel((prev) => ({ ...prev, currentContent: '' }));
+			return;
+		}
+		const html = await this.deps.platform.renderItem(
 			item,
 			phase,
+			this.deps.settings.extractTag,
 		);
 		if (requestId !== this.contentRequestId) return;
 		this.setModel((prev) => ({ ...prev, currentContent: html }));
@@ -344,6 +339,18 @@ export class ReviewController {
 			return { type: 'finished', sessionStats: this.model.sessionStats };
 		}
 
+		const item = this.model.currentItem;
+		const debugInfo: DebugInfo = {
+			queue: getQueueName(item.state.status),
+			status: item.state.status,
+			priority: item.priority,
+			due: item.state.due?.toISOString() ?? null,
+			stability: item.state.stability,
+			difficulty: item.state.difficulty,
+			reps: item.state.reps,
+			lapses: item.state.lapses,
+		};
+
 		if (this.model.phase === 'question') {
 			return {
 				type: 'question',
@@ -352,10 +359,11 @@ export class ReviewController {
 					this.model.currentItem.type === 'item'
 						? (this.model.currentItem.clozeIndex ?? null)
 						: null,
+				debugInfo,
 			};
 		}
 
-		return { type: 'answer', content: this.model.currentContent };
+		return { type: 'answer', content: this.model.currentContent, debugInfo };
 	}
 
 	private readonly onSelectDeck = (path: string | null): void => {
@@ -367,7 +375,7 @@ export class ReviewController {
 	};
 
 	private readonly onStats = (): void => {
-		new StatsModal(this.deps.app, this.deps.settings.extractTag).open();
+		this.deps.platform.openStats(this.deps.settings.extractTag);
 	};
 
 	private readonly onBack = (): void => {
@@ -378,8 +386,8 @@ export class ReviewController {
 		this.showAnswer();
 	};
 
-	private readonly onGrade = (grade: number): void => {
-		void this.gradeCurrentItem(grade);
+	private readonly onGrade = async (grade: number): Promise<void> => {
+		await this.gradeCurrentItem(grade);
 	};
 }
 
@@ -404,33 +412,6 @@ function updateSessionStats(sessionStats: SessionStats, grade: number): SessionS
 	return next;
 }
 
-function collectDeckPaths(decks: DeckInfo[]): Set<string> {
-	const paths = new Set<string>();
-	const walk = (nodes: DeckInfo[]): void => {
-		for (const node of nodes) {
-			paths.add(node.path);
-			if (node.children.length) walk(node.children);
-		}
-	};
-	walk(decks);
-	return paths;
-}
-
-function getPreselectedPath(app: App, decks: DeckInfo[]): string | null {
-	const active = app.workspace.getActiveFile();
-	if (!active) return null;
-	let folder = active.parent?.path ?? '';
-	if (!folder) return null;
-	const deckPaths = collectDeckPaths(decks);
-	while (folder) {
-		if (deckPaths.has(folder)) return folder;
-		const parts = folder.split('/');
-		parts.pop();
-		folder = parts.join('/');
-	}
-	return null;
-}
-
 function removeCurrentFromQueue(queue: ReviewQueue, current: ReviewItem): void {
 	const remove = (list: ReviewItem[]): void => {
 		const index = list.findIndex((item) => item.id === current.id);
@@ -439,4 +420,10 @@ function removeCurrentFromQueue(queue: ReviewQueue, current: ReviewItem): void {
 	remove(queue.learning);
 	remove(queue.due);
 	remove(queue.new);
+}
+
+function getQueueName(status: string): string {
+	if (status === 'new') return 'new';
+	if (status === 'learning' || status === 'relearning') return 'learning';
+	return 'review';
 }
