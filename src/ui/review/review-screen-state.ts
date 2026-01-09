@@ -2,6 +2,17 @@ import type { DeckInfo, StreakInfo, TodayStats } from '../../core/types';
 import type { DeckCountsValue } from './deck-summary-types';
 import type { SessionStats } from './review-screen-types';
 
+export interface DebugInfo {
+	queue: string;
+	status: string;
+	priority: number;
+	due: string | null;
+	stability: number;
+	difficulty: number;
+	reps: number;
+	lapses: number;
+}
+
 export type ReviewScreenState =
 	| {
 			type: 'folder';
@@ -16,10 +27,12 @@ export type ReviewScreenState =
 			type: 'question';
 			content: string;
 			clozeIndex: number | null;
+			debugInfo: DebugInfo;
 	  }
 	| {
 			type: 'answer';
 			content: string;
+			debugInfo: DebugInfo;
 	  }
 	| {
 			type: 'finished';
@@ -32,5 +45,5 @@ export interface ReviewScreenActions {
 	onStats: () => void;
 	onBack: () => void;
 	onShowAnswer: () => void;
-	onGrade: (grade: number) => void;
+	onGrade: (grade: number) => void | Promise<void>;
 }

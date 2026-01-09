@@ -2,7 +2,7 @@ import type { FunctionalComponent } from 'preact';
 import './ReviewGradeButtons.css';
 
 export interface ReviewGradeButtonsProps {
-	onGrade: (grade: number) => void;
+	onGrade: (grade: number) => void | Promise<void>;
 }
 
 export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = ({ onGrade }) => {
@@ -20,7 +20,9 @@ export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = 
 					key={grade.value}
 					type="button"
 					className={grade.className}
-					onClick={() => onGrade(grade.value)}
+					onClick={() => {
+						void onGrade(grade.value);
+					}}
 				>
 					{grade.value}
 				</button>

@@ -34,11 +34,18 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 				<ReviewQuestionScreen
 					content={state.content}
 					clozeIndex={state.clozeIndex}
+					debugInfo={state.debugInfo}
 					onShowAnswer={actions.onShowAnswer}
 				/>
 			);
 		case 'answer':
-			return <ReviewAnswerScreen content={state.content} onGrade={actions.onGrade} />;
+			return (
+				<ReviewAnswerScreen
+					content={state.content}
+					debugInfo={state.debugInfo}
+					onGrade={actions.onGrade}
+				/>
+			);
 		case 'finished':
 			return (
 				<ReviewFinishedScreen sessionStats={state.sessionStats} onBack={actions.onBack} />

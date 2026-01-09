@@ -73,6 +73,17 @@ function getHtmlContent(node: unknown): string {
 	return html;
 }
 
+const mockDebugInfo = {
+	queue: 'new',
+	status: 'new',
+	priority: 50,
+	due: null,
+	stability: 0,
+	difficulty: 0,
+	reps: 0,
+	lapses: 0,
+};
+
 describe('Review screens', () => {
 	it('renders finished screen with session summary', () => {
 		const vnode = ReviewFinishedScreen({
@@ -91,6 +102,7 @@ describe('Review screens', () => {
 		const vnode = ReviewQuestionScreen({
 			content: '<p>Test</p>',
 			clozeIndex: null,
+			debugInfo: mockDebugInfo,
 			onShowAnswer: () => undefined,
 		});
 
@@ -101,6 +113,7 @@ describe('Review screens', () => {
 	it('renders answer screen with grading buttons', () => {
 		const vnode = ReviewAnswerScreen({
 			content: '<p>Test</p>',
+			debugInfo: mockDebugInfo,
 			onGrade: () => undefined,
 		});
 
@@ -117,6 +130,7 @@ describe('Review screens', () => {
 		const vnode = ReviewQuestionScreen({
 			content: rawClozeContent,
 			clozeIndex: 1,
+			debugInfo: mockDebugInfo,
 			onShowAnswer: () => undefined,
 		});
 
