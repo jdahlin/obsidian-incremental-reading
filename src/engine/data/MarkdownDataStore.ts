@@ -331,14 +331,17 @@ ${line}`
 	}
 
 	private serializeState(state: ReviewState): Record<string, unknown> {
+		const isValidDate = (d: Date | null | undefined): d is Date =>
+			d instanceof Date && !isNaN(d.getTime());
+
 		return {
 			status: state.status,
-			due: state.due ? state.due.toISOString() : null,
+			due: isValidDate(state.due) ? state.due.toISOString() : null,
 			stability: state.stability,
 			difficulty: state.difficulty,
 			reps: state.reps,
 			lapses: state.lapses,
-			last_review: state.lastReview ? state.lastReview.toISOString() : null,
+			last_review: isValidDate(state.lastReview) ? state.lastReview.toISOString() : null,
 		};
 	}
 
