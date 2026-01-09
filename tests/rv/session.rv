@@ -4,7 +4,7 @@ expect stats.session.poolSize 0
 session JD1 --exam 2026-01-19 --capacity 50 --clump 3 --cooldown 5
 # Strategy and exam date
 expect session.strategy JD1
-expect session.examDate 2026-01-19
+expect session.examDate 2026-01-19T00:00:00.000Z
 # Session tuning knobs
 expect session.capacity 50
 expect session.clump 3

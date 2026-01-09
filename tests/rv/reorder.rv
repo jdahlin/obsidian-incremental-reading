@@ -1,0 +1,26 @@
+# Dynamic Priority Reordering Test
+
+session JD1
+clock 2025-01-01
+
+topic "Topic A" --priority 10
+topic "Topic B" --priority 20
+
+# Initial Order: Higher Priority First (JD1)
+# B (20) > A (10)
+inspect-next
+expect session.nextItem note-2
+
+# Change Priority of A to 30
+priority note-1 30
+
+# New Order: A (30) > B (20)
+inspect-next
+expect session.nextItem note-1
+
+# Change Priority of B to 40
+priority note-2 40
+
+# New Order: B (40) > A (30)
+inspect-next
+expect session.nextItem note-2

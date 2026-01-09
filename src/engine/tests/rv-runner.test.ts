@@ -6,17 +6,17 @@ import { parseRvScript, runRvCommands } from '../rv';
 
 const rvDir = join(process.cwd(), 'tests', 'rv');
 
-function getRvFiles(): string[] {
-	return readdirSync(rvDir)
-		.filter((name) => name.endsWith('.rv'))
-		.sort()
-		.map((name) => join(rvDir, name));
-}
+const files = readdirSync(rvDir)
+	.filter((name) => name.endsWith('.rv'))
+	.sort();
 
 describe('.rv script runner', () => {
-	it.each(getRvFiles())('runs %s', (filePath) => {
-		const content = readFileSync(filePath, 'utf8');
-		const commands = parseRvScript(content);
-		expect(() => runRvCommands(commands)).not.toThrow();
+	files.forEach((file) => {
+		it(`runs ${file}`, async () => {
+			const filePath = join(rvDir, file);
+			const content = readFileSync(filePath, 'utf8');
+			const commands = parseRvScript(content);
+			await expect(runRvCommands(commands)).resolves.not.toThrow();
+		});
 	});
 });

@@ -28,6 +28,7 @@ export interface EngineStore {
 	recordPriority(itemId: string, value: number): void;
 	recordScroll(itemId: string, value: number): void;
 	recordShow(itemId: string, phase?: string): void;
+	setNextItem(itemId: string | null): void;
 	setSession(config: Record<string, unknown>): void;
 	setScheduler(id: string): void;
 	setClock(value: string): void;

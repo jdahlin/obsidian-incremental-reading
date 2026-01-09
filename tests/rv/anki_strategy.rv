@@ -1,0 +1,77 @@
+# Anki Strategy Test
+# Order: Learning > Due > New
+# Secondary: Cloze > Topic
+# Priority is IGNORED in Anki strategy.
+
+session Anki
+clock 2025-01-01
+
+# 1. New Items Setup
+# note-1: Topic (New)
+topic "Topic New" --priority 50
+
+# note-2: Topic (New) -> note-2::c1 (Cloze New)
+topic "Note for Cloze New" --priority 50
+cloze LAST 0 1
+
+# 2. Learning Item Setup
+# Create a topic, grade it 1 (Again) to make it Learning.
+# It goes to Volatile Queue.
+topic "Topic Learning" --priority 100
+grade LAST 1
+# note-3 is now Learning (Volatile).
+# To see it again, we need to clear cooldown (default 5).
+
+# 3. Fillers (to clear cooldown)
+topic "Filler 1"
+topic "Filler 2"
+topic "Filler 3"
+topic "Filler 4"
+topic "Filler 5"
+
+# Current State in Pool (excluding History):
+# note-1 (New Topic)
+# note-2::c1 (New Cloze)
+# note-3 (Learning) - Blocked by cooldown until we review 5 items?
+#   Actually, cooldown is based on *reviews performed*.
+#   So we need to review the fillers.
+
+# note-4..8 are Fillers.
+
+# Strategy Check:
+# Anki: Learning > New.
+# Within New: Cloze > Topic.
+
+# Sequence:
+# 1-5. Fillers (New Topic). Order among them? ID sort.
+# note-4, note-5, note-6, note-7, note-8.
+# Wait, note-2::c1 is New Cloze. It beats New Topics (Fillers).
+# So note-2::c1 should come BEFORE fillers.
+
+inspect-next
+expect session.nextItem note-2::c1
+grade note-2::c1 3
+
+# Now note-1 (New Topic) vs Fillers (New Topic).
+# ID sort? note-1 comes before note-4.
+inspect-next
+expect session.nextItem note-1
+grade note-1 3
+
+# note-2 is also a New Topic (created for the cloze).
+# ID sort: note-2 comes before note-4.
+inspect-next
+expect session.nextItem note-2
+grade note-2 3
+
+# At this point, note-3 (Learning) seems to be ready (cooldown passed or calculation differs).
+# Anki Strategy: Learning (note-3) > New (Fillers like note-4).
+# So note-3 should appear next.
+
+inspect-next
+expect session.nextItem note-3
+grade note-3 3
+
+# After note-3, we expect Fillers (New).
+inspect-next
+expect session.nextItem note-4

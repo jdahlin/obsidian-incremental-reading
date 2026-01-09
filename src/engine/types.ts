@@ -47,6 +47,7 @@ export interface SessionConfig {
 	capacity?: number;
 	clumpLimit?: number;
 	cooldown?: number;
+	deterministic?: boolean;
 }
 
 export interface Scheduler {

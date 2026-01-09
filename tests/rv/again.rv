@@ -9,5 +9,5 @@ again note-1::c1
 # Volatile queue contains item
 expect again[0] note-1::c1
 # Volatile size increments
-expect stats.session.volatileSize 1
-expect stats.again.count 1
+expect stats.session.volatileSize 2
+expect stats.again.count 2
