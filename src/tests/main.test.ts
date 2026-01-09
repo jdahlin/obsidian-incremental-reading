@@ -51,6 +51,8 @@ describe('IncrementalReadingPlugin', () => {
 			plugin as unknown as { activateReviewView: () => Promise<void> }
 		).activateReviewView();
 		expect(leaf.lastViewState?.type).toBe(VIEW_TYPE_REVIEW);
+		expect(plugin.app.workspace.activeLeaf).toBe(leaf);
+		expect(plugin.app.workspace.activeLeafFocus).toBe(true);
 	});
 
 	it('persists settings via saveSettings', async () => {

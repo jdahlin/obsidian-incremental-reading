@@ -323,6 +323,8 @@ export class Workspace {
 	private leaves: WorkspaceLeaf[] = [];
 	private activeFile: TFile | null = null;
 	private activeView: unknown = null;
+	activeLeaf: WorkspaceLeaf | null = null;
+	activeLeafFocus = false;
 
 	getLeavesOfType(type: string): WorkspaceLeaf[] {
 		return this.leaves.filter((leaf) => leaf.viewType === type);
@@ -334,6 +336,27 @@ export class Workspace {
 
 	async revealLeaf(_leaf: WorkspaceLeaf): Promise<void> {
 		return;
+	}
+
+	setActiveLeaf(
+		leaf: WorkspaceLeaf,
+		paramsOrPushHistory?:
+			| {
+					focus?: boolean;
+			  }
+			| boolean,
+		focus?: boolean,
+	): void {
+		this.activeLeaf = leaf;
+		if (typeof paramsOrPushHistory === 'object' && paramsOrPushHistory) {
+			this.activeLeafFocus = !!paramsOrPushHistory.focus;
+			return;
+		}
+		if (typeof focus === 'boolean') {
+			this.activeLeafFocus = focus;
+			return;
+		}
+		this.activeLeafFocus = false;
 	}
 
 	getActiveFile(): TFile | null {
