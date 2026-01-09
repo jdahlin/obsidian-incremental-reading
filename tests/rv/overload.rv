@@ -1,0 +1,43 @@
+# Overload Management Test
+# Intent: Verify postpone functionality works as expected.
+
+clock 2025-01-01
+session Anki
+
+# 1. Setup Item to Postpone
+topic "Topic to Postpone"
+# Grade 3 -> Becomes Due/Review state.
+grade LAST 3
+
+# 2. Add a Filler (New)
+# Anki Priority: Due > New.
+topic "Filler"
+
+# Verify "Topic to Postpone" is picked first if it were due?
+# Wait, grade 3 makes it "Review". FSRS usually schedules it for future.
+# So initially it is NOT due (Bucket 0). Filler (Bucket 1) should win.
+
+# Let's ensure it IS due first.
+clock 2025-02-01
+# Now "Topic to Postpone" should be Due (Bucket 2). Filler is New (Bucket 1).
+inspect-next
+expect session.nextItem note-1
+
+# 3. Postpone it
+# Postpone "Topic to Postpone" by 5 days (from NOW).
+# NOW is 2025-02-01. New Due = 2025-02-06.
+postpone note-1 5
+
+# 4. Verify it is no longer top
+# Clock is still 2025-02-01. Item due 2025-02-06.
+# It falls to Bucket 0 (Review not due).
+# Filler (New, Bucket 1) should be next.
+inspect-next
+expect session.nextItem note-2
+
+# 5. Advance Clock to when it is due
+clock 2025-02-06
+# Now item is Due again (Bucket 2).
+inspect-next
+expect session.nextItem note-1
+
