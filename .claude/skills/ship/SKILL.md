@@ -38,16 +38,16 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
 ### 4. Monitor CI with gh
 
-After pushing, immediately check CI status:
+After pushing, get the run ID and watch until completion:
 
 ```bash
-gh run list --limit 1
+gh run list --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run watch --exit-status
 ```
 
-If status is "in_progress", watch until completion:
-
+Or in two steps:
 ```bash
-gh run watch
+gh run list --limit 1  # Note the run ID (rightmost number)
+gh run watch <run-id> --exit-status
 ```
 
 ### 5. Handle CI Failures
@@ -63,7 +63,7 @@ Then fix locally, re-run checks, commit, push, and monitor again:
 ```bash
 npm run typecheck && npm run lint && npm test
 git add -A && git commit -m "fix: <describe fix>" && git push
-gh run watch
+gh run list --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run watch --exit-status
 ```
 
 Repeat until CI is green.
@@ -73,7 +73,8 @@ Repeat until CI is green.
 | Command | Purpose |
 |---------|---------|
 | `gh run list --limit 1` | Check latest CI run status |
-| `gh run watch` | Watch CI run until completion |
+| `gh run list --limit 1 --json databaseId --jq '.[0].databaseId'` | Get latest run ID |
+| `gh run watch <run-id> --exit-status` | Watch CI run until completion |
 | `gh run view --log-failed` | Get failed step logs |
 | `gh pr create --fill` | Create PR from current branch |
 | `gh pr view --web` | Open PR in browser |
