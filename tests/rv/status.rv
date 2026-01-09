@@ -1,8 +1,21 @@
 # status command
-# Intent: status exposes session pool sizing.
+# Intent: outputs session progress, backlog size, and ratio stats.
 expect stats.session.poolSize 0
-topic "Source"
-cloze note-1 1 3
+expect stats.grades.count 0
+expect stats.history.count 0
+topic "First Topic" --priority 80
+cloze note-1 0 5
+topic "Second Topic" --priority 60
 status
-# Pool size includes note + cloze
-expect stats.session.poolSize 2
+# After status, stats should be accessible via expect
+expect stats.session.poolSize 3
+expect stats.notes.count 2
+expect stats.clozes.count 1
+expect stats.queue.total 3
+expect stats.queue.new 3
+expect stats.queue.due 0
+# Grade an item and check status updates
+grade note-1::c1 3
+status
+expect stats.history.count 1
+expect stats.grades.count 1

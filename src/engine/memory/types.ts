@@ -15,6 +15,7 @@ export interface EngineSnapshot {
 	session: Record<string, unknown>;
 	scheduler: string;
 	stats: Record<string, unknown>;
+	queue: string[];
 }
 
 export interface EngineStore {
@@ -29,6 +30,7 @@ export interface EngineStore {
 	recordScroll(itemId: string, value: number): Promise<void>;
 	recordShow(itemId: string, phase?: string): Promise<void>;
 	setNextItem(itemId: string | null): void;
+	setNextItems(itemIds: string[]): void;
 	setSession(config: Record<string, unknown>): void;
 	setScheduler(id: string): void;
 	setClock(value: string): void;

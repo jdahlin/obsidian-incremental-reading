@@ -57,6 +57,7 @@ interface EngineState {
 	session: SessionConfig;
 	scheduler: string;
 	nextItem: string | null;
+	nextItems: string[];
 	// New field for persistent review logs (DataStore.appendReview)
 	reviewLogs: ReviewRecord[];
 }
@@ -81,6 +82,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		session: { strategy: 'JD1', examDate: null },
 		scheduler: 'fsrs',
 		nextItem: null,
+		nextItems: [],
 		reviewLogs: [],
 	};
 
@@ -177,6 +179,10 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		this.state.nextItem = itemId;
 	}
 
+	setNextItems(itemIds: string[]): void {
+		this.state.nextItems = itemIds;
+	}
+
 	setSession(config: Record<string, unknown>): void {
 		this.state.session = {
 			strategy: String((config.strategy as string) ?? this.state.session.strategy),
@@ -213,6 +219,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			session: { ...this.state.session, nextItem: this.state.nextItem },
 			scheduler: this.state.scheduler,
 			stats: buildStats(this.state),
+			queue: this.state.nextItems.slice(),
 		};
 	}
 

@@ -1,0 +1,20 @@
+# inspect-next with --limit
+# Intent: inspect-next should return N items in ranked order.
+topic "High Priority" --priority 90
+topic "Medium Priority" --priority 50
+topic "Low Priority" --priority 10
+cloze note-1 0 4
+cloze note-2 0 6
+# Pool should have 5 items (3 topics + 2 clozes)
+expect stats.session.poolSize 5
+# Inspect with limit 3
+inspect-next --limit 3
+# Queue should contain 3 item IDs
+expect queue[0] note-1
+expect queue[1] note-1::c1
+expect queue[2] note-2
+# First item should be highest priority topic
+expect session.nextItem note-1
+# Inspect with limit 1 (default behavior)
+inspect-next --limit 1
+expect queue[0] note-1

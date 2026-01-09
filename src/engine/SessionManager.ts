@@ -55,7 +55,29 @@ export class SessionManager {
 	}
 
 	async getNext(now: Date = new Date()): Promise<SessionItem | null> {
-		if (this.pool.length === 0) return null;
+		const candidates = await this.getRankedCandidates(now);
+		if (candidates.length === 0) return null;
+
+		// Probabilistic interleaving for JD1 (80/20)
+		if (this.config.strategy === 'JD1' && candidates.length > 1 && !this.config.deterministic) {
+			const rand = Math.random();
+			if (rand > 0.8) {
+				// Pick from lower bands (randomly from the rest)
+				const index = 1 + Math.floor(Math.random() * (candidates.length - 1));
+				return candidates[index] ?? null;
+			}
+		}
+
+		return candidates[0] ?? null;
+	}
+
+	async getNextN(n: number, now: Date = new Date()): Promise<SessionItem[]> {
+		const candidates = await this.getRankedCandidates(now);
+		return candidates.slice(0, n);
+	}
+
+	private async getRankedCandidates(now: Date): Promise<SessionItem[]> {
+		if (this.pool.length === 0) return [];
 
 		const strategy = this.getStrategy();
 		const linkedNoteIds = this.lastNoteId
@@ -69,15 +91,14 @@ export class SessionManager {
 			seed: this.seed,
 		};
 
-		// Filter out items in history or currently being cooled down?
-		// Actually, volatileQueue items shouldn't be in the pool selection until cooldown passes.
+		// Filter out items in history or currently being cooled down
 		const availablePool = this.pool.filter(
 			(si) =>
 				!this.historyIds.includes(si.item.id) &&
 				!this.volatileQueue.some((v) => v.item.id === si.item.id),
 		);
 
-		if (availablePool.length === 0 && this.volatileQueue.length === 0) return null;
+		if (availablePool.length === 0 && this.volatileQueue.length === 0) return [];
 
 		// Check volatileQueue for items that passed cooldown
 		const readyFromVolatile = this.volatileQueue.filter((si) => {
@@ -96,19 +117,7 @@ export class SessionManager {
 		// Apply clump limit: max 3 clozes per note in a row
 		candidates = this.applyClumpLimit(candidates);
 
-		if (candidates.length === 0) return null;
-
-		// Probabilistic interleaving for JD1 (80/20)
-		if (this.config.strategy === 'JD1' && candidates.length > 1 && !this.config.deterministic) {
-			const rand = Math.random();
-			if (rand > 0.8) {
-				// Pick from lower bands (randomly from the rest)
-				const index = 1 + Math.floor(Math.random() * (candidates.length - 1));
-				return candidates[index] ?? null;
-			}
-		}
-
-		return candidates[0] ?? null;
+		return candidates;
 	}
 
 	async recordReview(itemId: string, rating: Rating, now: Date = new Date()): Promise<void> {
