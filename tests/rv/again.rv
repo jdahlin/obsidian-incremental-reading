@@ -8,6 +8,6 @@ expect stats.session.poolSize 2
 again note-1::c1
 # Volatile queue contains item
 expect again[0] note-1::c1
-# Volatile size increments
-expect stats.session.volatileSize 2
-expect stats.again.count 2
+# Volatile size increments (1 again call = 1 again entry)
+expect stats.session.volatileSize 1
+expect stats.again.count 1

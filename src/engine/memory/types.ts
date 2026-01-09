@@ -18,19 +18,19 @@ export interface EngineSnapshot {
 }
 
 export interface EngineStore {
-	createNote(content: string, options?: { title?: string; priority?: number }): string;
-	createExtract(sourceId: string, start: number, end: number): string;
-	addCloze(noteId: string, start: number, end: number, hint?: string): string;
-	recordGrade(itemId: string, rating: number): void;
-	recordAgain(itemId: string): void;
-	recordPostpone(itemId: string, days: number): void;
-	recordDismiss(itemId: string): void;
-	recordPriority(itemId: string, value: number): void;
-	recordScroll(itemId: string, value: number): void;
-	recordShow(itemId: string, phase?: string): void;
+	createNote(content: string, options?: { title?: string; priority?: number }): Promise<string>;
+	createExtract(sourceId: string, start: number, end: number): Promise<string>;
+	addCloze(noteId: string, start: number, end: number, hint?: string): Promise<string>;
+	recordGrade(itemId: string, rating: number): Promise<void>;
+	recordAgain(itemId: string): Promise<void>;
+	recordPostpone(itemId: string, days: number): Promise<void>;
+	recordDismiss(itemId: string): Promise<void>;
+	recordPriority(itemId: string, value: number): Promise<void>;
+	recordScroll(itemId: string, value: number): Promise<void>;
+	recordShow(itemId: string, phase?: string): Promise<void>;
 	setNextItem(itemId: string | null): void;
 	setSession(config: Record<string, unknown>): void;
 	setScheduler(id: string): void;
 	setClock(value: string): void;
-	snapshot(): EngineSnapshot;
+	snapshot(): Promise<EngineSnapshot>;
 }

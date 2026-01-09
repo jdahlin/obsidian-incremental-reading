@@ -122,14 +122,6 @@ export class SessionManager {
 			if (!this.volatileQueue.some((v) => v.item.id === itemId)) {
 				this.volatileQueue.push(si);
 			}
-			await this.dataStore.appendReview({
-				ts: now.toISOString(),
-				itemId,
-				rating,
-				stateBefore: si.state.status,
-				stabilityBefore: si.state.stability,
-				difficultyBefore: si.state.difficulty,
-			});
 		} else {
 			// Graduate: remove from volatile if present
 			this.volatileQueue = this.volatileQueue.filter((v) => v.item.id !== itemId);
