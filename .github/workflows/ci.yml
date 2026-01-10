@@ -25,6 +25,15 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Cache turbo
+              uses: actions/cache@v4
+              with:
+                  path: .turbo
+                  key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.sha }}
+                  restore-keys: |
+                      turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+                      turbo-${{ runner.os }}-
+
             - name: Lint
               run: pnpm run lint
 
