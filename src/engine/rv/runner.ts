@@ -147,7 +147,11 @@ async function applyCommand(
 			const { options } = parseArgs(command.args);
 			const clock = store.getClock();
 			const now = clock ? new Date(clock + 'T00:00:00Z') : new Date();
-			await sessionManager.loadPool(now);
+			const snapshot = await store.snapshot();
+			const sessionConfig = snapshot.session;
+			await sessionManager.loadPool(now, {
+				folderFilter: sessionConfig.folder as string | undefined,
+			});
 			const limit = options.limit ? Number(options.limit) : 1;
 			const nextItems = await sessionManager.getNextN(limit, now);
 			const itemIds = nextItems.map((si) => si.item.id);
@@ -158,6 +162,35 @@ async function applyCommand(
 		case 'status': {
 			// Status outputs session progress - data is available via expect on stats
 			await sessionManager.loadPool();
+			break;
+		}
+		case 'inspect-counts': {
+			const clock = store.getClock();
+			const now = clock ? new Date(clock + 'T00:00:00Z') : new Date();
+			const snapshot = await store.snapshot();
+			const sessionConfig = snapshot.session;
+			await sessionManager.loadPool(now, {
+				folderFilter: sessionConfig.folder as string | undefined,
+			});
+			const counts = sessionManager.getCounts(now);
+			store.setSession({
+				...sessionConfig,
+				counts,
+			});
+			break;
+		}
+		case 'inspect-stats': {
+			const stats = sessionManager.getSessionStats();
+			const snapshot = await store.snapshot();
+			const sessionConfig = snapshot.session;
+			store.setSession({
+				...sessionConfig,
+				sessionStats: stats,
+			});
+			break;
+		}
+		case 'reset-session': {
+			sessionManager.resetSession();
 			break;
 		}
 		case 'postpone': {
@@ -199,9 +232,10 @@ async function applyCommand(
 			if (positional[0]) newConfig.strategy = positional[0] as SessionStrategyId;
 			if (options.exam) newConfig.examDate = new Date(options.exam);
 			if (options.capacity) newConfig.capacity = Number(options.capacity);
-
 			if (options.clump) newConfig.clumpLimit = Number(options.clump);
 			if (options.cooldown) newConfig.cooldown = Number(options.cooldown);
+			if (options['new-cards-limit'])
+				newConfig.newCardsLimit = Number(options['new-cards-limit']);
 
 			store.setSession({
 				strategy: newConfig.strategy,
@@ -209,6 +243,8 @@ async function applyCommand(
 				capacity: newConfig.capacity,
 				clump: newConfig.clumpLimit,
 				cooldown: newConfig.cooldown,
+				newCardsLimit: newConfig.newCardsLimit,
+				folder: options.folder,
 			});
 			ctx.updateConfig(newConfig);
 			break;

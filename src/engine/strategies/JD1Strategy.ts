@@ -58,6 +58,12 @@ export class JD1Strategy implements SessionStrategy {
 			score += 25;
 		}
 
+		// 5. CreatedAge - for new items, prefer older created dates (FIFO)
+		if (state.status === 'new' && item.created) {
+			const ageInDays = (now.getTime() - item.created.getTime()) / (1000 * 60 * 60 * 24);
+			score += Math.min(10, ageInDays); // Up to 10 points for age
+		}
+
 		return score;
 	}
 }

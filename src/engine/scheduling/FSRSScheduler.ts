@@ -6,10 +6,21 @@ import {
 	generatorParameters,
 	type RecordLog,
 } from 'ts-fsrs';
-import type { ReviewState, Scheduler, Rating } from '../types';
+import type { ReviewState, Scheduler, Rating, SchedulingParams } from '../types';
 
 export class FSRSScheduler implements Scheduler {
-	private fsrs = new FSRS(generatorParameters({ enable_fuzz: false }));
+	private fsrs: FSRS;
+
+	constructor(params?: SchedulingParams) {
+		this.fsrs = new FSRS(
+			generatorParameters({
+				enable_fuzz: false,
+				maximum_interval: params?.maximumInterval ?? 365,
+				request_retention: params?.requestRetention ?? 0.9,
+				w: params?.weights,
+			}),
+		);
+	}
 
 	grade(state: ReviewState, rating: Rating, now: Date): ReviewState {
 		const card = this.toCard(state);

@@ -1,0 +1,47 @@
+# Topic Grading Test
+# Intent: Topics use fixed interval scheduling (10min/1d/3d/7d).
+
+session JD1
+clock 2025-01-01
+
+topic "Topic for Again" --priority 90
+topic "Topic for Hard" --priority 80
+topic "Topic for Good" --priority 70
+topic "Topic for Easy" --priority 60
+
+# Grade first topic as Again (1) -> 10 min, status=learning
+inspect-next
+expect session.nextItem note-1
+grade note-1 1
+
+# Check state - should be learning
+expect states.note-1.status learning
+expect states.note-1.reps 1
+expect states.note-1.lapses 1
+
+# Grade second topic as Hard (2) -> 1 day
+inspect-next
+expect session.nextItem note-2
+grade note-2 2
+
+expect states.note-2.status review
+expect states.note-2.reps 1
+expect due.note-2 2025-01-02
+
+# Grade third topic as Good (3) -> 3 days
+inspect-next
+expect session.nextItem note-3
+grade note-3 3
+
+expect states.note-3.status review
+expect states.note-3.reps 1
+expect due.note-3 2025-01-04
+
+# Grade fourth topic as Easy (4) -> 7 days
+inspect-next
+expect session.nextItem note-4
+grade note-4 4
+
+expect states.note-4.status review
+expect states.note-4.reps 1
+expect due.note-4 2025-01-08

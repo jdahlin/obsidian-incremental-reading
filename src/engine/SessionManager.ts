@@ -5,11 +5,17 @@ import type {
 	NotePlatform,
 	Rating,
 	ReviewState,
+	ReviewItem,
+	SessionStats,
 } from './types';
 import type { SessionStrategy, StrategyContext } from './strategies/types';
 import { JD1Strategy } from './strategies/JD1Strategy';
 import { AnkiStrategy } from './strategies/AnkiStrategy';
-import { getScheduler } from './scheduling';
+import { getScheduler, TopicScheduler } from './scheduling';
+
+export interface LoadPoolOptions {
+	folderFilter?: string;
+}
 
 export class SessionManager {
 	private pool: SessionItem[] = [];
@@ -17,6 +23,7 @@ export class SessionManager {
 	private historyIds: string[] = [];
 	private lastNoteId: string | null = null;
 	private seed: number = Date.now();
+	private sessionStats: SessionStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 
 	constructor(
 		private dataStore: DataStore,
@@ -28,11 +35,20 @@ export class SessionManager {
 		this.config = config;
 	}
 
-	async loadPool(now: Date = new Date()): Promise<void> {
-		const items = await this.dataStore.listItems();
-		const scheduler = getScheduler(this.config.schedulerId ?? 'fsrs');
+	async loadPool(now: Date = new Date(), options?: LoadPoolOptions): Promise<void> {
+		let items = await this.dataStore.listItems();
 
-		const sessionItems: SessionItem[] = [];
+		// Apply folder filtering
+		if (options?.folderFilter) {
+			items = this.filterByFolder(items, options.folderFilter);
+		}
+
+		const scheduler = getScheduler(
+			this.config.schedulerId ?? 'fsrs',
+			this.config.schedulingParams,
+		);
+
+		let sessionItems: SessionItem[] = [];
 		for (const item of items) {
 			let state: ReviewState | null = await this.dataStore.getState(item.id);
 			if (!state) {
@@ -49,6 +65,16 @@ export class SessionManager {
 				state,
 				score: 0,
 			});
+		}
+
+		// Apply new cards limit
+		if (this.config.newCardsLimit != null) {
+			const newItems = sessionItems.filter((si) => si.state.status === 'new');
+			const limitedNew = newItems.slice(0, this.config.newCardsLimit);
+			const limitedNewIds = new Set(limitedNew.map((si) => si.item.id));
+			sessionItems = sessionItems.filter(
+				(si) => si.state.status !== 'new' || limitedNewIds.has(si.item.id),
+			);
 		}
 
 		this.pool = sessionItems;
@@ -124,7 +150,11 @@ export class SessionManager {
 		const si = this.pool.find((p) => p.item.id === itemId);
 		if (!si) return;
 
-		const scheduler = getScheduler(this.config.schedulerId ?? 'fsrs');
+		// Use TopicScheduler for topics, configured scheduler for clozes
+		const scheduler =
+			si.item.type === 'topic'
+				? new TopicScheduler()
+				: getScheduler(this.config.schedulerId ?? 'fsrs', this.config.schedulingParams);
 
 		if (rating === 1) {
 			// Again: move to volatile queue
@@ -136,6 +166,11 @@ export class SessionManager {
 			this.volatileQueue = this.volatileQueue.filter((v) => v.item.id !== itemId);
 		}
 
+		// Capture state before grading for the review log
+		const stateBefore = si.state.status;
+		const stabilityBefore = si.state.stability;
+		const difficultyBefore = si.state.difficulty;
+
 		// Always persist state (even for Again) to satisfy tests and ensure data safety
 		const newState = scheduler.grade(si.state, rating, now);
 		await this.dataStore.setState(itemId, newState);
@@ -146,10 +181,27 @@ export class SessionManager {
 			ts: now.toISOString(),
 			itemId,
 			rating,
-			stateBefore: si.state.status,
-			stabilityBefore: si.state.stability,
-			difficultyBefore: si.state.difficulty,
+			stateBefore,
+			stabilityBefore,
+			difficultyBefore,
 		});
+
+		// Update session stats
+		this.sessionStats.reviewed++;
+		switch (rating) {
+			case 1:
+				this.sessionStats.again++;
+				break;
+			case 2:
+				this.sessionStats.hard++;
+				break;
+			case 3:
+				this.sessionStats.good++;
+				break;
+			case 4:
+				this.sessionStats.easy++;
+				break;
+		}
 
 		this.historyIds.push(itemId);
 		this.lastNoteId = si.item.noteId;
@@ -197,5 +249,45 @@ export class SessionManager {
 		}
 
 		return items;
+	}
+
+	private filterByFolder(items: ReviewItem[], folderPath: string): ReviewItem[] {
+		if (folderPath === '/') {
+			// Root folder: items with no folder in path
+			return items.filter((item) => !item.notePath.includes('/'));
+		}
+		const normalized = folderPath.replace(/\/$/, '');
+		return items.filter(
+			(item) => item.notePath === normalized || item.notePath.startsWith(`${normalized}/`),
+		);
+	}
+
+	getCounts(now: Date): { new: number; learning: number; due: number } {
+		let newCount = 0;
+		let learningCount = 0;
+		let dueCount = 0;
+
+		for (const si of this.pool) {
+			if (si.state.status === 'new') {
+				newCount++;
+			} else if (si.state.status === 'learning' || si.state.status === 'relearning') {
+				learningCount++;
+			} else if (si.state.due && si.state.due <= now) {
+				dueCount++;
+			}
+		}
+
+		return { new: newCount, learning: learningCount, due: dueCount };
+	}
+
+	getSessionStats(): SessionStats {
+		return { ...this.sessionStats };
+	}
+
+	resetSession(): void {
+		this.sessionStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
+		this.historyIds = [];
+		this.volatileQueue = [];
+		this.lastNoteId = null;
 	}
 }

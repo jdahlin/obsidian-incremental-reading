@@ -38,6 +38,10 @@ interface SessionConfig {
 	capacity?: number;
 	clump?: number;
 	cooldown?: number;
+	newCardsLimit?: number;
+	folder?: string;
+	counts?: { new: number; learning: number; due: number };
+	sessionStats?: { reviewed: number; again: number; hard: number; good: number; easy: number };
 }
 
 interface EngineState {
@@ -190,6 +194,10 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			capacity: config.capacity as number | undefined,
 			clump: config.clump as number | undefined,
 			cooldown: config.cooldown as number | undefined,
+			newCardsLimit: config.newCardsLimit as number | undefined,
+			folder: config.folder as string | undefined,
+			counts: config.counts as SessionConfig['counts'],
+			sessionStats: config.sessionStats as SessionConfig['sessionStats'],
 		};
 	}
 
