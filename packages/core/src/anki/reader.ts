@@ -113,13 +113,28 @@ function readModels(db: Database.Database): Map<number, AnkiModel> {
 	}
 
 	for (const nt of noteTypes) {
-		// Detect if it's a cloze type by name
-		const isCloze = nt.name.toLowerCase().includes('cloze');
+		// Detect model type by name pattern
+		const nameLower = nt.name.toLowerCase();
+		let modelType: number;
+
+		if (nameLower.includes('image occlusion') || nameLower.includes('imageocclusion')) {
+			modelType = 3; // IMAGE_OCCLUSION
+		} else if (nameLower.includes('cloze')) {
+			modelType = 1; // CLOZE
+		} else if (
+			nameLower.includes('basic') ||
+			nameLower === 'default' ||
+			nameLower.startsWith('basic ')
+		) {
+			modelType = 2; // BASIC
+		} else {
+			modelType = 0; // STANDARD (topic)
+		}
 
 		result.set(nt.id, {
 			id: nt.id,
 			name: nt.name,
-			type: isCloze ? 1 : 0, // 0=standard, 1=cloze
+			type: modelType,
 			flds: fieldsByNoteType.get(nt.id) || [],
 		});
 	}

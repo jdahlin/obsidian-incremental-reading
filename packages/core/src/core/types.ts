@@ -1,5 +1,5 @@
 export type Status = 'new' | 'learning' | 'review' | 'relearning';
-export type CardType = 'topic' | 'item';
+export type CardType = 'topic' | 'item' | 'basic' | 'image_occlusion';
 export type Rating = 1 | 2 | 3 | 4;
 
 export interface ItemState {
