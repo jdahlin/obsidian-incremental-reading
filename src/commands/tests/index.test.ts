@@ -31,6 +31,9 @@ function makePlugin(app: App): CommandPlugin & { commands: TestCommand[] } {
 			createFolderForExtractedTopics: false,
 			trackReviewTime: true,
 			showStreak: true,
+			queueStrategy: 'JD1' as const,
+			clumpLimit: 3,
+			cooldown: 5,
 		},
 		commands,
 		addCommand(command: unknown): void {

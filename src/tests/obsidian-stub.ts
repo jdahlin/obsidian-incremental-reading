@@ -264,17 +264,44 @@ export class Vault extends Events {
 	}
 }
 
+interface CacheLink {
+	link: string;
+	original: string;
+	displayText: string;
+}
+
+interface FileCache {
+	frontmatter: Record<string, unknown>;
+	links?: CacheLink[];
+	embeds?: CacheLink[];
+}
+
 export class MetadataCache {
 	constructor(private vault: Vault) {}
 
-	getFileCache(file: TFile): { frontmatter: Record<string, unknown> } | null {
+	getFileCache(file: TFile): FileCache | null {
 		const content = this.vault.getContent(file.path);
 		if (!content) return null;
 		const { frontmatter } = splitFrontmatter(content);
 		if (!frontmatter) return null;
 		const parsed = parseYaml(frontmatter);
 		if (!parsed || typeof parsed !== 'object') return null;
-		return { frontmatter: parsed as Record<string, unknown> };
+		return {
+			frontmatter: parsed as Record<string, unknown>,
+			links: [],
+			embeds: [],
+		};
+	}
+
+	getFirstLinkpathDest(link: string, _sourcePath: string): TFile | null {
+		// Simple resolution: look for a file with that name
+		const files = this.vault.getMarkdownFiles();
+		for (const file of files) {
+			if (file.basename === link || file.path === link || file.path === `${link}.md`) {
+				return file;
+			}
+		}
+		return null;
 	}
 }
 
@@ -568,6 +595,10 @@ export class Setting {
 		return this;
 	}
 
+	setHeading(): this {
+		return this;
+	}
+
 	addText(callback: (component: TextComponent) => void): this {
 		const component = new TextComponent();
 		Setting.createdComponents.push({ type: 'text', component });
@@ -595,6 +626,14 @@ export class Setting {
 	addButton(callback: (component: ButtonComponent) => void): this {
 		const component = new ButtonComponent();
 		Setting.createdComponents.push({ type: 'button', component });
+		this.containerEl.components.push(component);
+		callback(component);
+		return this;
+	}
+
+	addDropdown(callback: (component: DropdownComponent) => void): this {
+		const component = new DropdownComponent();
+		Setting.createdComponents.push({ type: 'dropdown', component });
 		this.containerEl.components.push(component);
 		callback(component);
 		return this;
@@ -690,6 +729,32 @@ export class ButtonComponent {
 
 	triggerClick(): void {
 		this.onClickHandler?.();
+	}
+}
+
+export class DropdownComponent {
+	private onChangeHandler: ((value: string) => void) | null = null;
+	private value = '';
+	private options: Map<string, string> = new Map();
+
+	addOption(value: string, display: string): this {
+		this.options.set(value, display);
+		return this;
+	}
+
+	setValue(value: string): this {
+		this.value = value;
+		return this;
+	}
+
+	onChange(handler: (value: string) => void): this {
+		this.onChangeHandler = handler;
+		return this;
+	}
+
+	triggerChange(value: string): void {
+		this.value = value;
+		this.onChangeHandler?.(value);
 	}
 }
 

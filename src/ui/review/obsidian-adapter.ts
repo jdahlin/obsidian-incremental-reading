@@ -4,14 +4,9 @@ import type {
 	ReviewItem,
 	TodayStats,
 	StreakInfo,
-	ItemState,
-	ReviewRecord,
 	DeckInfo,
 } from '../../core/types';
-import { loadReviewItems } from '../../data/review-loader';
 import { getTodayStats, getStreakInfo } from '../../data/review-stats';
-import { updateTopicState, updateClozeState } from '../../data/review-items';
-import { appendReview } from '../../data/revlog';
 import { loadReviewItemHtml } from '../../review/content';
 import { StatsModal } from '../stats/StatsModal';
 
@@ -21,33 +16,12 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		private view: unknown,
 	) {}
 
-	async loadItems(extractTag: string): Promise<ReviewItem[]> {
-		return loadReviewItems(this.app, extractTag);
-	}
-
 	async getTodayStats(now: Date): Promise<TodayStats> {
 		return getTodayStats(this.app, now);
 	}
 
 	async getStreakInfo(now: Date): Promise<StreakInfo> {
 		return getStreakInfo(this.app, now);
-	}
-
-	async updateTopicState(noteId: string, state: ItemState, notePath: string): Promise<void> {
-		return updateTopicState(this.app, noteId, state, notePath);
-	}
-
-	async updateClozeState(
-		noteId: string,
-		clozeIndex: number,
-		state: ItemState,
-		notePath: string,
-	): Promise<void> {
-		return updateClozeState(this.app, noteId, clozeIndex, state, notePath);
-	}
-
-	async appendReview(entry: ReviewRecord): Promise<void> {
-		return appendReview(this.app, entry);
 	}
 
 	async renderItem(

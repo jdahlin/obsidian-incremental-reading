@@ -2,19 +2,51 @@ import type { FunctionalComponent } from 'preact';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import type { App } from 'obsidian';
 import { ReviewScreenRouter } from './ReviewScreenRouter';
-import { useReviewState } from './useReviewState';
-import type { ReviewSettings } from './review-controller';
+import { useReviewState, type UseReviewStateDeps } from './useReviewState';
 import { ObsidianReviewAdapter } from './obsidian-adapter';
+import { ObsidianVault, ObsidianNotePlatform } from '../../engine/adapters';
+import { MarkdownDataStore } from '../../engine/data/MarkdownDataStore';
+import type { IncrementalReadingSettings } from '../../settings';
 
 export interface ReviewRootProps {
 	app: App;
 	view: unknown;
-	settings: ReviewSettings;
+	settings: IncrementalReadingSettings;
 }
 
 export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, settings }) => {
 	const platform = useMemo(() => new ObsidianReviewAdapter(app, view), [app, view]);
-	const { state, actions, onKeyDown } = useReviewState({ platform, settings });
+
+	// Create engine adapters using the unified MarkdownDataStore
+	const vault = useMemo(() => new ObsidianVault(app), [app]);
+	const notePlatform = useMemo(() => new ObsidianNotePlatform(app), [app]);
+	const dataStore = useMemo(
+		() => new MarkdownDataStore(vault, notePlatform),
+		[vault, notePlatform],
+	);
+
+	// Map IncrementalReadingSettings to engine settings
+	const deps: UseReviewStateDeps = useMemo(
+		() => ({
+			platform,
+			settings: {
+				newCardsPerDay: settings.newCardsPerDay,
+				maximumInterval: settings.maximumInterval,
+				requestRetention: settings.requestRetention,
+				extractTag: settings.extractTag,
+				trackReviewTime: settings.trackReviewTime,
+				showStreak: settings.showStreak,
+				strategy: settings.queueStrategy,
+				clumpLimit: settings.clumpLimit,
+				cooldown: settings.cooldown,
+			},
+			dataStore,
+			notePlatform,
+		}),
+		[platform, settings, dataStore, notePlatform],
+	);
+
+	const { state, actions, onKeyDown } = useReviewState(deps);
 	const rootRef = useRef<HTMLDivElement | null>(null);
 
 	const focusRoot = (): void => {

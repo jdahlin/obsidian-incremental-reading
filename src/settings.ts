@@ -10,6 +10,10 @@ export interface IncrementalReadingSettings {
 	createFolderForExtractedTopics: boolean;
 	trackReviewTime: boolean;
 	showStreak: boolean;
+	// Queue settings
+	queueStrategy: 'JD1' | 'Anki';
+	clumpLimit: number;
+	cooldown: number;
 }
 
 export const DEFAULT_SETTINGS: IncrementalReadingSettings = {
@@ -21,6 +25,10 @@ export const DEFAULT_SETTINGS: IncrementalReadingSettings = {
 	createFolderForExtractedTopics: false,
 	trackReviewTime: true,
 	showStreak: true,
+	// Queue settings
+	queueStrategy: 'JD1',
+	clumpLimit: 3,
+	cooldown: 5,
 };
 
 export class IncrementalReadingSettingTab extends PluginSettingTab {
@@ -128,6 +136,51 @@ export class IncrementalReadingSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.showStreak).onChange((value) => {
 					this.plugin.settings.showStreak = value;
 					void this.plugin.saveSettings();
+				});
+			});
+
+		// Queue Settings
+		new Setting(containerEl).setName('Queue').setHeading();
+
+		new Setting(containerEl)
+			.setName('Queue strategy')
+			// eslint-disable-next-line obsidianmd/ui/sentence-case
+			.setDesc('JD1: Priority-urgency ranking. Anki: Simple due-date ordering.')
+			.addDropdown((dropdown) => {
+				dropdown
+					// eslint-disable-next-line obsidianmd/ui/sentence-case
+					.addOption('JD1', 'JD1 (recommended)')
+					.addOption('Anki', 'Anki style')
+					.setValue(this.plugin.settings.queueStrategy)
+					.onChange((value) => {
+						this.plugin.settings.queueStrategy = value as 'JD1' | 'Anki';
+						void this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName('Clump limit')
+			.setDesc('Maximum consecutive clozes from the same note before switching.')
+			.addText((text) => {
+				text.setValue(String(this.plugin.settings.clumpLimit)).onChange((value) => {
+					const parsed = Number(value);
+					if (Number.isFinite(parsed) && parsed >= 1) {
+						this.plugin.settings.clumpLimit = parsed;
+						void this.plugin.saveSettings();
+					}
+				});
+			});
+
+		new Setting(containerEl)
+			.setName('Cooldown')
+			.setDesc('Number of reviews before a failed item re-enters the queue.')
+			.addText((text) => {
+				text.setValue(String(this.plugin.settings.cooldown)).onChange((value) => {
+					const parsed = Number(value);
+					if (Number.isFinite(parsed) && parsed >= 0) {
+						this.plugin.settings.cooldown = parsed;
+						void this.plugin.saveSettings();
+					}
 				});
 			});
 	}

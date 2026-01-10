@@ -23,14 +23,17 @@ describe('IncrementalReadingSettingTab', () => {
 
 		const types = Setting.createdComponents.map((entry) => entry.type);
 		expect(types).toEqual([
-			'text',
-			'text',
-			'text',
-			'text',
-			'text',
-			'toggle',
-			'toggle',
-			'toggle',
+			'text', // newCardsPerDay
+			'text', // maximumInterval
+			'text', // requestRetention
+			'text', // extractTag
+			'text', // extractTitleWords
+			'toggle', // createFolderForExtractedTopics
+			'toggle', // trackReviewTime
+			'toggle', // showStreak
+			'dropdown', // queueStrategy
+			'text', // clumpLimit
+			'text', // cooldown
 		]);
 
 		const [
