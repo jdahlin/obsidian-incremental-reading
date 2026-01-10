@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { SessionManager } from '../../SessionManager.js';
 import type { SessionItem, Rating } from '../../types.js';
 import { formatClozeQuestion, formatClozeAnswer } from '../../../core/cloze.js';
-import { renderContentWithImages } from '../terminal-image.js';
+import { extractImagesFromContent, removeImagesFromContent } from '../terminal-image.js';
+import { ImageDisplay } from '../components/ImageDisplay.js';
 
 type Phase = 'question' | 'answer';
 
@@ -94,6 +95,35 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 		void loadNextItem();
 	}, []);
 
+	// Extract and prepare images for the current content
+	const currentImages = React.useMemo(() => {
+		if (!currentItem || !noteContent) return [];
+
+		// Process content to extract images
+		let content = noteContent;
+		content = stripFrontmatter(content);
+
+		if (currentItem.item.type === 'cloze' && currentItem.item.clozeIndex != null) {
+			if (phase === 'question') {
+				content = formatClozeQuestion(content, currentItem.item.clozeIndex);
+			} else {
+				content = formatClozeAnswer(content, currentItem.item.clozeIndex);
+			}
+		} else if (currentItem.item.type === 'topic') {
+			const { front, back } = parseFrontBack(content);
+			if (front !== null) {
+				if (phase === 'question') {
+					content = front;
+				} else {
+					content = `${front}\n\n---\n\n${back}`;
+				}
+			}
+		}
+
+		const { imagePaths } = extractImagesFromContent(content, vaultPath);
+		return imagePaths;
+	}, [currentItem, noteContent, phase, vaultPath]);
+
 	const handleRating = useCallback(
 		async (rating: Rating) => {
 			if (!currentItem) return;
@@ -116,7 +146,7 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 				if (input === '1') void handleRating(1);
 				else if (input === '2') void handleRating(2);
 				else if (input === '3') void handleRating(3);
-				else if (input === '4') void handleRating(4);
+				else if (input === '4' || input === ' ') void handleRating(4);
 			}
 		},
 		{ isActive: !disableInput },
@@ -165,7 +195,9 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 		// Otherwise, show full content for both phases (standard topic)
 	}
 
-	displayContent = renderContentWithImages(displayContent, vaultPath, contentWidth);
+	// Remove images from content (they're displayed separately by ImageDisplay)
+	displayContent = removeImagesFromContent(displayContent);
+
 	// Convert tabs to spaces (tabs cause alignment issues with borders)
 	displayContent = displayContent.replace(/\t/g, '    ');
 
@@ -180,6 +212,9 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 
 	return (
 		<Box flexDirection="column" padding={1} flexGrow={1}>
+			{/* Images section */}
+			<ImageDisplay imagePaths={currentImages} maxWidth={contentWidth} />
+
 			{/* Header */}
 			<Box marginBottom={1}>
 				<Text color="gray">
