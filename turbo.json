@@ -1,13 +1,16 @@
 {
 	"$schema": "https://turbo.build/schema.json",
+	"ui": "stream",
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": []
+			"outputs": [],
+			"outputLogs": "errors-only"
 		},
 		"@repo/obsidian#build": {
 			"dependsOn": ["^build"],
-			"outputs": ["main.js", "styles.css"]
+			"outputs": ["main.js", "styles.css"],
+			"outputLogs": "errors-only"
 		},
 		"dev": {
 			"cache": false,
@@ -15,10 +18,12 @@
 		},
 		"lint": {
 			"dependsOn": ["^build"],
-			"outputs": []
+			"outputs": [],
+			"outputLogs": "errors-only"
 		},
 		"test": {
-			"dependsOn": ["^build"]
+			"dependsOn": ["^build"],
+			"outputLogs": "errors-only"
 		},
 		"test:watch": {
 			"cache": false,
