@@ -1,12 +1,13 @@
-import type { ImageOcclusionRect } from '@repo/core/anki/html';
+import type { ReviewPhase } from '@repo/core/core/content';
 import type { ReviewItem } from '@repo/core/core/types';
 import type { App } from 'obsidian';
 import { hasImageOcclusionSyntax, parseImageOcclusionRects } from '@repo/core/anki/html';
-import { formatClozeAnswer, formatClozeQuestion, parseClozeIndices } from '@repo/core/core/cloze';
+import { parseClozeIndices } from '@repo/core/core/cloze';
+import { extractSection, formatReviewContent } from '@repo/core/core/content';
 import { MarkdownRenderer, TFile } from 'obsidian';
 import { syncNoteToSidecar } from '../data/sync';
 
-export type ReviewPhase = 'question' | 'answer';
+export type { ReviewPhase } from '@repo/core/core/content';
 
 export interface ContentLoaderDeps {
 	app: App;
@@ -36,83 +37,28 @@ export async function loadReviewItemHtml(
 	try {
 		const rawContent = await deps.app.vault.read(file);
 
-		// Cloze rendering
+		// Cloze: check if index exists, re-sync if missing
 		if (item.type === 'item' && typeof item.clozeIndex === 'number' && item.clozeIndex !== 0) {
 			const indices = parseClozeIndices(rawContent);
 			if (!indices.includes(item.clozeIndex)) {
 				await syncNoteToSidecar(deps.app, file, deps.extractTag);
 			}
-
-			const formatted =
-				phase === 'question'
-					? formatClozeQuestion(rawContent, item.clozeIndex)
-					: formatClozeAnswer(rawContent, item.clozeIndex);
-
-			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
 		}
 
-		// Basic card rendering (front/back)
-		if (item.type === 'basic') {
-			const formatted = formatBasicCard(rawContent, phase);
-			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
-		}
-
-		// Image occlusion rendering
-		// Question phase: show image with occlusion overlays
-		// Answer phase: reveal current region
+		// Image occlusion needs special HTML overlay handling
 		if (item.type === 'image_occlusion') {
 			const clozeIndex = typeof item.clozeIndex === 'number' ? item.clozeIndex : 1;
 			const formatted = formatImageOcclusion(rawContent, phase, clozeIndex);
 			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
 		}
 
-		// Topic rendering (full note)
-		return await renderMarkdownToHtml(deps.app, rawContent, item.notePath, deps.view);
+		// Cloze, basic, and topic cards use shared formatter
+		const formatted = formatReviewContent(rawContent, item.type, phase, item.clozeIndex);
+		return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
 	} catch (error) {
 		console.error('IR: failed to load item content', error);
 		return '<p>Failed to load content</p>';
 	}
-}
-
-/**
- * Format basic card content for question/answer phase.
- * Looks for ## Front and ## Back sections, or falls back to showing all content.
- */
-function formatBasicCard(content: string, phase: ReviewPhase): string {
-	// Extract section content by finding the header and taking content until next header or end
-	const front = extractSection(content, 'Front');
-	const back = extractSection(content, 'Back');
-
-	if (front !== null) {
-		if (phase === 'question') {
-			return front;
-		}
-		// Answer phase: show both front and back
-		return back ? `${front}\n\n---\n\n${back}` : front;
-	}
-
-	// Fallback: no Front/Back sections found, show full content
-	return content;
-}
-
-/**
- * Extract content from a markdown section (## SectionName).
- */
-function extractSection(content: string, sectionName: string): string | null {
-	const headerPattern = new RegExp(`^## ${sectionName}\\s*$`, 'm');
-	const headerMatch = headerPattern.exec(content);
-	if (headerMatch === null) return null;
-
-	const startIndex = headerMatch.index + headerMatch[0].length;
-	const remainingContent = content.slice(startIndex);
-
-	// Find the next ## header or end of content
-	const nextHeaderMatch = /^## /m.exec(remainingContent);
-	const sectionContent = nextHeaderMatch
-		? remainingContent.slice(0, nextHeaderMatch.index)
-		: remainingContent;
-
-	return sectionContent.trim();
 }
 
 /**
@@ -157,31 +103,31 @@ function formatImageOcclusion(content: string, phase: ReviewPhase, clozeIndex: n
 	if (phase === 'question' && imagePath !== undefined && qMaskPath !== undefined) {
 		// Question phase: overlay question mask on image
 		const parts: string[] = [];
-		if (header) parts.push(header);
+		if (header !== null) parts.push(header);
 		parts.push(createImageOcclusionHtml(imagePath, qMaskPath));
-		if (footer) parts.push(`*${footer}*`);
+		if (footer !== null) parts.push(`*${footer}*`);
 		return parts.join('\n\n');
 	}
 
 	if (phase === 'answer') {
 		// Answer phase: show image without mask (or with answer mask for context)
 		const parts: string[] = [];
-		if (header) parts.push(`## ${header}`);
+		if (header !== null) parts.push(`## ${header}`);
 		if (imagePath !== undefined && aMaskPath !== undefined) {
 			parts.push(createImageOcclusionHtml(imagePath, aMaskPath));
 		} else {
 			parts.push(image);
 		}
-		if (footer) parts.push(footer);
-		if (remarks) parts.push(`**Remarks:** ${remarks}`);
+		if (footer !== null) parts.push(footer);
+		if (remarks !== null) parts.push(`**Remarks:** ${remarks}`);
 		return parts.join('\n\n');
 	}
 
 	// Fallback: just show the image section
 	const parts: string[] = [];
-	if (header) parts.push(header);
+	if (header !== null) parts.push(header);
 	parts.push(image);
-	if (footer) parts.push(`*${footer}*`);
+	if (footer !== null) parts.push(`*${footer}*`);
 	return parts.join('\n\n');
 }
 
@@ -209,7 +155,7 @@ function formatNativeImageOcclusion(
 	const imageMatch = image?.match(/!\[[^\]]*\]\(([^)]+)\)/);
 	const imagePath = imageMatch?.[1];
 
-	if (!imagePath) {
+	if (imagePath === undefined) {
 		return content;
 	}
 
@@ -217,12 +163,12 @@ function formatNativeImageOcclusion(
 	const overlayHtml = createNativeOcclusionHtml(imagePath, rects, phase, clozeIndex);
 
 	const parts: string[] = [];
-	if (header) parts.push(header);
+	if (header !== null) parts.push(header);
 	parts.push(overlayHtml);
 
 	if (phase === 'answer') {
-		if (backExtra) parts.push(backExtra);
-		if (comments) parts.push(`**Comments:** ${comments}`);
+		if (backExtra !== null) parts.push(backExtra);
+		if (comments !== null) parts.push(`**Comments:** ${comments}`);
 	}
 
 	return parts.join('\n\n');
@@ -234,7 +180,7 @@ function formatNativeImageOcclusion(
  */
 function createNativeOcclusionHtml(
 	imagePath: string,
-	rects: ImageOcclusionRect[],
+	rects: ReturnType<typeof parseImageOcclusionRects>,
 	phase: ReviewPhase,
 	currentClozeIndex: number,
 ): string {
