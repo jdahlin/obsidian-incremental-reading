@@ -1,4 +1,4 @@
-import { parse, stringify } from 'yaml';
+import { load as parse, dump as stringify } from 'js-yaml';
 import type { EngineStore, EngineSnapshot } from '../memory/types';
 import type { ReviewState } from '../types';
 import { MarkdownDataStore } from '../data/MarkdownDataStore';

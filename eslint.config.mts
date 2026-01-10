@@ -58,6 +58,13 @@ export default tseslint.config(
 	},
 	...obsidianmd.configs.recommended,
 	{
+		files: ['package.json'],
+		rules: {
+			// js-yaml is 8x faster than yaml for our YAML-heavy test suite
+			'depend/ban-dependencies': 'off',
+		},
+	},
+	{
 		files: ['src/engine/cli/**/*.ts', 'src/engine/cli/**/*.tsx'],
 		languageOptions: {
 			globals: {
