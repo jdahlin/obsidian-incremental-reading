@@ -1,11 +1,11 @@
 ---
 name: ship
-description: Fix tests, commit, push, and ensure GitHub Actions pass. Use when asked to ship code, fix and push, or make sure CI passes. Iterates until all checks are green.
+description: Fix tests, commit, create a PR, and ensure GitHub Actions pass. Use when asked to ship code, fix and push, or make sure CI passes. Iterates until all checks are green.
 ---
 
 # Ship Code
 
-Fix issues, commit, push, and wait for CI to pass. Keep iterating until GitHub Actions are green.
+Fix issues, commit, create a PR, and wait for CI to pass. Keep iterating until GitHub Actions are green.
 
 ## Workflow
 
@@ -26,31 +26,54 @@ If checks fail:
 
 Re-run checks after each fix until all pass locally.
 
-### 3. Commit and Push
+### 3. Create Feature Branch
 
-Use conventional commit format and push:
+If on master/main, create a new branch:
 
 ```bash
-git add -A && git commit -m "<type>(<scope>): <description>" && git push
+git checkout -b <type>/<short-description>
+```
+
+Branch naming: `feat/add-feature`, `fix/bug-name`, `refactor/module-name`
+
+### 4. Commit and Push
+
+Use conventional commit format:
+
+```bash
+git add -A && git commit -m "<type>(<scope>): <description>"
+git push -u origin HEAD
 ```
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
-### 4. Monitor CI with gh
+### 5. Create Pull Request
 
-After pushing, get the run ID and watch until completion:
+Create a PR using the gh CLI:
 
+```bash
+gh pr create --fill
+```
+
+Or with explicit title/body:
+```bash
+gh pr create --title "<type>(<scope>): <description>" --body "Description of changes"
+```
+
+### 6. Monitor PR Checks
+
+Watch the PR checks until completion:
+
+```bash
+gh pr checks --watch
+```
+
+Or monitor the workflow run directly:
 ```bash
 gh run list --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run watch --exit-status
 ```
 
-Or in two steps:
-```bash
-gh run list --limit 1  # Note the run ID (rightmost number)
-gh run watch <run-id> --exit-status
-```
-
-### 5. Handle CI Failures
+### 7. Handle CI Failures
 
 If CI fails, get the failure details and fix:
 
@@ -63,7 +86,7 @@ Then fix locally, re-run checks, commit, push, and monitor again:
 ```bash
 npm run typecheck && npm run lint && npm test
 git add -A && git commit -m "fix: <describe fix>" && git push
-gh run list --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run watch --exit-status
+gh pr checks --watch
 ```
 
 Repeat until CI is green.
@@ -72,16 +95,17 @@ Repeat until CI is green.
 
 | Command | Purpose |
 |---------|---------|
+| `gh pr create --fill` | Create PR with auto-filled title/body |
+| `gh pr create --title "..." --body "..."` | Create PR with explicit content |
+| `gh pr checks --watch` | Watch PR checks until completion |
+| `gh pr view` | View PR details |
+| `gh pr view --web` | Open PR in browser |
 | `gh run list --limit 1` | Check latest CI run status |
-| `gh run list --limit 1 --json databaseId --jq '.[0].databaseId'` | Get latest run ID |
 | `gh run watch <run-id> --exit-status` | Watch CI run until completion |
 | `gh run view --log-failed` | Get failed step logs |
-| `gh pr create --fill` | Create PR from current branch |
-| `gh pr view --web` | Open PR in browser |
-| `gh pr checks` | View PR check status |
 
 ## Success Criteria
 
 - All local checks pass (typecheck, lint, test)
-- `git push` succeeds
-- `gh run list --limit 1` shows status "completed" with conclusion "success"
+- PR is created successfully
+- `gh pr checks` shows all checks passed
