@@ -16,7 +16,7 @@ const showCursor = '\x1B[?25h';
 const cli = meow(
 	`
   Usage
-    $ npx tsx src/engine/cli/index.tsx --vault <path>
+    $ pnpm cli --vault <path>
 
   Options
     --vault, -v     Path to vault (contains IR/ folder)
@@ -26,19 +26,19 @@ const cli = meow(
     --limit, -l     Max new cards per session
     --batch, -b     Run in batch mode (read commands from stdin)
     --import, -i    Import from Anki (path to profile or 'default')
-    --deck-filter   Filter decks to import (e.g., "ANATOMI*")
+    --deck-filter   Filter decks to import (e.g., "AH del 2*")
 
   Batch mode commands:
     inspect-next [--limit N]   Show next N cards to review
     status                     Show card counts
 
   Examples
-    $ npx tsx src/engine/cli/index.tsx --vault ~/Documents/MyVault
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --review           # Review all
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --review Gabriel   # Review folders matching "Gabriel"
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default   # Import from default Anki profile
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default --deck-filter "ANATOMI*"
-    $ echo "inspect-next --limit 5" | npx tsx src/engine/cli/index.tsx -v ./Vault --batch
+    $ pnpm cli --vault ~/Documents/MyVault
+    $ pnpm cli -v ./Vault --review                              # Review all
+    $ pnpm cli -v ./Vault --review Gabriel                      # Review folders matching "Gabriel"
+    $ pnpm cli -v ./Vault --import default                      # Import from default Anki profile
+    $ pnpm cli -v ./Vault --import default --deck-filter "AH*"  # Import decks matching "AH*"
+    $ echo "status" | pnpm cli -v ./Vault --batch
 `,
 	{
 		importMeta: import.meta,
@@ -46,7 +46,7 @@ const cli = meow(
 			vault: {
 				type: 'string',
 				shortFlag: 'v',
-				isRequired: true,
+				default: './vault',
 			},
 			review: {
 				type: 'string',
