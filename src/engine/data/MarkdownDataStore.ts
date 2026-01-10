@@ -1,6 +1,6 @@
 import { load as parse, dump as stringify } from 'js-yaml';
 import type { DataStore, ReviewItem, ReviewState, ReviewRecord, NotePlatform } from '../types';
-import type { Vault } from './Vault';
+import type { FileSystem } from './FileSystem';
 
 const REVIEW_ITEMS_FOLDER = 'IR/Review Items';
 const REVLOG_FOLDER = 'IR/Revlog';
@@ -45,12 +45,12 @@ interface RawReviewItemFile {
 
 export class MarkdownDataStore implements DataStore {
 	constructor(
-		private vault: Vault,
+		private fs: FileSystem,
 		private notePlatform?: NotePlatform,
 	) {}
 
 	async listItems(): Promise<ReviewItem[]> {
-		const files = await this.vault.list();
+		const files = await this.fs.list();
 		const itemFiles = files.filter(
 			(f) => f.startsWith(REVIEW_ITEMS_FOLDER + '/') && f.endsWith('.md'),
 		);
@@ -58,7 +58,7 @@ export class MarkdownDataStore implements DataStore {
 		const items: ReviewItem[] = [];
 
 		for (const path of itemFiles) {
-			const content = await this.vault.read(path);
+			const content = await this.fs.read(path);
 			if (!content) continue;
 
 			const data = this.parseReviewItemFile(content);
@@ -155,22 +155,22 @@ export class MarkdownDataStore implements DataStore {
 			elapsed_ms: record.elapsedMs,
 		});
 
-		const currentContent = (await this.vault.read(path)) ?? '';
+		const currentContent = (await this.fs.read(path)) ?? '';
 		const newContent = currentContent
 			? `${currentContent}
 ${line}`
 			: line;
-		await this.vault.write(path, newContent);
+		await this.fs.write(path, newContent);
 	}
 
 	async setScrollPos(itemId: string, pos: number): Promise<void> {
 		const { noteId } = this.parseItemId(itemId);
 		const data = await this.readReviewItemFile(noteId);
 		if (data && data.note_path) {
-			const noteContent = await this.vault.read(data.note_path);
+			const noteContent = await this.fs.read(data.note_path);
 			if (noteContent) {
 				const updated = this.updateFrontmatter(noteContent, { scroll_pos: pos });
-				await this.vault.write(data.note_path, updated);
+				await this.fs.write(data.note_path, updated);
 			}
 		}
 	}
@@ -179,7 +179,7 @@ ${line}`
 		const { noteId } = this.parseItemId(itemId);
 		const data = await this.readReviewItemFile(noteId);
 		if (data && data.note_path) {
-			const noteContent = await this.vault.read(data.note_path);
+			const noteContent = await this.fs.read(data.note_path);
 			if (noteContent) {
 				const fm = this.parseFrontmatterBlock(noteContent);
 				if (fm) {
@@ -205,7 +205,7 @@ ${line}`
 
 	private async readReviewItemFile(noteId: string): Promise<ReviewItemFile | null> {
 		const path = this.getReviewItemPath(noteId);
-		const content = await this.vault.read(path);
+		const content = await this.fs.read(path);
 		if (!content) return null;
 		return this.parseReviewItemFile(content);
 	}
@@ -234,7 +234,7 @@ ${line}`
 
 		const yaml = stringify(record).trim();
 		const content = ['---', yaml, '---', ''].join('\n');
-		await this.vault.write(path, content);
+		await this.fs.write(path, content);
 	}
 
 	private parseReviewItemFile(content: string): ReviewItemFile | null {

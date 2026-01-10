@@ -1,6 +1,6 @@
-import type { Vault } from '../data/Vault';
+import type { FileSystem } from '../data/FileSystem';
 
-export class MockVault implements Vault {
+export class MockFileSystem implements FileSystem {
 	private files: Map<string, string> = new Map();
 
 	async read(path: string): Promise<string | null> {

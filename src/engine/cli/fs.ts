@@ -1,16 +1,16 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type { Vault } from '../data/Vault';
+import type { FileSystem } from '../data/FileSystem';
 import type { NotePlatform } from '../types';
 
 /**
  * Node.js filesystem adapter for CLI.
- * Implements both Vault and NotePlatform interfaces.
+ * Implements both FileSystem and NotePlatform interfaces.
  */
-export class FileSystem implements Vault, NotePlatform {
+export class NodeFileSystem implements FileSystem, NotePlatform {
 	constructor(private basePath: string) {}
 
-	// Vault interface
+	// FileSystem interface
 
 	async read(filePath: string): Promise<string | null> {
 		try {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useApp, useStdout, useInput } from 'ink';
 import { TerminalInfoProvider } from 'ink-picture';
-import { FileSystem } from './fs.js';
+import { NodeFileSystem } from './fs.js';
 import { MarkdownDataStore } from '../data/MarkdownDataStore.js';
 import { SessionManager } from '../SessionManager.js';
 import type { SessionStrategyId } from '../types.js';
@@ -35,7 +35,7 @@ export function App({
 	const [tab, setTab] = useState<Tab>(initialDeck || reviewMode ? 'review' : 'decks');
 	const [selectedDeck, setSelectedDeck] = useState<string | null>(initialDeck ?? null);
 	const [session, setSession] = useState<SessionManager | null>(null);
-	const [fs, setFs] = useState<FileSystem | null>(null);
+	const [fs, setFs] = useState<NodeFileSystem | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [rendered, setRendered] = useState(false);
@@ -55,7 +55,7 @@ export function App({
 	useEffect(() => {
 		async function init() {
 			try {
-				const fileSystem = new FileSystem(vaultPath);
+				const fileSystem = new NodeFileSystem(vaultPath);
 				setFs(fileSystem);
 
 				const dataStore = new MarkdownDataStore(fileSystem, fileSystem);
