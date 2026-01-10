@@ -1,4 +1,4 @@
-import { parse, stringify } from 'yaml';
+import { load as parse, dump as stringify } from 'js-yaml';
 import type { DataStore, ReviewItem, ReviewState, ReviewRecord, NotePlatform } from '../types';
 import type { Vault } from './Vault';
 

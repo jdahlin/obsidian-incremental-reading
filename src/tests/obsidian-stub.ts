@@ -1,4 +1,4 @@
-import { parse as yamlParse, stringify as yamlStringify } from 'yaml';
+import { load as yamlParse, dump as yamlStringify } from 'js-yaml';
 
 export function parseYaml(value: string): unknown {
 	return yamlParse(value);
