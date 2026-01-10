@@ -1,6 +1,6 @@
-# Architecture & Specification
+# Architecture
 
-This document defines the technical architecture for the Incremental Reading plugin. It serves as a specification for implementation.
+Technical architecture for the Incremental Reading plugin.
 
 ---
 
@@ -10,14 +10,12 @@ This document defines the technical architecture for the Incremental Reading plu
 
 Markdown notes are the source of truth for content. Users can edit, move, rename, or delete notes freely. The plugin adapts.
 
-### 2. Markdown for Review State (SQLite index optional)
+### 2. Sidecar Files for Review State
 
-Canonical review state lives in Markdown sidecar files for readability and easy debugging:
+Review state lives in Markdown sidecar files for readability and debugging:
 
 - Per-cloze scheduling (since a note can have N clozes)
-- Review history (append-only log)
-
-SQLite is optional and can be introduced later as a rebuildable index for speed.
+- Review history (append-only JSONL log)
 
 ### 3. Testability First
 
@@ -33,9 +31,13 @@ Pure Functions (testable)     Boundaries (mocked in tests)
 - Statistics aggregation
 ```
 
-### 4. Lazy Loading
+### 4. Engine Independence
 
-Heavy dependencies (if/when a SQLite index is added) are loaded on first use, not at plugin startup.
+The core review engine (`src/engine/`) has no Obsidian dependencies. It can run:
+
+- In Obsidian (via adapters)
+- In a CLI (via `src/engine/cli/`)
+- In tests (via in-memory stores)
 
 ---
 
@@ -48,198 +50,338 @@ Note (Markdown file)
 ├── Frontmatter (YAML)
 │   ├── tags: [topic]
 │   ├── source: "[[Parent]]"
-│   ├── type: topic | item
+│   ├── ir_note_id: string
 │   ├── created: Date
 │   └── priority: 0-100
 │
 ├── Content (Markdown)
-│   └── May contain clozes: {{c1::text}}, {{c2::text}}, ... (plain text, no HTML wrapper)
+│   └── May contain clozes: {{c1::text}}, {{c2::text}}
 │
 └── Derived → ReviewItem(s)
 ```
 
 ```
 ReviewItem (what gets reviewed)
-├── id: string              # "ir_note_id" for topics, "ir_note_id::cloze_uid" for items
-├── noteFile: TFile         # Reference to the note
-├── type: topic | item
-├── clozeIndex: number?     # null for topics, 1/2/3/... for items
-└── state: ItemState        # Scheduling state (from sidecar)
+├── id: string              # "ir_note_id" for topics, "ir_note_id::cN" for clozes
+├── noteId: string          # Reference to the note
+├── notePath: string        # File path
+├── type: 'topic' | 'cloze'
+├── clozeIndex: number?     # null for topics, 1/2/3/... for clozes
+├── priority: number        # 0-100, inherited from note
+└── created: Date?
 ```
 
 ```
-ItemState (scheduling)
-├── status: new | learning | review | relearning
-├── due: Date
+ReviewState (scheduling)
+├── status: 'new' | 'learning' | 'review' | 'relearning'
+├── due: Date | null
 ├── stability: number       # FSRS: memory strength in days
 ├── difficulty: number      # FSRS: 0-10
 ├── reps: number            # Total reviews
 ├── lapses: number          # Times forgotten
-└── last_review: Date?
+└── lastReview: Date | null
+```
 
 ### Identifiers
 
 - `ir_note_id`: NanoID length 12
 - `cloze_uid`: NanoID length 12
-- Alphabet: `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz`
-```
+- Full item ID: `ir_note_id` (topics) or `ir_note_id::cN` (clozes)
 
-### Key Insight: Notes vs Items
+### Notes vs Items
 
 A **Note** is a file. A **ReviewItem** is something you review.
 
-| Note Type          | Creates ReviewItems                                      |
-| ------------------ | -------------------------------------------------------- |
-| Topic (no clozes)  | 1 topic item                                             |
-| Note with N clozes | N item items (one per cloze index) + optional topic item |
+| Note Type          | Creates ReviewItems                 |
+| ------------------ | ----------------------------------- |
+| Topic (no clozes)  | 1 topic item                        |
+| Note with N clozes | N cloze items (one per cloze index) |
 
-Example: `Biochemistry/Krebs Cycle/ATP yield per glucose.md` contains:
+### Folders as Decks
 
-```
-The Krebs cycle produces {{c1::2 ATP}}, {{c2::6 NADH}}, and {{c3::2 FADH2}} per glucose.
-```
-
-This creates three review items (IDs use `ir_note_id::cloze_uid`):
-
-- `Ab3Kp9Xr2QaL::G7uT2mQ9rW1z` - tests "2 ATP"
-- `Ab3Kp9Xr2QaL::p8Ls2ZQv6N4k` - tests "6 NADH"
-- `Ab3Kp9Xr2QaL::Q9rT2mX1pL7z` - tests "2 FADH2"
-
-Unlike Anki, SuperMemo-style incremental reading continues to treat the note as reading material even after you start creating items from it. In this plugin, a note can remain reviewable as a topic while also producing per-cloze items. (This can be made configurable later.)
-
-### Organization: Folders as Decks
-
-**Folders = Decks** (Anki) or **Collections** (SuperMemo)
+Folders = Decks. No explicit deck property needed - folder path IS the deck.
 
 ```
-Biochemistry/                           # Course/Collection
-├── Krebs Cycle/                        # Lecture (Deck)
-│   ├── Slides.md                       # Source material
-│   ├── Lecture Notes.md
-│   ├── Acetyl-CoA enters the cycle.md  # Extracts
-│   └── ATP yield per glucose.md
-├── Glycolysis/                         # Another lecture
-│   ├── Slides.md
-│   └── Net ATP from glycolysis.md
-└── Electron Transport/                 # Sub-deck
-    └── ...
+Biochemistry/                    # Course
+├── Krebs Cycle/                 # Lecture (Deck)
+│   ├── ATP yield.md             # Note with clozes
+│   └── Acetyl-CoA.md
+└── Glycolysis/                  # Another deck
+    └── Net ATP.md
 ```
 
-**Why folders:**
+---
 
-- Native Obsidian concept (no extra metadata)
-- Extract command places notes in source's folder
-- Bases supports `file.inFolder()` filtering
-- Nested folders = hierarchical decks
-
-**No `deck` property needed** - folder path IS the deck.
-
-### Review Flow: Two Screens
-
-**Screen 1: Deck Summary** → **Screen 2: Review**
-
-This mirrors Anki's flow (Decks → Study Now) but condensed to two screens.
-
-#### Screen 1: Deck List
-
-Shows all decks (folders with topic notes) in a tree with per-deck stats. Like Anki's main screen.
+## Module Structure
 
 ```
-DeckListState {
-  decks: DeckInfo[]               // Hierarchical deck tree
-  selectedPath: string | null     // Currently selected deck (null = All)
-  todayStats: TodayStats
-  streak: StreakInfo
-}
-
-DeckInfo {
-  path: string                    // "Biochemistry/Krebs Cycle"
-  name: string                    // "Krebs Cycle"
-  depth: number                   // 0 = root, 1 = child, etc.
-  counts: {
-    new: number
-    learning: number
-    due: number
-  }
-  children: DeckInfo[]            // Nested folders
-  collapsed: boolean              // UI state
-}
-
-TodayStats {
-  reviewed: number
-  again: number
-  hard: number
-  good: number
-  easy: number
-}
-
-StreakInfo {
-  current: number
-  longest: number
-}
+src/
+├── core/                    # Pure utilities (no Obsidian deps)
+│   ├── types.ts             # Core type definitions
+│   ├── cloze.ts             # Cloze parsing/formatting
+│   ├── dates.ts             # Date utilities
+│   ├── decks.ts             # Deck hierarchy utilities
+│   └── frontmatter.ts       # YAML parsing/serialization
+│
+├── engine/                  # Review engine (platform-agnostic)
+│   ├── types.ts             # Engine interfaces
+│   ├── SessionManager.ts    # Core session logic
+│   │
+│   ├── strategies/          # Queue ordering strategies
+│   │   ├── JD1Strategy.ts   # Priority-urgency (default)
+│   │   ├── AnkiStrategy.ts  # Simple due-date ordering
+│   │   └── types.ts
+│   │
+│   ├── scheduling/          # Spaced repetition algorithms
+│   │   ├── FSRSScheduler.ts # FSRS algorithm (primary)
+│   │   ├── SM2Scheduler.ts  # SuperMemo-2 (stub)
+│   │   └── TopicScheduler.ts # Simpler intervals for topics
+│   │
+│   ├── data/                # Data store implementations
+│   │   ├── FileSystem.ts    # File system interface
+│   │   └── MarkdownDataStore.ts # Sidecar file storage
+│   │
+│   ├── memory/              # In-memory store (testing)
+│   │   └── MemoryDataStore.ts
+│   │
+│   ├── adapters/            # Platform adapters
+│   │   ├── ObsidianVault.ts
+│   │   ├── ObsidianNotePlatform.ts
+│   │   └── EngineReviewController.ts
+│   │
+│   ├── rv/                  # .rv script DSL (testing)
+│   │   ├── parser.ts
+│   │   └── runner.ts
+│   │
+│   ├── anki/                # Anki import/export
+│   │   ├── converter.ts
+│   │   ├── reader.ts
+│   │   └── html.ts
+│   │
+│   └── cli/                 # Standalone CLI
+│       ├── index.tsx
+│       └── screens/
+│
+├── data/                    # Obsidian data layer
+│   ├── review-items.ts      # Sidecar read/write
+│   ├── revlog.ts            # JSONL review log
+│   ├── sync.ts              # Note ↔ sidecar sync
+│   ├── ids.ts               # NanoID generation
+│   └── export.ts            # Data export
+│
+├── commands/                # Obsidian commands
+│   ├── extract.ts           # Extract selection to new note
+│   ├── cloze.ts             # Create cloze deletion
+│   └── index.ts             # Command registration
+│
+├── editor/                  # Editor extensions
+│   └── cloze-hider.ts       # Hide cloze answers during review
+│
+├── ui/                      # Preact UI components
+│   ├── review/              # Review view
+│   │   ├── ReviewItemView.tsx
+│   │   ├── ReviewRoot.tsx
+│   │   ├── DeckSummary.tsx
+│   │   ├── ReviewQuestionScreen.tsx
+│   │   ├── ReviewAnswerScreen.tsx
+│   │   └── ...
+│   ├── stats/               # Statistics modal
+│   │   └── StatsModal.ts
+│   └── PriorityModal.ts
+│
+├── stats/                   # Statistics (pure functions)
+│   └── aggregations.ts
+│
+├── bases/                   # Obsidian Bases integration
+│   └── index.ts
+│
+├── settings.ts              # Plugin settings
+└── main.ts                  # Plugin entry point
 ```
 
-**Building the Deck Tree:**
+---
+
+## Engine Architecture
+
+The engine is designed for independence from Obsidian, enabling CLI usage and comprehensive testing.
+
+### Core Abstractions
 
 ```typescript
-function buildDeckTree(reviewItems: ReviewItem[]): DeckInfo[] {
-	// 1. Get all unique folder paths from sidecar note_path fields
-	// 2. Build hierarchical tree from paths
-	// 3. For each folder, count items by status
-	// 4. Return tree structure
+// SessionManager: orchestrates review sessions
+class SessionManager {
+	constructor(dataStore: DataStore, notePlatform: NotePlatform, config: SessionConfig);
+	loadPool(now: Date): Promise<void>;
+	getNext(now: Date): Promise<SessionItem | null>;
+	recordReview(itemId: string, rating: Rating, now: Date): Promise<void>;
 }
 
-function getCountsForFolder(items: ReviewItem[], folderPath: string): Counts {
-	// Filter by folder prefix, then count by status/due
+// DataStore: persistence interface
+interface DataStore {
+	listItems(): Promise<ReviewItem[]>;
+	getState(itemId: string): Promise<ReviewState | null>;
+	setState(itemId: string, state: ReviewState): Promise<void>;
+	appendReview(record: ReviewRecord): Promise<void>;
 }
-```
 
-**Preselection Logic:**
+// NotePlatform: content access
+interface NotePlatform {
+	getNote(noteId: string): Promise<string | null>;
+	setNote(noteId: string, content: string): Promise<void>;
+	getLinks(noteId: string): Promise<string[]>;
+}
 
-1. Get active file's folder path
-2. Find matching deck in tree
-3. If found → select that deck
-4. If not → select "All Decks"
-
-**Data Sources:**
-
-- Deck tree + counts: Built from sidecar files under `IR/Review Items/` (or an optional SQLite index)
-- Today's stats: Calculated from revlog JSONL entries for today
-- Streak: Calculated from revlog daily review dates
-
-#### Screen 2: Review
-
-Standard card review with **always-editable content** (core IR principle).
-
-Unlike Anki (read-only during review), content is always editable - no mode switching:
-
-- Notes remain editable in Obsidian's normal editor while reviewing
-- Select text → Extract (`Alt+X`) or Cloze (`Alt+Z`)
-- Type to edit inline
-- Grade with 1-4 keys when ready
-- Press `Esc` → returns to Deck List
-
-```typescript
-ReviewScreenState {
-  phase: 'question' | 'answer'    // Only for items (cloze hide/reveal)
-  currentItem: ReviewItem | null
-  sessionStats: SessionStats
+// Scheduler: memory math
+interface Scheduler {
+	grade(state: ReviewState, rating: Rating, now: Date): ReviewState;
+	isDue(state: ReviewState, now: Date): boolean;
 }
 ```
 
-**For Topics**: Note is editable; review panel can show progress + grading.
-**For Items**: Note is editable; the editor visually hides the answer text for the active cloze index in question phase (without modifying the file), and reveals in answer phase.
+### Session Strategies
 
-To avoid spoilers, the review header should not show the note title or breadcrumb trail; show only the selected deck/folder.
+Two strategies control queue ordering:
 
-#### Navigation Flow
+#### JD1 (Default)
+
+Priority-urgency ranking for knowledge synthesis.
+
+```
+Score = (Priority * 100) + TypeWeight + LinkedAffinity + UrgencyTerm + RecencyTerm
+
+TypeWeight    = Topic ? 50 : 0
+LinkedAffinity = linked to previous item ? 30 : 0
+UrgencyTerm   = (1 - R) * 25, where R = exp(-daysSinceReview / stability)
+RecencyTerm   = min(10, floor(daysSinceReview / 7))
+```
+
+Rules:
+
+- Priority bands dominate ordering
+- LinkedAffinity boosts items linked to previously reviewed item
+- Probabilistic interleaving: 80% top band, 20% lower bands
+- Clump limit: max 3 clozes per note in a row (configurable)
+- Again cooldown: 5 items must pass before re-selection (configurable)
+
+#### Anki
+
+Simple due-date ordering for migration compatibility.
+
+- Bucket order: Learning → Due → New
+- Sort by due date within buckets
+- Short requeue on Again
+
+### Schedulers
+
+| Scheduler | Purpose                                | Status         |
+| --------- | -------------------------------------- | -------------- |
+| FSRS      | Primary algorithm for clozes           | ✅ Implemented |
+| SM2       | SuperMemo-2 alternative                | Stub           |
+| Topic     | Simpler intervals for reading material | ✅ Implemented |
+
+Topic scheduler intervals:
+
+- Grade 1 (Again): +10 minutes
+- Grade 2 (Hard): +1 day
+- Grade 3 (Good): +3 days
+- Grade 4 (Easy): +7 days
+
+### Exam Mode
+
+When `examDate` is set, intervals are compressed:
+
+```
+daysToExam = max(0, (examDate - now) / day)
+targetInterval = clamp(daysToExam / 6, 1, 60)
+due = min(schedulerDue, now + targetInterval)
+```
+
+---
+
+## Storage
+
+### File Locations
+
+| Data          | Location                          | Format           |
+| ------------- | --------------------------------- | ---------------- |
+| Review items  | `IR/Review Items/<ir_note_id>.md` | YAML frontmatter |
+| Review log    | `IR/Revlog/YYYY-MM.md`            | JSONL            |
+| Note metadata | Note frontmatter                  | YAML             |
+
+### Sidecar File Format
+
+Path: `IR/Review Items/<ir_note_id>.md`
+
+```yaml
+---
+ir_note_id: Ab3Kp9Xr2QaL
+note_path: Biochemistry/Krebs Cycle/ATP.md
+topic:
+    status: review
+    due: 2024-01-20T10:00:00
+    stability: 15.2
+    difficulty: 5.5
+    reps: 8
+    lapses: 1
+    last_review: 2024-01-18T14:00:00
+clozes:
+    c1:
+        cloze_uid: G7uT2mQ9rW1z
+        status: review
+        due: 2024-01-20T10:00:00
+        stability: 15.2
+        difficulty: 5.5
+        reps: 8
+        lapses: 1
+        last_review: 2024-01-18T14:00:00
+    c2:
+        cloze_uid: p8Ls2ZQv6N4k
+        status: new
+---
+```
+
+### Review Log Format
+
+Path: `IR/Revlog/YYYY-MM.md`
+
+JSONL format, one object per line:
+
+```json
+{
+	"ts": "2024-01-15T10:30:00.000Z",
+	"item_id": "Ab3Kp9Xr2QaL::c1",
+	"rating": 3,
+	"state_before": "review",
+	"stability_before": 15.2,
+	"difficulty_before": 5.5
+}
+```
+
+### Note Frontmatter
+
+Minimal frontmatter in notes (only non-default values):
+
+```yaml
+---
+tags: [topic]
+ir_note_id: Ab3Kp9Xr2QaL
+source: '[[Parent Note]]'
+created: 2024-01-15T10:30:00
+priority: 20 # Only if not default (50)
+scroll_pos: 450 # Topics only, if scrolled
+---
+```
+
+---
+
+## Review UI Flow
 
 ```
 Open Review (Cmd+Shift+R)
          │
          ▼
 ┌─────────────────┐
-│  Deck List      │◄────────────┐
+│  Deck Summary   │◄────────────┐
 │                 │             │
 │  [Study Now]    │             │ Esc
 │  [Select Deck]  │             │
@@ -250,777 +392,95 @@ Open Review (Cmd+Shift+R)
 │    Review       │─────────────┘
 │  (always edit)  │
 │                 │
-│  Read/Edit/Cloze│
-│  [Grade 1-4]    │
-│  [Esc = Back]   │
+│  Question phase │
+│  [Show Answer]  │
+│      ↓          │
+│  Answer phase   │
+│  [1] [2] [3] [4]│
 └─────────────────┘
          │
          │ Queue empty
          ▼
 ┌─────────────────┐
-│  Complete!      │
-│  Next due: ...  │
+│  Session Done   │
+│  Stats summary  │
 │  [Back to Deck] │
 └─────────────────┘
 ```
 
-No separate edit mode - content is always editable during review.
+Notes remain editable during review (core IR principle).
 
-### Queue Building
+---
+
+## Testing
+
+### .rv Script DSL
+
+The engine is validated via `.rv` scripts - a domain-specific language for testing review scenarios:
+
+```
+# Create a topic and cloze
+topic "The mitochondria is the powerhouse of the cell" --priority 80
+cloze T-1 4 16
+
+# Start session and review
+session JD1
+clock 2024-01-15
+grade T-1::c1 3
+
+# Assertions
+expect notes.T-1.priority 80
+expect grades[0].rating 3
+```
+
+Commands:
+
+- `topic`, `extract`, `cloze` - Content creation
+- `session`, `scheduler`, `clock` - Configuration
+- `grade`, `again`, `postpone` - Review actions
+- `expect` - Assertions
+- `inspect-next`, `status` - Debugging
+
+### Test Structure
+
+Tests are colocated with modules in `tests/` directories:
+
+```
+src/engine/
+├── SessionManager.ts
+└── tests/
+    ├── SessionManager.test.ts
+    ├── rv-runner.test.ts
+    └── rv-runner-markdown.test.ts
+```
+
+---
+
+## Settings
+
+| Setting            | Default | Description                           |
+| ------------------ | ------- | ------------------------------------- |
+| `newCardsPerDay`   | 10      | Max new items per day                 |
+| `maximumInterval`  | 365     | Upper bound for intervals             |
+| `requestRetention` | 0.9     | Target retention rate                 |
+| `extractTag`       | 'topic' | Tag for review notes                  |
+| `queueStrategy`    | 'JD1'   | Queue ordering (JD1 or Anki)          |
+| `clumpLimit`       | 3       | Max consecutive clozes from same note |
+| `cooldown`         | 5       | Reviews before failed item re-enters  |
+
+---
+
+## Race Condition Handling
+
+All file operations use try/catch for concurrent access:
 
 ```typescript
-function buildQueue(
-	items: ReviewItem[],
-	now: Date,
-	options: {
-		newCardsPerDay: number;
-		newCardsToday: number;
-		folderFilter?: string; // e.g., "Biochemistry/Krebs Cycle"
-		includeSubfolders?: boolean; // default: true
-	},
-): ReviewQueue;
-```
-
-Folder filtering:
-
-- `folderFilter: null` → all items
-- `folderFilter: "Biochemistry"` + `includeSubfolders: true` → Krebs Cycle + Glycolysis + etc.
-- `folderFilter: "Biochemistry/Krebs Cycle"` + `includeSubfolders: false` → just Krebs Cycle
-
----
-
-## Storage
-
-### Storage Strategy
-
-| Data                                                   | Primary Storage                                      | Why                                  |
-| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------ |
-| Note identity (`tags`, `source`, `type`, `ir_note_id`) | Frontmatter                                          | Defines what's reviewable            |
-| Note-level settings (`priority`)                       | Frontmatter                                          | User-editable, shared by all clozes  |
-| Reading position (`scroll_pos`)                        | Frontmatter                                          | Topics only, persists across reviews |
-| Per-cloze scheduling                                   | Sidecar Markdown (`IR/Review Items/<ir_note_id>.md`) | Readable, per-note state             |
-| Review history                                         | Markdown log (`IR/Revlog/YYYY-MM.md`)                | Append-only, easy to inspect         |
-
-**Principle**: Notes + sidecars + revlogs are canonical. A SQLite index may be added later for speed.
-
-### Syncing Notes ↔ Sidecars
-
-Use Obsidian's vault events to keep in sync:
-
-```typescript
-// Listen for file changes
-this.registerEvent(
-	app.vault.on('modify', (file) => {
-		if (hasTopicTag(file)) {
-			syncNoteToSidecar(app, file, extractTag);
-		}
-	}),
-);
-
-// Listen for file deletion
-this.registerEvent(
-	app.vault.on('delete', (file) => {
-		deleteSidecarForNote(file);
-	}),
-);
-
-// Listen for file rename
-this.registerEvent(
-	app.vault.on('rename', (file, oldPath) => {
-		updateSidecarNotePath(oldPath, file.path);
-	}),
-);
-```
-
-**Sync triggers:**
-
-- Plugin load → full sync (notes → sidecars)
-- File modify → sync that note
-- File delete → remove orphaned items
-- File rename → update item paths
-- After grading → update sidecar + append to revlog
-
-### Default Value Policy
-
-**Only write non-default values to frontmatter** to keep notes clean.
-
-| Property     | Default | Write if...              |
-| ------------ | ------- | ------------------------ |
-| `tags`       | -       | Always (required)        |
-| `source`     | -       | Has parent note          |
-| `type`       | `topic` | Has clozes → `item`      |
-| `created`    | -       | Always (for sorting)     |
-| `ir_note_id` | -       | Always (stable identity) |
-| `priority`   | `50`    | Changed from default     |
-| `scroll_pos` | `0`     | Topic with scroll > 0    |
-
-**Minimal frontmatter example** (new topic):
-
-```yaml
----
-tags: [topic]
-source: '[[Slides]]'
-created: 2024-01-15T10:30:00
-ir_note_id: 'Ab3Kp9Xr2QaL'
----
-```
-
-**Full frontmatter example** (edited topic with custom priority):
-
-```yaml
----
-tags: [topic]
-source: '[[Slides]]'
-type: item
-created: 2024-01-15T10:30:00
-ir_note_id: 'Ab3Kp9Xr2QaL'
-priority: 20
-scroll_pos: 450
----
-```
-
-### Bases Compatibility
-
-Bases can read frontmatter from Markdown files. Review state is stored in sidecars under `IR/Review Items/`, so Bases views should target those files.
-
-Two options for what Bases sees:
-
-**Option A: Summary properties** (simple views)
-
-```yaml
-cloze_count: 3
-due_count: 2 # How many clozes are due
-next_due: 2024-01-20 # Earliest due date
-```
-
-**Option B: Per-cloze map** (full visibility)
-
-```yaml
-clozes:
-    c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
-    c2: { cloze_uid: Q9rT2mX1pL7z, status: new }
-```
-
-For MVP/debuggability, Option B is acceptable; summary fields can be added later if needed.
-
-### Note Frontmatter (Complete Schema)
-
-```yaml
----
-# Required
-tags: [topic]
-ir_note_id: 'Ab3Kp9Xr2QaL'
-
-# Optional - context
-source: '[[Parent Note]]' # Where this was extracted from
-created: 2024-01-15T10:30:00 # Creation timestamp
-
-# Optional - classification
-type: topic | item # Default: topic (inferred from clozes)
-
-# Optional - user settings
-priority: 50 # 0-100, default 50
-
-# Optional - reading state (topics only)
-scroll_pos: 450 # Pixel offset, default 0
-
-# Optional - Bases summary (written by plugin)
-cloze_count: 3 # Number of clozes in note
-due_count: 2 # Clozes due for review
-next_due: 2024-01-20 # Earliest due date
----
-```
-
-### Review Item Sidecar (Canonical State)
-
-Path: `IR/Review Items/<ir_note_id>.md`
-
-```yaml
----
-ir_note_id: 'Ab3Kp9Xr2QaL'
-note_path: 'Biochemistry/Krebs Cycle/ATP.md'
-clozes:
-    c1:
-        cloze_uid: 'G7uT2mQ9rW1z'
-        status: review
-        due: 2024-01-20T10:00:00
-        stability: 15.2
-        difficulty: 5.5
-        reps: 8
-        lapses: 1
-        last_review: 2024-01-18T14:00:00
-    c2:
-        cloze_uid: 'p8Ls2ZQv6N4k'
-        status: new
-        due: null
-        stability: 0
-        difficulty: 0
----
-```
-
-### Review Log (Append-Only)
-
-Path: `IR/Revlog/YYYY-MM.md`
-
-Format: JSONL, one object per line (no header/frontmatter):
-
-```json
-{
-	"ts": "2024-01-15T10:30:00.000Z",
-	"item_id": "Ab3Kp9Xr2QaL::G7uT2mQ9rW1z",
-	"rating": 3,
-	"elapsed_ms": 2500,
-	"state_before": "review",
-	"stability_before": 15.2,
-	"difficulty_before": 5.5
-}
-```
-
-### Optional SQLite Index (Future)
-
-A rebuildable SQLite index can be added later for speed. It mirrors sidecars and revlog data but is not canonical.
-
----
-
-## Module Structure
-
-```
-src/
-├── core/                    # Pure functions (fully testable)
-│   ├── types.ts             # Type definitions
-│   ├── scheduling.ts        # FSRS calculations, grade logic
-│   ├── queue.ts             # Queue building and ordering
-│   ├── cloze.ts             # Cloze parsing and manipulation
-│   ├── frontmatter.ts       # Frontmatter parsing/serialization
-│   └── dates.ts             # Date utilities
-│
-├── data/                    # Data access layer
-│   ├── review-items.ts      # Sidecar read/write
-│   ├── revlog.ts            # JSONL append/read
-│   └── sync.ts              # Note → Sidecar synchronization
-│
-├── editor/                  # Editor extensions
-│   └── cloze-hider.ts        # Hide/reveal cloze answers in editor
-│
-├── stats/                   # Statistics (pure where possible)
-│   ├── aggregations.ts      # Compute stats from revlog entries
-│   └── charts.ts            # Chart data preparation (pure)
-│
-├── commands/                # Obsidian command handlers
-│   ├── extract.ts
-│   └── cloze.ts
-│
-├── views/                   # UI components
-│   ├── review/
-│   │   ├── ReviewItemView.tsx
-│   │   ├── ReviewView.tsx
-│   │   └── ...
-│   └── stats/
-│       ├── StatsModal.tsx
-│       └── ...
-│
-├── settings.ts              # Plugin settings
-└── main.ts                  # Plugin entry point
-```
-
----
-
-## Pure Function Signatures
-
-### core/scheduling.ts
-
-```typescript
-// Calculate new state after grading
-function gradeItem(state: ItemState, rating: Rating, now: Date, fsrsParams: FsrsParams): ItemState;
-
-// Topic-specific grading (simpler intervals)
-function gradeTopic(state: ItemState, rating: Rating, now: Date): ItemState;
-
-// Map user grade (1-4) to FSRS Rating
-function mapGradeToRating(grade: number): Rating;
-
-// Calculate burden (workload estimate)
-function calculateBurden(items: ItemState[]): number;
-```
-
-### core/queue.ts
-
-```typescript
-// Build queue from items
-function buildQueue(
-	items: ReviewItem[],
-	now: Date,
-	newCardsPerDay: number,
-	newCardsToday: number,
-): ReviewQueue;
-
-// Get next item to review
-function getNextItem(queue: ReviewQueue): ReviewItem | null;
-
-// Sort items by priority rules
-function sortByPriority(items: ReviewItem[]): ReviewItem[];
-
-// Categorize items into queue buckets
-function categorizeItems(
-	items: ReviewItem[],
-	now: Date,
-): { learning: ReviewItem[]; due: ReviewItem[]; new: ReviewItem[]; upcoming: ReviewItem[] };
-```
-
-### core/cloze.ts
-
-```typescript
-// Extract cloze indices from note content
-function parseClozeIndices(content: string): number[];
-
-// Get next available cloze index
-function getNextClozeIndex(content: string): number;
-
-// Get highest existing cloze index
-function getHighestClozeIndex(content: string): number | null;
-
-// Format cloze for display (hiding answer)
-function formatClozeQuestion(content: string, clozeIndex: number): string;
-
-// Format cloze with answer revealed
-function formatClozeAnswer(content: string, clozeIndex: number): string;
-```
-
-### core/frontmatter.ts
-
-```typescript
-// Parse frontmatter into typed object
-function parseFrontmatter(raw: Record<string, unknown>): NoteFrontmatter | null;
-
-// Serialize frontmatter for writing
-function serializeFrontmatter(fm: NoteFrontmatter): Record<string, unknown>;
-
-// Normalize tags (handles #prefix, arrays, strings)
-function normalizeTags(tags: unknown): string[];
-
-// Parse date from various formats
-function parseDate(value: unknown): Date | null;
-
-// Format date for frontmatter
-function formatDate(date: Date): string;
-
-// Normalize number with fallback
-function normalizeNumber(value: unknown, fallback: number): number;
-```
-
-### core/dates.ts
-
-```typescript
-// Add days to date
-function addDays(date: Date, days: number): Date;
-
-// Add minutes to date
-function addMinutes(date: Date, minutes: number): Date;
-
-// Check if date is today
-function isToday(date: Date, now: Date): boolean;
-
-// Get start of day
-function startOfDay(date: Date): Date;
-
-// Days between two dates
-function daysBetween(a: Date, b: Date): number;
-```
-
-### stats/aggregations.ts
-
-```typescript
-// Calculate retention rate
-function calculateRetention(reviews: ReviewRecord[]): number;
-
-// Calculate streak
-function calculateStreak(reviewDays: Date[], today: Date): StreakInfo;
-
-// Group reviews by date
-function groupByDate(reviews: ReviewRecord[]): Map<string, ReviewRecord[]>;
-
-// Calculate answer distribution
-function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDistribution;
-
-// Build heatmap data
-function buildHeatmapData(reviews: ReviewRecord[], days: number): HeatmapData[];
-
-// Build forecast data
-function buildForecastData(items: ItemState[], days: number, now: Date): ForecastData[];
-```
-
----
-
-## Data Flow
-
-### Opening Review
-
-```
-1. User opens Review view
-
-2. Load items from sidecar files
-   items = loadSidecarItems()
-
-3. Load note metadata (for priority, type)
-   for each item:
-     note = vault.getFile(item.note_path)
-     fm = readFrontmatter(note)
-     item.priority = fm.priority
-
-4. Build queue (pure function)
-   queue = buildQueue(items, now, settings.newCardsPerDay, todayNewCount)
-
-5. Render first item
-   current = getNextItem(queue)
-   render(current)
-```
-
-### Grading an Item
-
-```
-1. User grades item (e.g., grade = 3)
-
-2. Calculate new state (pure function)
-   if item.type == 'topic':
-     newState = gradeTopic(item.state, grade, now)
-   else:
-     newState = gradeItem(item.state, grade, now, fsrsParams)
-
-3. Persist to sidecar
-   updateSidecarItem(item.id, newState)
-
-4. Log review (for stats)
-   appendRevlog({
-     ts: now,
-     item_id: item.id,
-     rating: grade,
-     elapsed_ms: elapsedTime,
-     state_before: item.state.status,
-     stability_before: item.state.stability,
-     difficulty_before: item.state.difficulty,
-   })
-
-5. Advance to next item
-   current = getNextItem(queue)
-   render(current)
-```
-
-### Adding a Cloze
-
-```
-1. User selects text, runs "Create Cloze"
-
-2. Calculate index (pure function)
-   content = editor.getValue()
-   index = getNextClozeIndex(content)
-
-3. Wrap selection
-   clozeText = `{{c${index}::${selection}}}`
-   editor.replaceSelection(clozeText)
-
-4. Update note frontmatter
-   if fm.type != 'item':
-     fm.type = 'item'
-     writeFrontmatter(file, fm)
-
-5. Create sidecar entry
-   upsertSidecarCloze({
-     id: `${ir_note_id}::${cloze_uid}`,
-     note_path: file.path,
-     cloze_index: index,
-     status: 'new',
-     due: now,
-     stability: 0,
-     difficulty: 0,
-     reps: 0,
-     lapses: 0,
-     last_review: null,
-   })
-```
-
-### Sync on Startup
-
-When plugin loads, synchronize sidecars with vault:
-
-```
-1. Get all notes with topic tag
-   notes = getNotesWithTag(vault, settings.extractTag)
-
-2. Get all sidecar items
-   items = getAllSidecarItems()
-
-3. For each note:
-   a. Parse clozes from content
-      clozeIndices = parseClozeIndices(note.content)
-
-   b. If no clozes and type is topic:
-      - Ensure single topic entry exists in sidecar
-
-   c. If has clozes:
-      - Ensure sidecar entry for each cloze index
-      - Remove stale entries (cloze deleted)
-
-4. Remove orphaned sidecars (note deleted)
-   for each item:
-     if note doesn't exist:
-       deleteSidecar(item.id)
-```
-
----
-
-## Bases Views
-
-The plugin creates Bases views for browsing items.
-
-### View: All Items
-
-File: `IR/All Items.base`
-
-Shows all review items with columns:
-
-- File (link to note)
-- Type (topic/item)
-- Cloze (c1, c2, ... or empty)
-- Status
-- Priority
-- Due
-- Stability
-- Difficulty
-- Reps
-- Lapses
-- Source
-
-Filter: `file.inFolder("IR/Review Items")`
-
-### View: Due Today
-
-File: `IR/Due Today.base`
-
-Filter: `due <= today AND status != new`
-
-Columns: File, Type, Cloze, Priority, Due, Stability
-
-### View: New
-
-File: `IR/New.base`
-
-Filter: `status = new`
-
-Columns: File, Type, Cloze, Priority, Created
-
-### View: Struggling
-
-File: `IR/Struggling.base`
-
-Filter: `lapses >= 3`
-
-Columns: File, Type, Cloze, Lapses, Difficulty, Stability, Last Review
-
-### View: Topics Only
-
-File: `IR/Topics.base`
-
-Filter: `type = topic`
-
-### View: Items Only
-
-File: `IR/Items.base`
-
-Filter: `type = item`
-
-### Per-Folder Views (Deck Views)
-
-Users can create folder-specific views. Example for Krebs Cycle lecture:
-
-File: `Biochemistry/Krebs Cycle/Queue.base`
-
-```base
-filters:
-  and:
-    - file.inFolder("IR/Review Items")
-    - note_path: contains "Biochemistry/Krebs Cycle/"
-views:
-  - type: table
-    name: Due
-    filters:
-      and:
-        - status: is not "new"
-        - due: is on or before today
-  - type: table
-    name: New
-    filters:
-      and:
-        - status: is "new"
-  - type: table
-    name: All
-```
-
-This shows New/Learning/Due tabs for just that lecture folder.
-
-For the entire course:
-
-File: `Biochemistry/All Items.base`
-
-```base
-filters:
-  and:
-    - file.inFolder("IR/Review Items")
-    - note_path: contains "Biochemistry/"
-```
-
-This includes all items from Krebs Cycle, Glycolysis, etc.
-
-### Implementation Note
-
-Bases reads frontmatter from Markdown files. For per-cloze data, the plugin stores state in the sidecar files under `IR/Review Items/`.
-
-```yaml
-clozes:
-    c1: { cloze_uid: Ab3Kp9Xr2QaL, status: review, due: 2024-01-20, stability: 15.2 }
-    c2: { cloze_uid: Q9rT2mX1pL7z, status: new, due: null, stability: 0 }
-```
-
----
-
-## Statistics Inputs
-
-Statistics are computed from:
-
-- Revlog entries parsed from `IR/Revlog/YYYY-MM.md` (JSONL)
-- Sidecar state from `IR/Review Items/<ir_note_id>.md`
-
-Aggregation is done by pure functions:
-
-- Heatmap data from daily review counts
-- Retention rate from ratings (>= 2)
-- Answer distribution by rating
-- Reviews over time grouped by day and prior state
-- Streak from daily review dates
-- Forecast from item due dates
-
-If an optional SQLite index is added later, it can mirror these inputs for faster querying.
-
----
-
-## Error Handling
-
-### Index Errors (Optional)
-
-- If a SQLite index fails to load: Continue without index, log warning
-
-### Note Sync Errors
-
-- If note can't be read: Skip, log warning
-- If frontmatter invalid: Use defaults, log warning
-
-### Review Errors
-
-- If current item disappears (deleted): Refresh queue, continue
-- If grade fails to persist: Show error notice, don't advance
-
----
-
-## Testing Strategy
-
-Testing is deferred until the core workflow is stable end-to-end.
-
----
-
-## Current Implementation Status
-
-This section documents what is actually implemented.
-
-### Implemented (Working)
-
-**Cloze Syntax & Display:**
-
-- Plain Anki-style clozes: `{{c1::text}}` or `{{c1::text::hint}}` (no HTML wrapper)
-- Question phase: Cloze content replaced with `[...]` placeholder
-- Answer phase: Full text revealed
-- Cloze creation command inserts plain syntax
-
-**Review UI (Single-Pane Design):**
-
-- Two-screen flow: Deck Summary → Review
-- Review content rendered directly in review panel (no separate editor tab)
-- Topics (extracts without cloze): Show content + grade buttons immediately
-- Cloze items: Show question with `[...]` → "Show Answer" → grade buttons
-- Grade buttons (1-4) with color coding
-- Keyboard shortcuts: Enter/Space = show answer, 1-4 = grade, Esc = back
-- Session stats and completion screen
-
-**Data Storage:**
-
-- Per-cloze scheduling via sidecar files (`IR/Review Items/<ir_note_id>.md`)
-- Each cloze gets its own `cloze_uid` and scheduling state
-- JSONL revlog in `IR/Revlog/YYYY-MM.md`
-- Race condition handling for concurrent file operations
-
-**Scheduling:**
-
-- FSRS algorithm for cloze items
-- Simpler interval growth for topics (passive review)
-- Queue built from sidecar files with priority ordering
-
-### File Locations
-
-| Component  | Location                          |
-| ---------- | --------------------------------- |
-| Revlog     | `IR/Revlog/YYYY-MM.md` (JSONL)    |
-| Sidecar    | `IR/Review Items/<ir_note_id>.md` |
-| Scheduling | Sidecar files (per-cloze state)   |
-
-### Source Tree Structure
-
-| File                                  | Purpose                                    |
-| ------------------------------------- | ------------------------------------------ |
-| `src/data/revlog.ts`                  | JSONL revlog in `IR/Revlog/YYYY-MM.md`     |
-| `src/data/review-items.ts`            | Sidecar files in `IR/Review Items/<id>.md` |
-| `src/data/sync.ts`                    | Note ↔ sidecar synchronization             |
-| `src/core/types.ts`                   | Type definitions                           |
-| `src/core/cloze.ts`                   | Cloze parsing and formatting               |
-| `src/views/review/ReviewItemView.tsx` | Review view controller                     |
-| `src/views/review/ReviewScreen.tsx`   | Review UI component                        |
-| `src/views/review/DeckSummary.tsx`    | Deck list UI component                     |
-| `src/commands/cloze.ts`               | Cloze creation command                     |
-| `src/commands/extract.ts`             | Extract command                            |
-
-### Race Condition Handling
-
-All file creation operations use try/catch to handle race conditions:
-
-```typescript
-// Pattern for file creation
-const existing = app.vault.getAbstractFileByPath(path);
-if (existing instanceof TFile) {
-	await app.vault.append(existing, content);
-	return;
-}
 try {
 	await app.vault.create(path, content);
 } catch {
-	// File created between check and create - fallback
 	const file = app.vault.getAbstractFileByPath(path);
 	if (file instanceof TFile) {
 		await app.vault.append(file, content);
-	}
-}
-```
-
-This pattern is applied in:
-
-- `src/data/revlog.ts:appendReview()`
-- `src/data/review-items.ts:writeReviewItemFile()`
-
-Folder creation also handles races:
-
-```typescript
-const folder = app.vault.getAbstractFileByPath(path);
-if (!folder) {
-	try {
-		await app.vault.createFolder(path);
-	} catch {
-		// Already created by another operation
 	}
 }
 ```
@@ -1029,113 +489,9 @@ if (!folder) {
 
 ## Dependencies
 
-| Package       | Purpose              | Size  | Loaded             |
-| ------------- | -------------------- | ----- | ------------------ |
-| ts-fsrs       | Scheduling algorithm | ~15KB | Always             |
-| frappe-charts | Statistics charts    | ~17KB | Lazy (stats modal) |
-| preact        | UI components        | ~4KB  | Always             |
-
----
-
-## Migration
-
-### From Current Implementation
-
-Current: Note frontmatter stores all scheduling.
-New: Per-cloze scheduling moves to sidecar files under `IR/Review Items/`.
-
-Migration on first load:
-
-1. For each note with topic tag:
-    - Ensure `ir_note_id` exists
-    - Create/update sidecar with per-cloze entries
-2. Mark migration complete in settings
-
-### Data Export
-
-Provide CSV export for revlog:
-
-```
-timestamp,item_id,rating,elapsed_ms,state_before
-2024-01-15T10:30:00,notes/Cells.md::c1,3,2500,review
-```
-
----
-
-## Future Enhancements (Post-MVP)
-
-### Alternative Card Types
-
-**MVP**: Cloze deletions only (`{{c1::text}}`).
-
-**Future**: Support additional card types.
-
-#### Basic Q&A Cards
-
-Syntax option 1 (Anki-style):
-
-```markdown
-Q: What is the capital of France?
-A: Paris
-```
-
-Syntax option 2 (frontmatter):
-
-```markdown
----
-type: qa
----
-
-## What is the capital of France?
-
-Paris
-```
-
-Implementation:
-
-- Parse Q/A markers or separator
-- Item ID: `ir_note_id::qa` (one Q&A per note) or `ir_note_id::qa1` (multiple)
-- Question phase: show Q, hide A
-- Answer phase: reveal A
-
-#### Image Occlusion Cards
-
-**Significant complexity** - requires:
-
-1. Image annotation editor (canvas overlay)
-2. Storage of occlusion regions (coordinates, shapes)
-3. Render-time masking of regions
-4. Per-region scheduling
-
-Syntax concept:
-
-```markdown
-![[diagram.png]]
-
-<!-- occlusions:
-  - id: 1, type: rect, x: 100, y: 50, w: 80, h: 30, label: "mitochondria"
-  - id: 2, type: rect, x: 200, y: 100, w: 60, h: 40, label: "nucleus"
--->
-```
-
-Item IDs: `ir_note_id::img1::o1`, `ir_note_id::img1::o2`
-
-**Not MVP** - requires dedicated editor UI.
-
-### Card Type Detection
-
-```typescript
-function detectCardType(content: string, frontmatter: any): CardType {
-	if (hasClozes(content)) return 'cloze';
-	if (hasQAMarkers(content)) return 'qa';
-	if (hasOcclusionMarkers(content)) return 'occlusion';
-	return 'topic'; // Default: reading material
-}
-```
-
-### Priority for MVP
-
-1. **Cloze deletions** - Core IR workflow, validates the concept
-2. **Topics** - Reading material with scroll position
-3. ~~Q&A cards~~ - Post-MVP, simple addition
-4. ~~Image occlusion~~ - Post-MVP, significant work
+| Package        | Purpose         | Notes    |
+| -------------- | --------------- | -------- |
+| ts-fsrs        | FSRS scheduling | ~15KB    |
+| preact         | UI components   | ~4KB     |
+| js-yaml        | YAML parsing    | Fast     |
+| better-sqlite3 | Anki import     | CLI only |
