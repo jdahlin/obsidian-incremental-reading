@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import type { SessionManager } from '../../SessionManager.js';
 import type { SessionItem, Rating } from '../../types.js';
 import { formatClozeQuestion, formatClozeAnswer } from '../../../core/cloze.js';
+import { renderContentWithImages } from '../terminal-image.js';
 
 type Phase = 'question' | 'answer';
 
@@ -164,7 +165,7 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 		// Otherwise, show full content for both phases (standard topic)
 	}
 
-	displayContent = renderImagePlaceholders(displayContent);
+	displayContent = renderContentWithImages(displayContent, vaultPath, contentWidth);
 	// Convert tabs to spaces (tabs cause alignment issues with borders)
 	displayContent = displayContent.replace(/\t/g, '    ');
 
@@ -248,13 +249,6 @@ function stripFrontmatter(content: string): string {
 		}
 	}
 	return content;
-}
-
-function renderImagePlaceholders(content: string): string {
-	// Handle both wiki-style ![[image]] and markdown-style ![](image)
-	return content
-		.replace(/!\[\[([^\]]+)\]\]/g, '[Image: $1]')
-		.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '[Image: $2]');
 }
 
 /**
