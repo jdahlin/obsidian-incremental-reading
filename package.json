@@ -18,7 +18,8 @@
 		"format": "prettier --write --log-level=error .",
 		"format:check": "prettier --check .",
 		"clean": "turbo clean && rm -rf node_modules",
-		"prepare": "husky"
+		"prepare": "husky",
+		"cli": "tsx packages/cli/src/index.tsx"
 	},
 	"nano-staged": {
 		"*.{ts,tsx,js,mjs,json}": [
@@ -36,6 +37,7 @@
 		"husky": "^9.1.7",
 		"nano-staged": "^0.9.0",
 		"prettier": "^3.7.4",
+		"tsx": "^4.21.0",
 		"turbo": "^2.7.2",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.16"
