@@ -1,0 +1,37 @@
+# Counts Test
+# Intent: getCounts returns accurate new/learning/due counts.
+
+session JD1
+clock 2025-01-01
+
+# Create 3 new topics
+topic "New Topic 1" --priority 50
+topic "New Topic 2" --priority 50
+topic "New Topic 3" --priority 50
+
+# Check initial counts - all should be new
+inspect-counts
+expect session.counts.new 3
+expect session.counts.learning 0
+expect session.counts.due 0
+
+# Grade one as Again -> moves to learning
+inspect-next
+expect session.nextItem note-1
+grade note-1 1
+
+# After Again, status becomes learning
+inspect-counts
+expect session.counts.new 2
+expect session.counts.learning 1
+expect session.counts.due 0
+
+# Grade another as Good -> moves to review, due in future
+inspect-next
+grade note-2 3
+
+# note-2 is now in review status, due in the future (not due yet)
+inspect-counts
+expect session.counts.new 1
+expect session.counts.learning 1
+expect session.counts.due 0

@@ -1,0 +1,21 @@
+# New Cards Limit Test
+# Intent: Limit the number of new cards shown in a session.
+# Setup: 5 new topics, limit to 2.
+
+session JD1 --new-cards-limit 2
+clock 2025-01-01
+
+topic "Topic 1" --priority 50
+topic "Topic 2" --priority 50
+topic "Topic 3" --priority 50
+topic "Topic 4" --priority 50
+topic "Topic 5" --priority 50
+
+# Check counts - only 2 new cards should be in pool
+inspect-counts
+expect session.counts.new 2
+
+# Inspect queue - should only have 2 items
+inspect-next --limit 10
+expect queue[0] note-1
+expect queue[1] note-2

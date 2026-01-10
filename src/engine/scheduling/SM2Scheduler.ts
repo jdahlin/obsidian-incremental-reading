@@ -1,6 +1,8 @@
-import type { ReviewState, Scheduler, Rating } from '../types';
+import type { ReviewState, Scheduler, Rating, SchedulingParams } from '../types';
 
 export class SM2Scheduler implements Scheduler {
+	constructor(private params?: SchedulingParams) {}
+
 	grade(state: ReviewState, rating: Rating, now: Date): ReviewState {
 		throw new Error('SM2 scheduler is not implemented yet');
 	}

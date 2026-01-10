@@ -1,17 +1,18 @@
 export * from './FSRSScheduler';
 export * from './SM2Scheduler';
+export * from './TopicScheduler';
 
 import { FSRSScheduler } from './FSRSScheduler';
 import { SM2Scheduler } from './SM2Scheduler';
-import type { Scheduler } from '../types';
+import type { Scheduler, SchedulingParams } from '../types';
 
-export function getScheduler(id: string): Scheduler {
+export function getScheduler(id: string, params?: SchedulingParams): Scheduler {
 	switch (id) {
 		case 'fsrs':
-			return new FSRSScheduler();
+			return new FSRSScheduler(params);
 		case 'sm2':
-			return new SM2Scheduler();
+			return new SM2Scheduler(params);
 		default:
-			return new FSRSScheduler();
+			return new FSRSScheduler(params);
 	}
 }

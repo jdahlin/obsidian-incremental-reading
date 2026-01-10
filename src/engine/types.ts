@@ -39,15 +39,31 @@ export interface SessionState {
 	seed: number;
 }
 
+export interface SchedulingParams {
+	maximumInterval?: number;
+	requestRetention?: number;
+	weights?: number[];
+}
+
 export interface SessionConfig {
 	strategy: SessionStrategyId;
 	mode: ReviewMode;
 	schedulerId?: SchedulerId;
+	schedulingParams?: SchedulingParams;
 	examDate?: Date | null;
 	capacity?: number;
 	clumpLimit?: number;
 	cooldown?: number;
+	newCardsLimit?: number;
 	deterministic?: boolean;
+}
+
+export interface SessionStats {
+	reviewed: number;
+	again: number;
+	hard: number;
+	good: number;
+	easy: number;
 }
 
 export interface Scheduler {
