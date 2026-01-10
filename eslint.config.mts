@@ -92,6 +92,7 @@ export default tseslint.config(
 		'coverage',
 		'build-css',
 		'css-tmp',
+		'e2e', // Playwright E2E tests have their own tsconfig
 		'esbuild.config.mjs',
 		'eslint.config.js',
 		'vitest.config.ts',
