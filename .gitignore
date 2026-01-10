@@ -28,3 +28,8 @@ data.json
 build-css/
 css-tmp/
 Vault
+
+# E2E testing
+e2e/.cache/
+test-results/
+playwright-report/

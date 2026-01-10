@@ -14,6 +14,9 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint .",
 		"test": "vitest run --coverage",
+		"test:e2e": "npm run build && playwright test -c e2e/playwright.config.ts",
+		"test:e2e:headed": "npm run build && playwright test -c e2e/playwright.config.ts --headed",
+		"e2e:setup": "npx tsx e2e/setup/obsidian.ts",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"prepare": "husky"
@@ -44,6 +47,7 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
+		"@playwright/test": "^1.49.0",
 		"@codemirror/state": "6.5.0",
 		"@codemirror/view": "^6.29.1",
 		"@eslint/js": "9.30.1",
