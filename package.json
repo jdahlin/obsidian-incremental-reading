@@ -43,6 +43,9 @@
 		"learning"
 	],
 	"license": "MIT",
+	"engines": {
+		"node": ">=25.0.0"
+	},
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",
 		"@codemirror/view": "^6.29.1",
