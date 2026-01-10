@@ -1,115 +1,90 @@
 /**
  * Obsidian installation and launch utilities for E2E tests.
  *
- * Downloads Obsidian AppImage and provides launch configuration for Playwright.
+ * Downloads Obsidian and provides launch configuration for Playwright.
+ * Currently supports macOS only.
  */
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { existsSync } from 'fs';
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 
-// Obsidian release URL - update version as needed
+// Obsidian release info
 const OBSIDIAN_VERSION = '1.7.7';
-const OBSIDIAN_APPIMAGE_URL = `https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.AppImage`;
+const OBSIDIAN_DMG_URL = `https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}-universal.dmg`;
 
 const CACHE_DIR = path.join(__dirname, '..', '.cache');
-const APPIMAGE_PATH = path.join(CACHE_DIR, `Obsidian-${OBSIDIAN_VERSION}.AppImage`);
+const DMG_PATH = path.join(CACHE_DIR, `Obsidian-${OBSIDIAN_VERSION}.dmg`);
+const APP_PATH = path.join(CACHE_DIR, 'Obsidian.app');
 
 /**
- * Download Obsidian AppImage if not already cached.
+ * Download Obsidian DMG if not already cached.
  */
-export async function ensureObsidianInstalled(): Promise<string> {
+async function downloadObsidian(): Promise<string> {
 	await fs.mkdir(CACHE_DIR, { recursive: true });
 
-	if (existsSync(APPIMAGE_PATH)) {
-		console.log(`Using cached Obsidian ${OBSIDIAN_VERSION}`);
-		return APPIMAGE_PATH;
+	if (existsSync(DMG_PATH)) {
+		console.log(`Using cached Obsidian ${OBSIDIAN_VERSION} DMG`);
+		return DMG_PATH;
 	}
 
 	console.log(`Downloading Obsidian ${OBSIDIAN_VERSION}...`);
 
-	// Download using curl (available on most systems)
-	execSync(`curl -L -o "${APPIMAGE_PATH}" "${OBSIDIAN_APPIMAGE_URL}"`, {
+	// Download using curl
+	execSync(`curl -L -o "${DMG_PATH}" "${OBSIDIAN_DMG_URL}"`, {
 		stdio: 'inherit',
 	});
-
-	// Make executable
-	await fs.chmod(APPIMAGE_PATH, 0o755);
 
 	console.log('Obsidian downloaded successfully');
-	return APPIMAGE_PATH;
+	return DMG_PATH;
 }
 
 /**
- * Extract the Obsidian AppImage to a directory.
- * This allows Playwright to launch it as an Electron app.
+ * Extract Obsidian.app from the DMG.
  */
-export async function extractObsidian(): Promise<string> {
-	const extractDir = path.join(CACHE_DIR, `obsidian-${OBSIDIAN_VERSION}`);
-
-	if (existsSync(path.join(extractDir, 'obsidian'))) {
-		return extractDir;
+export async function ensureObsidianInstalled(): Promise<string> {
+	if (existsSync(APP_PATH)) {
+		console.log('Using cached Obsidian.app');
+		return APP_PATH;
 	}
 
-	const appImagePath = await ensureObsidianInstalled();
+	const dmgPath = await downloadObsidian();
 
-	console.log('Extracting Obsidian AppImage...');
-	await fs.mkdir(extractDir, { recursive: true });
+	console.log('Mounting DMG and extracting Obsidian.app...');
 
-	// Extract AppImage
-	execSync(`"${appImagePath}" --appimage-extract`, {
-		cwd: extractDir,
-		stdio: 'inherit',
+	// Mount the DMG
+	const mountOutput = execSync(`hdiutil attach "${dmgPath}" -nobrowse -readonly`, {
+		encoding: 'utf-8',
 	});
 
-	// Move squashfs-root contents up
-	const squashfsRoot = path.join(extractDir, 'squashfs-root');
-	if (existsSync(squashfsRoot)) {
-		const files = await fs.readdir(squashfsRoot);
-		for (const file of files) {
-			await fs.rename(path.join(squashfsRoot, file), path.join(extractDir, file));
-		}
-		await fs.rmdir(squashfsRoot);
+	// Parse mount point from output (last column of last line)
+	const lines = mountOutput.trim().split('\n');
+	const lastLine = lines[lines.length - 1];
+	const mountPoint = lastLine.split('\t').pop()?.trim();
+
+	if (!mountPoint) {
+		throw new Error('Failed to determine DMG mount point');
 	}
 
-	return extractDir;
+	try {
+		// Copy Obsidian.app to cache
+		const sourceApp = path.join(mountPoint, 'Obsidian.app');
+		execSync(`cp -R "${sourceApp}" "${APP_PATH}"`, { stdio: 'inherit' });
+		console.log('Obsidian.app extracted successfully');
+	} finally {
+		// Unmount the DMG
+		execSync(`hdiutil detach "${mountPoint}" -quiet`, { stdio: 'inherit' });
+	}
+
+	return APP_PATH;
 }
 
 /**
- * Get the path to the Obsidian executable within the extracted directory.
+ * Get the path to the Obsidian executable for Playwright.
  */
-export function getObsidianExecutable(extractDir: string): string {
-	return path.join(extractDir, 'obsidian');
-}
-
-/**
- * Get the path to the Obsidian resources for Playwright Electron launch.
- */
-export function getObsidianResourcesPath(extractDir: string): string {
-	return path.join(extractDir, 'resources', 'app.asar');
-}
-
-/**
- * Launch Obsidian with a specific vault for testing.
- * Returns the process so it can be managed by tests.
- */
-export function launchObsidian(extractDir: string, vaultPath: string): ReturnType<typeof spawn> {
-	const executable = getObsidianExecutable(extractDir);
-
-	// Launch with specific vault
-	const proc = spawn(executable, [vaultPath], {
-		env: {
-			...process.env,
-			// Disable GPU for headless environments
-			ELECTRON_DISABLE_GPU: '1',
-			// Disable sandbox for CI environments
-			ELECTRON_NO_SANDBOX: '1',
-		},
-		stdio: 'pipe',
-	});
-
-	return proc;
+export function getObsidianExecutable(appPath: string): string {
+	return path.join(appPath, 'Contents', 'MacOS', 'Obsidian');
 }
 
 /**
@@ -125,16 +100,21 @@ export interface ObsidianLaunchConfig {
  * Get Playwright-compatible launch configuration.
  */
 export async function getPlaywrightConfig(vaultPath: string): Promise<ObsidianLaunchConfig> {
-	const extractDir = await extractObsidian();
-	const executable = getObsidianExecutable(extractDir);
+	const appPath = await ensureObsidianInstalled();
+	const executable = getObsidianExecutable(appPath);
 
 	return {
 		executablePath: executable,
-		args: [vaultPath],
+		args: [`obsidian://open?path=${encodeURIComponent(vaultPath)}`],
 		env: {
 			...process.env,
-			ELECTRON_DISABLE_GPU: '1',
-			ELECTRON_NO_SANDBOX: '1',
 		},
 	};
+}
+
+// Allow running directly to pre-download Obsidian
+if (require.main === module) {
+	ensureObsidianInstalled()
+		.then((appPath) => console.log(`Obsidian ready at: ${appPath}`))
+		.catch(console.error);
 }

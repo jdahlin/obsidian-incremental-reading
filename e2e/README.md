@@ -5,7 +5,7 @@ Automated end-to-end tests using [Playwright](https://playwright.dev/) with Obsi
 ## Prerequisites
 
 - Node.js 18+
-- Linux (AppImage support) or macOS
+- macOS (Intel or Apple Silicon)
 - ~500MB disk space for Obsidian download
 
 ## Setup
