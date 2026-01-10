@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { App } from 'obsidian';
 import { ReviewController } from '../review-controller';
 import { ObsidianReviewAdapter } from '../obsidian-adapter';
@@ -11,6 +11,14 @@ interface TestableReviewController {
 }
 
 describe('ReviewController - onDataChange', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('should NOT refresh summary if screen is review', async () => {
 		const app = new App();
 		const platform = new ObsidianReviewAdapter(app, {});
@@ -43,8 +51,8 @@ describe('ReviewController - onDataChange', () => {
 		// 2. Trigger data change
 		dataChangeHandler();
 
-		// 3. Wait for timeout (500ms in code)
-		await new Promise((resolve) => setTimeout(resolve, 600));
+		// 3. Advance timers past the 500ms debounce
+		await vi.advanceTimersByTimeAsync(600);
 
 		// 4. Assert screen is STILL review
 		expect(testable.model.screen).toBe('review');
@@ -86,8 +94,8 @@ describe('ReviewController - onDataChange', () => {
 		// 2. Trigger data change
 		dataChangeHandler();
 
-		// 3. Wait for timeout
-		await new Promise((resolve) => setTimeout(resolve, 600));
+		// 3. Advance timers past the 500ms debounce
+		await vi.advanceTimersByTimeAsync(600);
 
 		// 4. Assert refreshSummary was called
 		expect(refreshSpy).toHaveBeenCalled();
