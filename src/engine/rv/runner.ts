@@ -128,8 +128,8 @@ async function applyCommand(
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
 			const rating = Number(positional[1] ?? 0);
-			const snapshot = await store.snapshot();
-			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			const clock = store.getClock();
+			const now = clock ? new Date(clock + 'T00:00:00Z') : new Date();
 			await sessionManager.loadPool(now);
 			await sessionManager.recordReview(itemId, rating as Rating, now);
 			break;
@@ -137,16 +137,16 @@ async function applyCommand(
 		case 'again': {
 			const { positional } = parseArgs(command.args);
 			const itemId = positional[0] ?? '';
-			const snapshot = await store.snapshot();
-			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			const clock = store.getClock();
+			const now = clock ? new Date(clock + 'T00:00:00Z') : new Date();
 			await sessionManager.loadPool(now);
 			await sessionManager.recordReview(itemId, 1, now);
 			break;
 		}
 		case 'inspect-next': {
 			const { options } = parseArgs(command.args);
-			const snapshot = await store.snapshot();
-			const now = snapshot.clock ? new Date(snapshot.clock + 'T00:00:00Z') : new Date();
+			const clock = store.getClock();
+			const now = clock ? new Date(clock + 'T00:00:00Z') : new Date();
 			await sessionManager.loadPool(now);
 			const limit = options.limit ? Number(options.limit) : 1;
 			const nextItems = await sessionManager.getNextN(limit, now);

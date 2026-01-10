@@ -34,5 +34,6 @@ export interface EngineStore {
 	setSession(config: Record<string, unknown>): void;
 	setScheduler(id: string): void;
 	setClock(value: string): void;
+	getClock(): string | null;
 	snapshot(): Promise<EngineSnapshot>;
 }
