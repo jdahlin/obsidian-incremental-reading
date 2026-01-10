@@ -212,6 +212,10 @@ extract:${sourceId}:${start}-${end}`,
 		this.runtime.clock = value;
 	}
 
+	getClock(): string | null {
+		return this.runtime.clock;
+	}
+
 	async snapshot(): Promise<EngineSnapshot> {
 		const items = await this.dataStore.listItems();
 

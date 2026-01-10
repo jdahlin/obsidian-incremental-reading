@@ -201,6 +201,10 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		this.state.clock = value;
 	}
 
+	getClock(): string | null {
+		return this.state.clock;
+	}
+
 	async snapshot(): Promise<EngineSnapshot> {
 		return {
 			notes: sortRecord(this.state.notes),
