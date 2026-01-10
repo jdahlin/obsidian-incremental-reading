@@ -54,7 +54,7 @@
 		"@vitest/coverage-v8": "^4.0.16",
 		"esbuild": "0.25.5",
 		"eslint-plugin-obsidianmd": "0.1.9",
-		"globals": "14.0.0",
+		"globals": "17.0.0",
 		"husky": "^9.1.7",
 		"ink": "^5.2.1",
 		"jiti": "2.6.1",
