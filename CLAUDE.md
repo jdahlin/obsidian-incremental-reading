@@ -81,6 +81,20 @@ src/engine/anki/
 - Commit `main.js`, `styles.css`, or `node_modules/`
 - Open separate editor tabs during review (single-pane design)
 
+## Debugging Review UI
+
+Launch Obsidian with remote debugging:
+
+```bash
+open -a Obsidian --args --remote-debugging-port=9222
+```
+
+Use Chrome DevTools MCP to inspect the review view:
+
+```javascript
+document.querySelector('.ir-review-view');
+```
+
 ## Documentation
 
 - `docs/ARCHITECTURE.md` - Technical design and data model
