@@ -1,0 +1,27 @@
+.ir-review-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow: auto;
+	padding: 24px;
+}
+
+.ir-review-card {
+	max-width: 600px;
+	width: 100%;
+	text-align: center;
+	font-size: 1.1em;
+	line-height: 1.6;
+}
+
+.ir-review-item-title {
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.ir-review-item-meta {
+	display: flex;
+	gap: 12px;
+	color: var(--text-muted);
+}

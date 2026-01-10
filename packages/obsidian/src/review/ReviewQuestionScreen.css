@@ -1,0 +1,14 @@
+.ir-review-screen {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	max-width: 720px;
+	width: 100%;
+	margin: 0 auto;
+}
+
+.ir-review-footer {
+	display: flex;
+	justify-content: center;
+	padding: 16px 0;
+}
