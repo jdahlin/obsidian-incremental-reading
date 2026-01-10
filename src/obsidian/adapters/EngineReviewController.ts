@@ -1,6 +1,6 @@
-import { SessionManager } from '../SessionManager';
-import type { SessionConfig, SessionItem, Rating, ReviewState } from '../types';
-import type { DataStore, NotePlatform } from '../types';
+import { SessionManager } from '../../engine/SessionManager';
+import type { SessionConfig, SessionItem, Rating, ReviewState } from '../../engine/types';
+import type { DataStore, NotePlatform } from '../../engine/types';
 import type {
 	ReviewItem as CoreReviewItem,
 	DeckInfo,
@@ -8,16 +8,16 @@ import type {
 	StreakInfo,
 	ReviewPlatformAdapter,
 	ItemState,
-} from '../../core/types';
-import { buildDeckTree, getCountsForFolder } from '../../core/decks';
+} from '../../engine/core/types';
+import { buildDeckTree, getCountsForFolder } from '../../engine/core/decks';
 import type { ReviewPhase } from '../../review/content';
-import type { DeckCountsValue } from '../../ui/review/deck-summary-types';
+import type { DeckCountsValue } from '../review/deck-summary-types';
 import type {
 	DebugInfo,
 	ReviewScreenActions,
 	ReviewScreenState,
-} from '../../ui/review/review-screen-state';
-import type { SessionStats as UISessionStats } from '../../ui/review/review-screen-types';
+} from '../review/review-screen-state';
+import type { SessionStats as UISessionStats } from '../review/review-screen-types';
 
 export interface EngineReviewSettings {
 	newCardsPerDay: number;

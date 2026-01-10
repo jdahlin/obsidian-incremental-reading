@@ -1,7 +1,7 @@
 import { App, Editor, Notice, TFile } from 'obsidian';
-import { getHighestClozeIndex, getNextClozeIndex } from '../core/cloze';
-import { normalizeTags } from '../core/frontmatter';
-import { syncNoteToSidecar } from '../data/sync';
+import { getHighestClozeIndex, getNextClozeIndex } from '../engine/core/cloze';
+import { normalizeTags } from '../engine/core/frontmatter';
+import { syncNoteToSidecar } from '../obsidian/data/sync';
 
 export interface ClozeOptions {
 	title?: string;

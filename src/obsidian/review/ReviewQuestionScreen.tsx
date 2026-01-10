@@ -1,5 +1,5 @@
 import type { FunctionalComponent } from 'preact';
-import { formatClozeQuestion } from '../../core/cloze';
+import { formatClozeQuestion } from '../../engine/core/cloze';
 import { ReviewCard } from './ReviewCard';
 import { ReviewShowAnswerButton } from './ReviewShowAnswerButton';
 import { ReviewDebugInfo } from './ReviewDebugInfo';

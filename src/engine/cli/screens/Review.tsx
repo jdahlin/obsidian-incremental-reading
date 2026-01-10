@@ -4,7 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { SessionManager } from '../../SessionManager.js';
 import type { SessionItem, Rating } from '../../types.js';
-import { formatClozeQuestion, formatClozeAnswer } from '../../../core/cloze.js';
+import { formatClozeQuestion, formatClozeAnswer } from '../../core/cloze.js';
 import { extractImagesFromContent, removeImagesFromContent } from '../terminal-image.js';
 import { ImageDisplay } from '../components/ImageDisplay.js';
 

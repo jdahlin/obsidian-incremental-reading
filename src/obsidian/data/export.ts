@@ -1,6 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { readAllReviews } from './revlog';
-import { formatDate } from '../core/frontmatter';
+import { formatDate } from '../../engine/core/frontmatter';
 
 export async function exportReviewHistory(app: App): Promise<TFile> {
 	const reviews = await readAllReviews(app);

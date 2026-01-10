@@ -4,9 +4,9 @@ import {
 	EngineReviewController,
 	type EngineReviewControllerDeps,
 	type EngineReviewSettings,
-} from '../../engine/adapters';
+} from '../adapters';
 import type { DataStore, NotePlatform } from '../../engine/types';
-import type { ReviewPlatformAdapter } from '../../core/types';
+import type { ReviewPlatformAdapter } from '../../engine/core/types';
 
 export interface UseReviewStateResult {
 	state: ReviewScreenState;

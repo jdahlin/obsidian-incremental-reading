@@ -1,5 +1,5 @@
 import type { FunctionalComponent } from 'preact';
-import type { DeckInfo } from '../../core/types';
+import type { DeckInfo } from '../../engine/core/types';
 import type { DeckCountsValue } from './deck-summary-types';
 import { DeckRow } from './DeckRow';
 import './DeckList.css';
