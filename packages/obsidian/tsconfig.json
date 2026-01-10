@@ -1,0 +1,14 @@
+{
+	"extends": "@repo/tsconfig/preact.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"noEmit": true,
+		"baseUrl": "../..",
+		"paths": {
+			"@repo/core": ["packages/core/src/index.ts"],
+			"@repo/core/*": ["packages/core/src/*"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"exclude": ["node_modules", "dist"]
+}

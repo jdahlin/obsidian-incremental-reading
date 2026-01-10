@@ -1,0 +1,4 @@
+{
+	"extends": "../ts/base.json",
+	"include": ["*.ts"]
+}

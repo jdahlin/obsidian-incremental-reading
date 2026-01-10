@@ -1,0 +1,35 @@
+{
+	"name": "@repo/obsidian",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -p tsconfig.build.json --noEmit && node esbuild.config.mjs production",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@repo/core": "workspace:*",
+		"obsidian": "latest",
+		"preact": "^10.26.9"
+	},
+	"devDependencies": {
+		"@codemirror/state": "6.5.0",
+		"@codemirror/view": "^6.29.1",
+		"@repo/eslint-config": "workspace:*",
+		"@types/js-yaml": "^4.0.9",
+		"js-yaml": "^4.1.1",
+		"@repo/tsconfig": "workspace:*",
+		"@repo/vitest-config": "workspace:*",
+		"@types/node": "^22.0.0",
+		"esbuild": "0.25.5",
+		"eslint-plugin-obsidianmd": "0.1.9",
+		"jsdom": "^27.4.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.16"
+	}
+}
