@@ -25,35 +25,12 @@ export interface ReviewItem {
 }
 
 export interface ReviewPlatformAdapter {
-	loadItems(extractTag: string): Promise<ReviewItem[]>;
 	getTodayStats(now: Date): Promise<TodayStats>;
 	getStreakInfo(now: Date): Promise<StreakInfo>;
-	updateTopicState(noteId: string, state: ItemState, notePath: string): Promise<void>;
-	updateClozeState(
-		noteId: string,
-		clozeIndex: number,
-		state: ItemState,
-		notePath: string,
-	): Promise<void>;
-	appendReview(entry: ReviewRecord): Promise<void>;
 	renderItem(item: ReviewItem, phase: 'question' | 'answer', extractTag: string): Promise<string>;
 	openStats(extractTag: string): void;
 	getPreselectedPath(decks: DeckInfo[]): string | null;
 	onDataChange(handler: () => void): () => void;
-}
-
-export interface ReviewQueue {
-	learning: ReviewItem[];
-	due: ReviewItem[];
-	new: ReviewItem[];
-	upcoming: ReviewItem[];
-}
-
-export interface QueueStats {
-	learning: number;
-	due: number;
-	new: number;
-	total: number;
 }
 
 export interface NoteFrontmatter {
@@ -73,17 +50,6 @@ export interface ReviewRecord {
 	state_before?: Status;
 	stability_before?: number;
 	difficulty_before?: number;
-}
-
-export interface ReviewQueueOptions {
-	newCardsLimit: number;
-	folderFilter?: string | null;
-}
-
-export interface FsrsParams {
-	maximumInterval?: number;
-	requestRetention?: number;
-	weights?: number[];
 }
 
 export interface TodayStats {

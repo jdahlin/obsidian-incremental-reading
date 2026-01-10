@@ -4,9 +4,6 @@ import {
 	ensureNoteId,
 	writeReviewItemFile,
 	readReviewItemFile,
-	updateClozeState,
-	updateTopicState,
-	updateReviewItemNotePath,
 	deleteReviewItemFile,
 	getReviewItemPath,
 } from '../review-items';
@@ -84,30 +81,13 @@ describe('review item files', () => {
 		expect(parsed?.topic?.due?.getTime()).toBe(state.due?.getTime());
 	});
 
-	it('updates cloze and topic states', async () => {
+	it('deletes review item file', async () => {
 		const app = new App();
 		const noteId = 'note-2';
-		const state = makeState({ status: 'learning' });
-
-		await updateClozeState(app, noteId, 1, state, 'Notes/Note.md');
-		await updateTopicState(app, noteId, state, 'Notes/Note.md');
-
-		const parsed = await readReviewItemFile(app, noteId);
-		expect(parsed?.clozes?.c1?.status).toBe('learning');
-		expect(parsed?.topic?.status).toBe('learning');
-	});
-
-	it('updates note path and deletes file', async () => {
-		const app = new App();
-		const noteId = 'note-3';
 		await writeReviewItemFile(app, noteId, {
 			ir_note_id: noteId,
-			note_path: 'Notes/Old.md',
+			note_path: 'Notes/Note.md',
 		});
-
-		await updateReviewItemNotePath(app, noteId, 'Notes/New.md');
-		const updated = await readReviewItemFile(app, noteId);
-		expect(updated?.note_path).toBe('Notes/New.md');
 
 		await deleteReviewItemFile(app, noteId);
 		const removed = app.vault.getAbstractFileByPath(getReviewItemPath(noteId));

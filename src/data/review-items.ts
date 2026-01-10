@@ -123,50 +123,6 @@ export async function writeReviewItemFile(
 	}
 }
 
-export async function updateClozeState(
-	app: App,
-	noteId: string,
-	clozeIndex: number,
-	state: ItemState,
-	notePath?: string,
-): Promise<void> {
-	const existing = await readReviewItemFile(app, noteId);
-	if (!existing && !notePath) {
-		throw new Error(`Missing review item file for ${noteId}`);
-	}
-	const data = existing ?? {
-		ir_note_id: noteId,
-		note_path: notePath ?? '',
-	};
-
-	if (!data.clozes) data.clozes = {};
-	const key = `c${clozeIndex}`;
-	const current = data.clozes[key];
-	data.clozes[key] = {
-		cloze_uid: current?.cloze_uid ?? createId(),
-		...state,
-	};
-	await writeReviewItemFile(app, noteId, data);
-}
-
-export async function updateTopicState(
-	app: App,
-	noteId: string,
-	state: ItemState,
-	notePath?: string,
-): Promise<void> {
-	const existing = await readReviewItemFile(app, noteId);
-	if (!existing && !notePath) {
-		throw new Error(`Missing review item file for ${noteId}`);
-	}
-	const data = existing ?? {
-		ir_note_id: noteId,
-		note_path: notePath ?? '',
-	};
-	data.topic = state;
-	await writeReviewItemFile(app, noteId, data);
-}
-
 export async function deleteReviewItemFile(app: App, noteId: string): Promise<void> {
 	const path = getReviewItemPath(noteId);
 	const file = app.vault.getAbstractFileByPath(path);
@@ -177,20 +133,6 @@ export async function deleteReviewItemFile(app: App, noteId: string): Promise<vo
 	if (await app.vault.adapter.exists(path)) {
 		await app.vault.adapter.remove(path);
 	}
-}
-
-export async function updateReviewItemNotePath(
-	app: App,
-	noteId: string,
-	notePath: string,
-): Promise<void> {
-	const existing = await readReviewItemFile(app, noteId);
-	if (!existing) return;
-	const updated: ReviewItemFile = {
-		...existing,
-		note_path: notePath,
-	};
-	await writeReviewItemFile(app, noteId, updated);
 }
 
 export function getReviewItemPath(noteId: string): string {

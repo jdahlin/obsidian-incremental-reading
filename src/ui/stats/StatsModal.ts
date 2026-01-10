@@ -1,6 +1,5 @@
 import { Modal } from 'obsidian';
 import type { App } from 'obsidian';
-import { loadReviewItems } from '../../data/review-loader';
 import { readAllReviews } from '../../data/revlog';
 import {
 	calculateAnswerDistribution,
@@ -9,6 +8,10 @@ import {
 	buildHeatmapData,
 } from '../../stats/aggregations';
 import { getStreakInfo, getTodayStats } from '../../data/review-stats';
+import { MarkdownDataStore } from '../../engine/data/MarkdownDataStore';
+import { ObsidianVault } from '../../engine/adapters/ObsidianVault';
+import { ObsidianNotePlatform } from '../../engine/adapters/ObsidianNotePlatform';
+import type { ReviewItem } from '../../core/types';
 import './StatsModal.css';
 
 export class StatsModal extends Modal {
@@ -30,7 +33,7 @@ export class StatsModal extends Modal {
 		contentEl.createEl('h2', { text: 'Statistics' });
 
 		const reviews = await readAllReviews(this.app);
-		const items = await loadReviewItems(this.app, this.extractTag);
+		const items = await this.loadItems();
 		const todayStats = await getTodayStats(this.app);
 		const streak = await getStreakInfo(this.app);
 
@@ -67,5 +70,48 @@ export class StatsModal extends Modal {
 
 	onClose(): void {
 		this.contentEl.empty();
+	}
+
+	private async loadItems(): Promise<ReviewItem[]> {
+		const vault = new ObsidianVault(this.app);
+		const notePlatform = new ObsidianNotePlatform(this.app);
+		const dataStore = new MarkdownDataStore(vault, notePlatform);
+
+		const engineItems = await dataStore.listItems();
+		const items: ReviewItem[] = [];
+
+		for (const engineItem of engineItems) {
+			const state = await dataStore.getState(engineItem.id);
+			items.push({
+				id: engineItem.id,
+				noteId: engineItem.noteId,
+				notePath: engineItem.notePath,
+				type: engineItem.type === 'topic' ? 'topic' : 'item',
+				clozeIndex: engineItem.clozeIndex,
+				state: state
+					? {
+							status: state.status,
+							due: state.due,
+							stability: state.stability,
+							difficulty: state.difficulty,
+							reps: state.reps,
+							lapses: state.lapses,
+							last_review: state.lastReview,
+						}
+					: {
+							status: 'new',
+							due: null,
+							stability: 0,
+							difficulty: 0,
+							reps: 0,
+							lapses: 0,
+							last_review: null,
+						},
+				priority: engineItem.priority,
+				created: engineItem.created,
+			});
+		}
+
+		return items;
 	}
 }

@@ -1,47 +1,54 @@
-import { buildDeckTree, getCountsForFolder } from '../../core/decks';
-import { buildQueue, getNextItem } from '../../core/queue';
-import { mapGradeToRating, gradeItem, gradeTopic } from '../../core/scheduling';
+import { SessionManager } from '../SessionManager';
+import type { SessionConfig, SessionItem, Rating, ReviewState } from '../types';
+import type { DataStore, NotePlatform } from '../types';
 import type {
-	ReviewItem,
-	ReviewQueue,
-	ReviewRecord,
-	ReviewPlatformAdapter,
+	ReviewItem as CoreReviewItem,
 	DeckInfo,
 	TodayStats,
 	StreakInfo,
+	ReviewPlatformAdapter,
+	ItemState,
 } from '../../core/types';
-import { formatDate } from '../../core/frontmatter';
+import { buildDeckTree, getCountsForFolder } from '../../core/decks';
 import type { ReviewPhase } from '../../review/content';
-import type { DeckCountsValue } from './deck-summary-types';
-import type { DebugInfo, ReviewScreenActions, ReviewScreenState } from './review-screen-state';
-import type { SessionStats } from './review-screen-types';
+import type { DeckCountsValue } from '../../ui/review/deck-summary-types';
+import type {
+	DebugInfo,
+	ReviewScreenActions,
+	ReviewScreenState,
+} from '../../ui/review/review-screen-state';
+import type { SessionStats as UISessionStats } from '../../ui/review/review-screen-types';
 
-export interface ReviewSettings {
+export interface EngineReviewSettings {
 	newCardsPerDay: number;
 	maximumInterval: number;
 	requestRetention: number;
 	extractTag: string;
 	trackReviewTime: boolean;
 	showStreak: boolean;
+	strategy: 'JD1' | 'Anki';
+	clumpLimit?: number;
+	cooldown?: number;
 }
 
-export interface ReviewControllerDeps {
+export interface EngineReviewControllerDeps {
 	platform: ReviewPlatformAdapter;
-	settings: ReviewSettings;
+	settings: EngineReviewSettings;
+	dataStore: DataStore;
+	notePlatform: NotePlatform;
 }
 
-interface ReviewModel {
+interface EngineReviewModel {
 	screen: 'folder' | 'review';
-	items: ReviewItem[];
+	items: CoreReviewItem[];
 	decks: DeckInfo[];
 	allCounts: DeckCountsValue;
 	selectedPath: string | null;
 	todayStats: TodayStats;
 	streak: StreakInfo;
-	queue: ReviewQueue | null;
-	currentItem: ReviewItem | null;
+	currentSessionItem: SessionItem | null;
 	phase: ReviewPhase;
-	sessionStats: SessionStats;
+	sessionStats: UISessionStats;
 	currentStartedAt: Date | null;
 	currentContent: string;
 }
@@ -49,21 +56,24 @@ interface ReviewModel {
 type Listener = (state: ReviewScreenState) => void;
 
 const emptyCounts: DeckCountsValue = { new: 0, learning: 0, due: 0 };
-
 const emptyTodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
-
 const emptyStreak = { current: 0, longest: 0 };
 
-function createSessionStats(): SessionStats {
+function createSessionStats(): UISessionStats {
 	return { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
 }
 
-export class ReviewController {
+/**
+ * Engine-powered review controller using SessionManager for advanced queue logic.
+ * Provides JD1 strategy, volatile queue, clump limiting, and linked note affinity.
+ */
+export class EngineReviewController {
 	private listeners = new Set<Listener>();
 	private unbindDataChange: (() => void) | null = null;
 	private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+	private sessionManager: SessionManager | null = null;
 	private static readonly SPACE_GRADE: 1 | 2 | 3 | 4 = 3;
-	private model: ReviewModel = {
+	private model: EngineReviewModel = {
 		screen: 'folder',
 		items: [],
 		decks: [],
@@ -71,8 +81,7 @@ export class ReviewController {
 		selectedPath: null,
 		todayStats: emptyTodayStats,
 		streak: emptyStreak,
-		queue: null,
-		currentItem: null,
+		currentSessionItem: null,
 		phase: 'question',
 		sessionStats: createSessionStats(),
 		currentStartedAt: null,
@@ -82,7 +91,7 @@ export class ReviewController {
 	private refreshRequestId = 0;
 	private contentRequestId = 0;
 
-	constructor(private deps: ReviewControllerDeps) {}
+	constructor(private deps: EngineReviewControllerDeps) {}
 
 	mount(): void {
 		this.unbindDataChange = this.deps.platform.onDataChange(() => {
@@ -117,7 +126,7 @@ export class ReviewController {
 		return this.state;
 	}
 
-	getModel(): Readonly<ReviewModel> {
+	getModel(): Readonly<EngineReviewModel> {
 		return this.model;
 	}
 
@@ -148,7 +157,7 @@ export class ReviewController {
 			if (this.model.phase === 'question') {
 				this.onShowAnswer();
 			} else {
-				return this.onGrade(ReviewController.SPACE_GRADE);
+				return this.onGrade(EngineReviewController.SPACE_GRADE);
 			}
 			return;
 		}
@@ -162,7 +171,42 @@ export class ReviewController {
 	async refreshSummary(): Promise<void> {
 		const requestId = ++this.refreshRequestId;
 		const now = new Date();
-		const items = await this.deps.platform.loadItems(this.deps.settings.extractTag);
+
+		// Use dataStore directly to get all items (no tag filtering)
+		const engineItems = await this.deps.dataStore.listItems();
+		const items: CoreReviewItem[] = [];
+		for (const engineItem of engineItems) {
+			const state = await this.deps.dataStore.getState(engineItem.id);
+			items.push({
+				id: engineItem.id,
+				noteId: engineItem.noteId,
+				notePath: engineItem.notePath,
+				type: engineItem.type === 'topic' ? 'topic' : 'item',
+				clozeIndex: engineItem.clozeIndex,
+				state: state
+					? {
+							status: state.status,
+							due: state.due,
+							stability: state.stability,
+							difficulty: state.difficulty,
+							reps: state.reps,
+							lapses: state.lapses,
+							last_review: state.lastReview,
+						}
+					: {
+							status: 'new',
+							due: null,
+							stability: 0,
+							difficulty: 0,
+							reps: 0,
+							lapses: 0,
+							last_review: null,
+						},
+				priority: engineItem.priority,
+				created: engineItem.created,
+			});
+		}
+
 		const decks = buildDeckTree(items, now);
 		const allCounts = getCountsForFolder(items, '', now);
 		const todayStats = await this.deps.platform.getTodayStats(now);
@@ -179,8 +223,7 @@ export class ReviewController {
 			selectedPath,
 			todayStats,
 			streak,
-			queue: null,
-			currentItem: null,
+			currentSessionItem: null,
 			phase: 'question',
 			sessionStats: createSessionStats(),
 			currentStartedAt: null,
@@ -190,89 +233,96 @@ export class ReviewController {
 
 	async startReview(): Promise<void> {
 		const now = new Date();
-		const queue = buildQueue(this.model.items, now, {
+
+		// Build session config from settings
+		const config: SessionConfig = {
+			strategy: this.deps.settings.strategy,
+			mode: 'review',
+			schedulerId: 'fsrs',
+			schedulingParams: {
+				maximumInterval: this.deps.settings.maximumInterval,
+				requestRetention: this.deps.settings.requestRetention,
+			},
 			newCardsLimit: this.deps.settings.newCardsPerDay,
+			clumpLimit: this.deps.settings.clumpLimit ?? 3,
+			cooldown: this.deps.settings.cooldown ?? 5,
+			deterministic: false,
+		};
+
+		// Create SessionManager
+		this.sessionManager = new SessionManager(
+			this.deps.dataStore,
+			this.deps.notePlatform,
+			config,
+		);
+
+		// Load pool with folder filter
+		await this.sessionManager.loadPool(now, {
 			folderFilter: this.model.selectedPath ?? undefined,
 		});
-		const currentItem = getNextItem(queue);
-		const phase =
-			currentItem?.type === 'item' && currentItem.clozeIndex != null ? 'question' : 'answer';
+
+		// Get first item
+		const currentSessionItem = await this.sessionManager.getNext(now);
+		const phase = this.determinePhase(currentSessionItem);
 
 		this.setModel((prev) => ({
 			...prev,
 			screen: 'review',
-			queue,
-			currentItem,
+			currentSessionItem,
 			phase,
 			sessionStats: createSessionStats(),
-			currentStartedAt: currentItem ? now : null,
+			currentStartedAt: currentSessionItem ? now : null,
 			currentContent: '',
 		}));
-		await this.loadItemContent(currentItem, phase);
+
+		await this.loadItemContent(currentSessionItem, phase);
 	}
 
 	async gradeCurrentItem(grade: number): Promise<void> {
-		const item = this.model.currentItem;
-		if (!item) return;
-		if (item.type === 'item' && this.model.phase === 'question') {
+		const si = this.model.currentSessionItem;
+		if (!si || !this.sessionManager) return;
+
+		if (si.item.type === 'cloze' && this.model.phase === 'question') {
 			this.showAnswer();
 			return;
 		}
 
 		const now = new Date();
-		const rating = mapGradeToRating(grade);
-		const previous = { ...item.state };
-		let nextState = previous;
+		const rating = grade as Rating;
 
-		try {
-			if (item.type === 'topic') {
-				nextState = gradeTopic(item.state, grade, now);
-				await this.deps.platform.updateTopicState(item.noteId, nextState, item.notePath);
-			} else {
-				nextState = gradeItem(item.state, rating, now, {
-					maximumInterval: this.deps.settings.maximumInterval,
-					requestRetention: this.deps.settings.requestRetention,
-				});
-				await this.deps.platform.updateClozeState(
-					item.noteId,
-					item.clozeIndex ?? 1,
-					nextState,
-					item.notePath,
-				);
-			}
-		} catch (error) {
-			console.error('IR: failed to update item state', error);
-		}
+		// Record review through session manager (persists to sidecar files)
+		await this.sessionManager.recordReview(si.item.id, rating, now);
 
-		item.state = nextState;
-		const elapsed =
-			this.deps.settings.trackReviewTime && this.model.currentStartedAt
-				? now.getTime() - this.model.currentStartedAt.getTime()
-				: undefined;
-		const entry: ReviewRecord = {
-			ts: formatDate(now),
-			item_id: item.id,
-			rating,
-			elapsed_ms: elapsed,
-			state_before: previous.status,
-			stability_before: previous.stability,
-			difficulty_before: previous.difficulty,
+		// Update session stats
+		const engineStats = this.sessionManager.getSessionStats();
+		const sessionStats: UISessionStats = {
+			reviewed: engineStats.reviewed,
+			again: engineStats.again,
+			hard: engineStats.hard,
+			good: engineStats.good,
+			easy: engineStats.easy,
 		};
-		await this.deps.platform.appendReview(entry);
-
-		const sessionStats = updateSessionStats(this.model.sessionStats, grade);
 		this.setModel((prev) => ({ ...prev, sessionStats }));
+
 		await this.advanceQueue();
 	}
 
-	private async loadItemContent(item: ReviewItem | null, phase: ReviewPhase): Promise<void> {
+	private determinePhase(si: SessionItem | null): ReviewPhase {
+		if (!si) return 'question';
+		return si.item.type === 'cloze' && si.item.clozeIndex != null ? 'question' : 'answer';
+	}
+
+	private async loadItemContent(si: SessionItem | null, phase: ReviewPhase): Promise<void> {
 		const requestId = ++this.contentRequestId;
-		if (!item) {
+		if (!si) {
 			this.setModel((prev) => ({ ...prev, currentContent: '' }));
 			return;
 		}
+
+		// Convert SessionItem to CoreReviewItem for platform adapter
+		const coreItem = this.sessionItemToCoreItem(si);
 		const html = await this.deps.platform.renderItem(
-			item,
+			coreItem,
 			phase,
 			this.deps.settings.extractTag,
 		);
@@ -281,32 +331,33 @@ export class ReviewController {
 	}
 
 	private async backToSummary(): Promise<void> {
+		this.sessionManager = null;
 		await this.refreshSummary();
 	}
 
 	private showAnswer(): void {
-		const item = this.model.currentItem;
-		if (item?.type === 'item' && this.model.phase === 'question') {
+		const si = this.model.currentSessionItem;
+		if (si?.item.type === 'cloze' && this.model.phase === 'question') {
 			this.setModel((prev) => ({ ...prev, phase: 'answer' }));
-			void this.loadItemContent(item, 'answer');
+			void this.loadItemContent(si, 'answer');
 		}
 	}
 
 	private async advanceQueue(): Promise<void> {
-		if (!this.model.queue) return;
-		if (this.model.currentItem) {
-			removeCurrentFromQueue(this.model.queue, this.model.currentItem);
-		}
-		const nextItem = getNextItem(this.model.queue);
-		const phase =
-			nextItem?.type === 'item' && nextItem.clozeIndex != null ? 'question' : 'answer';
+		if (!this.sessionManager) return;
+
+		const now = new Date();
+		const nextItem = await this.sessionManager.getNext(now);
+		const phase = this.determinePhase(nextItem);
+
 		this.setModel((prev) => ({
 			...prev,
-			currentItem: nextItem,
+			currentSessionItem: nextItem,
 			phase,
 			currentStartedAt: nextItem ? new Date() : null,
 			currentContent: '',
 		}));
+
 		await this.loadItemContent(nextItem, phase);
 	}
 
@@ -317,7 +368,9 @@ export class ReviewController {
 		}
 	}
 
-	private setModel(update: ReviewModel | ((prev: ReviewModel) => ReviewModel)): void {
+	private setModel(
+		update: EngineReviewModel | ((prev: EngineReviewModel) => EngineReviewModel),
+	): void {
 		this.model = typeof update === 'function' ? update(this.model) : update;
 		this.emit();
 	}
@@ -335,35 +388,63 @@ export class ReviewController {
 			};
 		}
 
-		if (!this.model.currentItem) {
+		if (!this.model.currentSessionItem) {
 			return { type: 'finished', sessionStats: this.model.sessionStats };
 		}
 
-		const item = this.model.currentItem;
+		const si = this.model.currentSessionItem;
 		const debugInfo: DebugInfo = {
-			queue: getQueueName(item.state.status),
-			status: item.state.status,
-			priority: item.priority,
-			due: item.state.due?.toISOString() ?? null,
-			stability: item.state.stability,
-			difficulty: item.state.difficulty,
-			reps: item.state.reps,
-			lapses: item.state.lapses,
+			queue: this.getQueueName(si.state.status),
+			status: si.state.status,
+			priority: si.item.priority,
+			due: si.state.due?.toISOString() ?? null,
+			stability: si.state.stability,
+			difficulty: si.state.difficulty,
+			reps: si.state.reps,
+			lapses: si.state.lapses,
 		};
 
 		if (this.model.phase === 'question') {
 			return {
 				type: 'question',
 				content: this.model.currentContent,
-				clozeIndex:
-					this.model.currentItem.type === 'item'
-						? (this.model.currentItem.clozeIndex ?? null)
-						: null,
+				clozeIndex: si.item.type === 'cloze' ? (si.item.clozeIndex ?? null) : null,
 				debugInfo,
 			};
 		}
 
 		return { type: 'answer', content: this.model.currentContent, debugInfo };
+	}
+
+	private getQueueName(status: string): string {
+		if (status === 'new') return 'new';
+		if (status === 'learning' || status === 'relearning') return 'learning';
+		return 'review';
+	}
+
+	private sessionItemToCoreItem(si: SessionItem): CoreReviewItem {
+		return {
+			id: si.item.id,
+			noteId: si.item.noteId,
+			notePath: si.item.notePath,
+			type: si.item.type === 'topic' ? 'topic' : 'item',
+			clozeIndex: si.item.clozeIndex,
+			state: this.reviewStateToItemState(si.state),
+			priority: si.item.priority,
+			created: si.item.created,
+		};
+	}
+
+	private reviewStateToItemState(state: ReviewState): ItemState {
+		return {
+			status: state.status,
+			due: state.due,
+			stability: state.stability,
+			difficulty: state.difficulty,
+			reps: state.reps,
+			lapses: state.lapses,
+			last_review: state.lastReview,
+		};
 	}
 
 	private readonly onSelectDeck = (path: string | null): void => {
@@ -389,41 +470,4 @@ export class ReviewController {
 	private readonly onGrade = async (grade: number): Promise<void> => {
 		await this.gradeCurrentItem(grade);
 	};
-}
-
-function updateSessionStats(sessionStats: SessionStats, grade: number): SessionStats {
-	const next = { ...sessionStats, reviewed: sessionStats.reviewed + 1 };
-	switch (grade) {
-		case 1:
-			next.again += 1;
-			break;
-		case 2:
-			next.hard += 1;
-			break;
-		case 3:
-			next.good += 1;
-			break;
-		case 4:
-			next.easy += 1;
-			break;
-		default:
-			break;
-	}
-	return next;
-}
-
-function removeCurrentFromQueue(queue: ReviewQueue, current: ReviewItem): void {
-	const remove = (list: ReviewItem[]): void => {
-		const index = list.findIndex((item) => item.id === current.id);
-		if (index !== -1) list.splice(index, 1);
-	};
-	remove(queue.learning);
-	remove(queue.due);
-	remove(queue.new);
-}
-
-function getQueueName(status: string): string {
-	if (status === 'new') return 'new';
-	if (status === 'learning' || status === 'relearning') return 'learning';
-	return 'review';
 }
