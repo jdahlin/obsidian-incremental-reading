@@ -150,6 +150,18 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 		} else {
 			displayContent = formatClozeAnswer(displayContent, currentItem.item.clozeIndex);
 		}
+	} else if (currentItem.item.type === 'topic') {
+		// Handle basic cards with Front/Back sections
+		const { front, back } = parseFrontBack(displayContent);
+		if (front !== null) {
+			// This is a basic card with Front/Back structure
+			if (phase === 'question') {
+				displayContent = front;
+			} else {
+				displayContent = `${front}\n\n---\n\n${back}`;
+			}
+		}
+		// Otherwise, show full content for both phases (standard topic)
 	}
 
 	displayContent = renderImagePlaceholders(displayContent);
@@ -239,5 +251,27 @@ function stripFrontmatter(content: string): string {
 }
 
 function renderImagePlaceholders(content: string): string {
-	return content.replace(/!\[\[([^\]]+)\]\]/g, '[Image: $1]');
+	// Handle both wiki-style ![[image]] and markdown-style ![](image)
+	return content
+		.replace(/!\[\[([^\]]+)\]\]/g, '[Image: $1]')
+		.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '[Image: $2]');
+}
+
+/**
+ * Parse Front/Back sections from basic Anki cards.
+ * Returns null for front if no Front/Back structure is found.
+ */
+function parseFrontBack(content: string): { front: string | null; back: string } {
+	// Match ## Front section (may have leading whitespace/newlines)
+	const frontMatch = content.match(/(?:^|\n)##\s*Front\s*\n([\s\S]*?)(?=\n##\s*Back|$)/i);
+	const backMatch = content.match(/\n##\s*Back\s*\n([\s\S]*?)$/i);
+
+	if (frontMatch && backMatch) {
+		return {
+			front: frontMatch[1]?.trim() ?? '',
+			back: backMatch[1]?.trim() ?? '',
+		};
+	}
+
+	return { front: null, back: content };
 }
