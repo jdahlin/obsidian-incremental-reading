@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { App } from 'obsidian';
 import { appendReview } from '../revlog';
 import { exportReviewHistory } from '../export';
-import { formatDate } from '../../core/frontmatter';
+import { formatDate } from '../../../engine/core/frontmatter';
 
 describe('review history export', () => {
 	it('writes a CSV file with review history', async () => {

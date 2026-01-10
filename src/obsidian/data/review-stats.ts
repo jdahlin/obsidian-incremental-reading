@@ -1,8 +1,8 @@
-import { startOfDay } from '../core/dates';
-import type { StreakInfo, TodayStats } from '../core/types';
+import { startOfDay } from '../../engine/core/dates';
+import type { StreakInfo, TodayStats } from '../../engine/core/types';
 import type { App } from 'obsidian';
 import { readAllReviews, readReviewsSince } from './revlog';
-import { calculateStreak } from '../stats/aggregations';
+import { calculateStreak } from '../../engine/stats/aggregations';
 
 export async function getTodayStats(app: App, now: Date = new Date()): Promise<TodayStats> {
 	const today = startOfDay(now);

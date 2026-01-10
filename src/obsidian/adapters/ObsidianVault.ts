@@ -1,5 +1,5 @@
 import { TFile, TFolder, type App } from 'obsidian';
-import type { FileSystem } from '../data/FileSystem';
+import type { FileSystem } from '../../engine/data/FileSystem';
 
 /**
  * Implements the engine's FileSystem interface using Obsidian's vault API.

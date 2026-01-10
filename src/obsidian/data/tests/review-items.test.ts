@@ -7,7 +7,7 @@ import {
 	deleteReviewItemFile,
 	getReviewItemPath,
 } from '../review-items';
-import type { ItemState } from '../../core/types';
+import type { ItemState } from '../../../engine/core/types';
 
 function frontmatterOf(app: App, file: TFile): Record<string, unknown> {
 	return app.metadataCache.getFileCache(file)?.frontmatter ?? {};

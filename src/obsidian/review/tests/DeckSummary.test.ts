@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeckSummary } from '../DeckSummary';
-import type { DeckInfo } from '../../../core/types';
+import type { DeckInfo } from '../../../engine/core/types';
 
 type ComponentFn = (props: Record<string, unknown>) => unknown;
 

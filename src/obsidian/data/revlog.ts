@@ -1,6 +1,6 @@
 import { App, TFile } from 'obsidian';
-import type { ReviewRecord } from '../core/types';
-import { formatDate } from '../core/frontmatter';
+import type { ReviewRecord } from '../../engine/core/types';
+import { formatDate } from '../../engine/core/frontmatter';
 
 const REVLOG_FOLDER = 'IR/Revlog';
 

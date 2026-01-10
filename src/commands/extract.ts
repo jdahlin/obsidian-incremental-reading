@@ -7,9 +7,9 @@ import {
 	TFile,
 	stringifyYaml,
 } from 'obsidian';
-import { formatDate } from '../core/frontmatter';
-import { syncNoteToSidecar } from '../data/sync';
-import { createId } from '../data/ids';
+import { formatDate } from '../engine/core/frontmatter';
+import { syncNoteToSidecar } from '../obsidian/data/sync';
+import { createId } from '../obsidian/data/ids';
 
 export interface ExtractOptions {
 	titleWords: number;
