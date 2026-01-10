@@ -1,7 +1,7 @@
 import { App, TFile } from 'obsidian';
-import { parseClozeIndices } from '../core/cloze';
-import { parseFrontmatter } from '../core/frontmatter';
-import type { ItemState } from '../core/types';
+import { parseClozeIndices } from '../../engine/core/cloze';
+import { parseFrontmatter } from '../../engine/core/frontmatter';
+import type { ItemState } from '../../engine/core/types';
 import { createId } from './ids';
 import {
 	ensureNoteId,

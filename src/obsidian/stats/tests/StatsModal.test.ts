@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { App, FakeElement } from 'obsidian';
 import { StatsModal } from '../StatsModal';
-import { appendReview } from '../../../data/revlog';
-import { writeReviewItemFile } from '../../../data/review-items';
-import type { ItemState } from '../../../core/types';
+import { appendReview } from '../../data/revlog';
+import { writeReviewItemFile } from '../../data/review-items';
+import type { ItemState } from '../../../engine/core/types';
 
 function collectText(element: FakeElement, acc: string[] = []): string[] {
 	if (element.textContent) acc.push(element.textContent);

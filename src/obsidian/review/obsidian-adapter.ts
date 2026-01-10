@@ -5,8 +5,8 @@ import type {
 	TodayStats,
 	StreakInfo,
 	DeckInfo,
-} from '../../core/types';
-import { getTodayStats, getStreakInfo } from '../../data/review-stats';
+} from '../../engine/core/types';
+import { getTodayStats, getStreakInfo } from '../data/review-stats';
 import { loadReviewItemHtml } from '../../review/content';
 import { StatsModal } from '../stats/StatsModal';
 
