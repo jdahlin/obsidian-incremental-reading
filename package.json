@@ -51,12 +51,12 @@
 		]
 	},
 	"prettier": {
+		"useTabs": true,
+		"tabWidth": 4,
+		"endOfLine": "lf",
 		"semi": true,
 		"singleQuote": true,
 		"trailingComma": "all",
-		"useTabs": true,
-		"tabWidth": 4,
-		"printWidth": 100,
-		"endOfLine": "lf"
+		"printWidth": 100
 	}
 }
