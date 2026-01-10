@@ -1,0 +1,42 @@
+import type { DeckInfo } from '@repo/core/core/types';
+import type { FunctionalComponent } from 'preact';
+import type { DeckCountsValue } from './deck-summary-types';
+import { DeckRow } from './DeckRow';
+import './DeckList.css';
+
+export interface DeckListProps {
+	rows: DeckInfo[];
+	selectedPath: string | null;
+	allCounts: DeckCountsValue;
+	onSelect: (path: string | null) => void;
+}
+
+export const DeckList: FunctionalComponent<DeckListProps> = ({
+	rows,
+	selectedPath,
+	allCounts,
+	onSelect,
+}) => {
+	return (
+		<div className="ir-deck-list">
+			<DeckRow
+				key="all-decks"
+				label="All decks"
+				depth={0}
+				counts={allCounts}
+				selected={selectedPath === null}
+				onSelect={() => onSelect(null)}
+			/>
+			{rows.map((row) => (
+				<DeckRow
+					key={row.path}
+					label={row.name}
+					depth={row.depth}
+					counts={row.counts}
+					selected={selectedPath === row.path}
+					onSelect={() => onSelect(row.path)}
+				/>
+			))}
+		</div>
+	);
+};

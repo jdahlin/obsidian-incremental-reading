@@ -10,23 +10,16 @@ jobs:
     build:
         runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                node-version: [25.x]
-                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
         steps:
             - uses: actions/checkout@v4
             - name: Setup pnpm
               uses: pnpm/action-setup@v4
-              with:
-                  version: 9
-            - name: Use Node.js ${{ matrix.node-version }}
+            - name: Use Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: ${{ matrix.node-version }}
+                  node-version: '25'
                   cache: 'pnpm'
             - run: pnpm install --frozen-lockfile
             - run: pnpm run typecheck
-            - run: pnpm run build --if-present
+            - run: pnpm run build
             - run: pnpm run lint

@@ -1,0 +1,5 @@
+.ir-deck-footer {
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-muted);
+}
