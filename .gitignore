@@ -15,7 +15,7 @@ main.js
 manifest.json
 
 # Keep the source stylesheet tracked (the root styles.css is a build artifact).
-!src/styles.css
+!**/src/styles.css
 
 # Exclude sourcemaps
 *.map
