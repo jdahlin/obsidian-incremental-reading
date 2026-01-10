@@ -1,0 +1,7 @@
+.ir-deck-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	height: 100%;
+	margin-inline: clamp(12px, 6vw, 120px);
+}

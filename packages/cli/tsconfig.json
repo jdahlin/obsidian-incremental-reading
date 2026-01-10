@@ -1,0 +1,16 @@
+{
+	"extends": "@repo/tsconfig/base.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"lib": ["ES2022"],
+		"jsx": "react-jsx",
+		"noEmit": true,
+		"baseUrl": "../..",
+		"paths": {
+			"@repo/core": ["packages/core/src/index.ts"],
+			"@repo/core/*": ["packages/core/src/*"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"exclude": ["node_modules", "dist"]
+}
