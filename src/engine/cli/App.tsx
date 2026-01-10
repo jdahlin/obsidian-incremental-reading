@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useApp, useStdout, useInput } from 'ink';
+import { TerminalInfoProvider } from 'ink-picture';
 import { FileSystem } from './fs.js';
 import { MarkdownDataStore } from '../data/MarkdownDataStore.js';
 import { SessionManager } from '../SessionManager.js';
@@ -164,7 +165,7 @@ export function App({
 		}
 	};
 
-	return (
+	const content = (
 		<Box flexDirection="column" width={width} height={height}>
 			{renderTabBar()}
 			<Box flexDirection="column" flexGrow={1}>
@@ -172,4 +173,11 @@ export function App({
 			</Box>
 		</Box>
 	);
+
+	// Skip TerminalInfoProvider in snapshot mode (requires raw mode for terminal detection)
+	if (exitAfterRender) {
+		return content;
+	}
+
+	return <TerminalInfoProvider>{content}</TerminalInfoProvider>;
 }
