@@ -3,8 +3,14 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(npm test *)",
+      "Bash(npm install *)",
+      "Bash(npx *)",
       "Bash(gh *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(find src *)",
+      "Bash(find tests *)",
+      "Bash(rg *)"
     ]
   }
 }
