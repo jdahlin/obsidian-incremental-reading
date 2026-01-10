@@ -55,10 +55,12 @@ export async function loadReviewItemHtml(
 			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
 		}
 
-		// Image occlusion rendering (for now, show full content)
-		// TODO: Implement mask toggling based on phase
+		// Image occlusion rendering
+		// Question phase: show Header + Image only
+		// Answer phase: show all content
 		if (item.type === 'image_occlusion') {
-			return await renderMarkdownToHtml(deps.app, rawContent, item.notePath, deps.view);
+			const formatted = formatImageOcclusion(rawContent, phase);
+			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
 		}
 
 		// Topic rendering (full note)
@@ -108,6 +110,49 @@ function extractSection(content: string, sectionName: string): string | null {
 		: remainingContent;
 
 	return sectionContent.trim();
+}
+
+/**
+ * Format image occlusion card content for question/answer phase.
+ * Question: Show Header + Image (context for recall)
+ * Answer: Show all content including Footer, Remarks, etc.
+ */
+function formatImageOcclusion(content: string, phase: ReviewPhase): string {
+	// Try to extract key sections
+	const header = extractSection(content, 'Header');
+	const image = extractSection(content, 'Image');
+	const footer = extractSection(content, 'Footer');
+	const remarks = extractSection(content, 'Remarks');
+	const sources = extractSection(content, 'Sources');
+	const extra1 = extractSection(content, 'Extra 1');
+	const extra2 = extractSection(content, 'Extra 2');
+
+	// Check if we have Image Occlusion structure
+	if (image === null) {
+		// No Image section found - might be different format, show full content
+		return content;
+	}
+
+	if (phase === 'question') {
+		// Question phase: show header (context) + image
+		const parts: string[] = [];
+		if (header) parts.push(header);
+		parts.push(image);
+		if (footer) parts.push(`*${footer}*`); // Footer as hint in italics
+		return parts.join('\n\n');
+	}
+
+	// Answer phase: show all available sections
+	const parts: string[] = [];
+	if (header) parts.push(`## ${header}`);
+	parts.push(image);
+	if (footer) parts.push(footer);
+	if (remarks) parts.push(`**Remarks:** ${remarks}`);
+	if (sources) parts.push(`**Sources:** ${sources}`);
+	if (extra1) parts.push(extra1);
+	if (extra2) parts.push(extra2);
+
+	return parts.join('\n\n');
 }
 
 async function renderMarkdownToHtml(
