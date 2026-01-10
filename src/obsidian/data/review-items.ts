@@ -1,7 +1,12 @@
 import { App, TFile, parseYaml, stringifyYaml } from 'obsidian';
 import { createId } from './ids';
-import { formatDate, normalizeNumber, normalizeStatus, parseDate } from '../core/frontmatter';
-import type { ItemState } from '../core/types';
+import {
+	formatDate,
+	normalizeNumber,
+	normalizeStatus,
+	parseDate,
+} from '../../engine/core/frontmatter';
+import type { ItemState } from '../../engine/core/types';
 
 const REVIEW_ITEMS_FOLDER = 'IR/Review Items';
 

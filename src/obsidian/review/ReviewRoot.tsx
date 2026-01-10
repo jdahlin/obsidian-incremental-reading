@@ -4,7 +4,7 @@ import type { App } from 'obsidian';
 import { ReviewScreenRouter } from './ReviewScreenRouter';
 import { useReviewState, type UseReviewStateDeps } from './useReviewState';
 import { ObsidianReviewAdapter } from './obsidian-adapter';
-import { ObsidianVault, ObsidianNotePlatform } from '../../engine/adapters';
+import { ObsidianVault, ObsidianNotePlatform } from '../adapters';
 import { MarkdownDataStore } from '../../engine/data/MarkdownDataStore';
 import type { IncrementalReadingSettings } from '../../settings';
 

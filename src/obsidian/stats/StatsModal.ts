@@ -1,17 +1,17 @@
 import { Modal } from 'obsidian';
 import type { App } from 'obsidian';
-import { readAllReviews } from '../../data/revlog';
+import { readAllReviews } from '../data/revlog';
 import {
 	calculateAnswerDistribution,
 	calculateRetention,
 	buildForecastData,
 	buildHeatmapData,
-} from '../../stats/aggregations';
-import { getStreakInfo, getTodayStats } from '../../data/review-stats';
+} from '../../engine/stats/aggregations';
+import { getStreakInfo, getTodayStats } from '../data/review-stats';
 import { MarkdownDataStore } from '../../engine/data/MarkdownDataStore';
-import { ObsidianVault } from '../../engine/adapters/ObsidianVault';
-import { ObsidianNotePlatform } from '../../engine/adapters/ObsidianNotePlatform';
-import type { ReviewItem } from '../../core/types';
+import { ObsidianVault } from '../adapters/ObsidianVault';
+import { ObsidianNotePlatform } from '../adapters/ObsidianNotePlatform';
+import type { ReviewItem } from '../../engine/core/types';
 import './StatsModal.css';
 
 export class StatsModal extends Modal {

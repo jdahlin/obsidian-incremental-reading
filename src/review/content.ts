@@ -1,7 +1,7 @@
 import { App, MarkdownRenderer, TFile } from 'obsidian';
-import { formatClozeAnswer, formatClozeQuestion, parseClozeIndices } from '../core/cloze';
-import { syncNoteToSidecar } from '../data/sync';
-import type { ReviewItem } from '../core/types';
+import { formatClozeAnswer, formatClozeQuestion, parseClozeIndices } from '../engine/core/cloze';
+import { syncNoteToSidecar } from '../obsidian/data/sync';
+import type { ReviewItem } from '../engine/core/types';
 
 export type ReviewPhase = 'question' | 'answer';
 

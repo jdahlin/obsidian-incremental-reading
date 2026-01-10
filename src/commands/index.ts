@@ -2,10 +2,10 @@ import type IncrementalReadingPlugin from '../main';
 import { clozeSelectionNextIndex, clozeSelectionSameIndex } from './cloze';
 import { extractToIncrementalNote } from './extract';
 import { Notice, type Editor, type MarkdownFileInfo, type MarkdownView } from 'obsidian';
-import { exportReviewHistory } from '../data/export';
-import { normalizeNumber } from '../core/frontmatter';
-import { PriorityModal } from '../ui/PriorityModal';
-import { StatsModal } from '../ui/stats/StatsModal';
+import { exportReviewHistory } from '../obsidian/data/export';
+import { normalizeNumber } from '../engine/core/frontmatter';
+import { PriorityModal } from '../obsidian/PriorityModal';
+import { StatsModal } from '../obsidian/stats/StatsModal';
 
 type CommandPlugin = Pick<
 	IncrementalReadingPlugin,

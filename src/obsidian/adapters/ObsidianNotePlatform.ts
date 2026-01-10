@@ -1,5 +1,5 @@
 import { TFile, type App } from 'obsidian';
-import type { NotePlatform } from '../types';
+import type { NotePlatform } from '../../engine/types';
 
 /**
  * Adapts Obsidian's vault and metadata cache to the engine's NotePlatform interface.

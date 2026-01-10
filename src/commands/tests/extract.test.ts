@@ -6,7 +6,7 @@ import {
 	sanitizeTitle,
 	titleFromSelection,
 } from '../extract';
-import { formatDate } from '../../core/frontmatter';
+import { formatDate } from '../../engine/core/frontmatter';
 
 function getFrontmatter(app: App, path: string): Record<string, unknown> {
 	const file = app.vault.getAbstractFileByPath(path);

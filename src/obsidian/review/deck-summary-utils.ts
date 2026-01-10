@@ -1,4 +1,4 @@
-import type { DeckInfo } from '../../core/types';
+import type { DeckInfo } from '../../engine/core/types';
 
 export function rowClass(selected: boolean): string {
 	return `ir-deck-row${selected ? ' is-selected' : ''}`;
