@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 import React from 'react';
 import { render } from 'ink';
 import meow from 'meow';
 import { App } from './App.js';
 import { runBatch } from './batch.js';
+import { importAnkiDatabase, getDefaultAnkiPath } from '../anki/index.js';
 
 // Enter alternate screen buffer (like vim/less)
 const enterAltScreen = '\x1b[?1049h';
@@ -23,6 +25,8 @@ const cli = meow(
     --strategy, -s  Review strategy: Anki | JD1 (default: Anki)
     --limit, -l     Max new cards per session
     --batch, -b     Run in batch mode (read commands from stdin)
+    --import, -i    Import from Anki (path to profile or 'default')
+    --deck-filter   Filter decks to import (e.g., "ANATOMI*")
 
   Batch mode commands:
     inspect-next [--limit N]   Show next N cards to review
@@ -32,6 +36,8 @@ const cli = meow(
     $ npx tsx src/engine/cli/index.tsx --vault ~/Documents/MyVault
     $ npx tsx src/engine/cli/index.tsx -v ./Vault --review           # Review all
     $ npx tsx src/engine/cli/index.tsx -v ./Vault --review Gabriel   # Review folders matching "Gabriel"
+    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default   # Import from default Anki profile
+    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default --deck-filter "ANATOMI*"
     $ echo "inspect-next --limit 5" | npx tsx src/engine/cli/index.tsx -v ./Vault --batch
 `,
 	{
@@ -68,11 +74,28 @@ const cli = meow(
 				type: 'boolean',
 				default: false,
 			},
+			import: {
+				type: 'string',
+				shortFlag: 'i',
+			},
+			deckFilter: {
+				type: 'string',
+			},
 		},
 	},
 );
 
-const { vault, deck, strategy, limit, batch, review, snapshot } = cli.flags;
+const {
+	vault,
+	deck,
+	strategy,
+	limit,
+	batch,
+	review,
+	snapshot,
+	import: importPath,
+	deckFilter,
+} = cli.flags;
 
 // --snapshot: render once with colors and exit (for debugging)
 if (snapshot) {
@@ -83,8 +106,30 @@ if (snapshot) {
 const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r');
 const reviewFilter = review || undefined;
 
-// Batch mode - read from stdin, output to stdout
-if (batch) {
+// Import mode - import from Anki and exit
+if (importPath) {
+	const ankiProfilePath = importPath === 'default' ? getDefaultAnkiPath() : importPath;
+
+	void importAnkiDatabase({
+		ankiProfilePath,
+		vaultPath: vault,
+		deckFilter,
+	})
+		.then((result) => {
+			console.log('\nImport Summary:');
+			console.log(`  Notes imported: ${result.notesImported}`);
+			console.log(`  Media files copied: ${result.mediaFilesCopied}`);
+			if (result.mediaMissing.length > 0) {
+				console.log(`  Media files missing: ${result.mediaMissing.length}`);
+			}
+			process.exit(0);
+		})
+		.catch((err: Error) => {
+			console.error('Import failed:', err.message);
+			process.exit(1);
+		});
+} else if (batch) {
+	// Batch mode - read from stdin, output to stdout
 	let input = '';
 	process.stdin.setEncoding('utf8');
 	process.stdin.on('data', (chunk: string) => {
@@ -96,6 +141,7 @@ if (batch) {
 		});
 	});
 } else {
+	// Interactive mode
 	// Enter full screen mode (unless snapshot)
 	if (!snapshot) {
 		process.stdout.write(enterAltScreen + hideCursor);

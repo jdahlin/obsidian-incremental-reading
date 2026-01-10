@@ -47,18 +47,31 @@ Always use try/catch for file creation:
 
 ```typescript
 try {
-  await app.vault.create(path, content);
+	await app.vault.create(path, content);
 } catch {
-  const file = app.vault.getAbstractFileByPath(path);
-  if (file instanceof TFile) {
-    await app.vault.append(file, content);
-  }
+	const file = app.vault.getAbstractFileByPath(path);
+	if (file instanceof TFile) {
+		await app.vault.append(file, content);
+	}
 }
 ```
 
 ### Cloze Syntax
 
 Use plain Anki-style syntax: `{{c1::answer}}` - no HTML wrappers.
+
+### Test Directory Convention
+
+Use `tests/` for test directories, not `__tests__/`:
+
+```
+src/engine/anki/
+├── converter.ts
+├── html.ts
+└── tests/
+    ├── converter.test.ts
+    └── html.test.ts
+```
 
 ## Don't
 
