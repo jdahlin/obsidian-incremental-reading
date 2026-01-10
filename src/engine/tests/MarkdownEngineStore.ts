@@ -2,7 +2,7 @@ import { load as parse, dump as stringify } from 'js-yaml';
 import type { EngineStore, EngineSnapshot } from '../memory/types';
 import type { ReviewState } from '../types';
 import { MarkdownDataStore } from '../data/MarkdownDataStore';
-import type { Vault } from '../data/Vault';
+import type { FileSystem } from '../data/FileSystem';
 
 interface SidecarClozeEntry {
 	cloze_uid: string;
@@ -39,7 +39,7 @@ export class MarkdownEngineStore implements EngineStore {
 
 	constructor(
 		private dataStore: MarkdownDataStore,
-		private vault: Vault,
+		private fs: FileSystem,
 	) {}
 
 	// --- EngineStore Mutations ---
@@ -67,7 +67,7 @@ ir_note_id: ${id}
 ${content}`;
 		}
 
-		await this.vault.write(path, fileContent);
+		await this.fs.write(path, fileContent);
 
 		const sidecarPath = `IR/Review Items/${id}.md`;
 		const yaml = `ir_note_id: ${id}
@@ -75,7 +75,7 @@ note_path: ${path}
 type: topic
 priority: ${options.priority ?? 50}
 topic:\n  status: new`;
-		await this.vault.write(
+		await this.fs.write(
 			sidecarPath,
 			`---
 ${yaml}
@@ -96,7 +96,7 @@ note_path: ${path}
 type: topic
 priority: 50
 topic:\n  status: new`;
-		await this.vault.write(
+		await this.fs.write(
 			sidecarPath,
 			`---
 ${yaml}
@@ -104,7 +104,7 @@ ${yaml}
 `,
 		);
 
-		await this.vault.write(
+		await this.fs.write(
 			path,
 			`---
 ir_note_id: ${id}
@@ -228,7 +228,7 @@ extract:${sourceId}:${start}-${end}`,
 
 		for (const item of items) {
 			if (item.type === 'topic') {
-				const content = (await this.vault.read(item.notePath)) ?? '';
+				const content = (await this.fs.read(item.notePath)) ?? '';
 				const body = content.replace(/^---\n[\s\S]*?\n---\n/, '');
 
 				// Parse frontmatter for scroll_pos
@@ -254,7 +254,7 @@ extract:${sourceId}:${start}-${end}`,
 			} else {
 				const { noteId, clozeKey } = this.parseItemId(item.id);
 				const sidecarPath = `IR/Review Items/${noteId}.md`;
-				const sidecarContent = await this.vault.read(sidecarPath);
+				const sidecarContent = await this.fs.read(sidecarPath);
 				let start = 0,
 					end = 0,
 					hint: string | undefined = undefined;
@@ -290,7 +290,7 @@ extract:${sourceId}:${start}-${end}`,
 			}
 		}
 
-		const allFiles = await this.vault.list();
+		const allFiles = await this.fs.list();
 		const logFiles = allFiles
 			.filter((f) => f.startsWith('IR/Revlog/') && f.endsWith('.md'))
 			.sort();
@@ -300,7 +300,7 @@ extract:${sourceId}:${start}-${end}`,
 		const again: string[] = [];
 
 		for (const logFile of logFiles) {
-			const content = await this.vault.read(logFile);
+			const content = await this.fs.read(logFile);
 			if (!content) continue;
 			const lines = content.split('\n').filter(Boolean);
 			for (const line of lines) {
@@ -379,7 +379,7 @@ extract:${sourceId}:${start}-${end}`,
 	}
 
 	private async updateSidecar(path: string, mutator: (data: SidecarData) => SidecarData) {
-		const content = await this.vault.read(path);
+		const content = await this.fs.read(path);
 		if (!content) return;
 
 		const parts = content.split('---');
@@ -389,7 +389,7 @@ extract:${sourceId}:${start}-${end}`,
 			parsed = mutator(parsed);
 			const newYaml = stringify(parsed).trim();
 			const newContent = ['---', newYaml, '---', ...parts.slice(2)].join('\n');
-			await this.vault.write(path, newContent);
+			await this.fs.write(path, newContent);
 		}
 	}
 }

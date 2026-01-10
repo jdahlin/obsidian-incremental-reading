@@ -1,12 +1,12 @@
 import { TFile, TFolder, type App } from 'obsidian';
-import type { Vault as EngineVault } from '../data/Vault';
+import type { FileSystem } from '../data/FileSystem';
 
 /**
- * Implements the engine's Vault interface using Obsidian's vault API.
+ * Implements the engine's FileSystem interface using Obsidian's vault API.
  * This allows MarkdownDataStore to work with Obsidian without any
  * Obsidian-specific code in the data layer.
  */
-export class ObsidianVault implements EngineVault {
+export class ObsidianVault implements FileSystem {
 	constructor(private app: App) {}
 
 	async read(path: string): Promise<string | null> {

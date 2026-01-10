@@ -1,4 +1,4 @@
-export interface Vault {
+export interface FileSystem {
 	/**
 	 * Read file content as string.
 	 * Returns null if file does not exist.
@@ -23,8 +23,8 @@ export interface Vault {
 	exists(path: string): Promise<boolean>;
 
 	/**
-	 * List all files in vault (recursively).
-	 * Returns array of file paths relative to vault root.
+	 * List all files (recursively).
+	 * Returns array of file paths relative to root.
 	 */
 	list(): Promise<string[]>;
 }

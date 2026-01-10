@@ -1,4 +1,4 @@
-import { FileSystem } from './fs.js';
+import { NodeFileSystem } from './fs.js';
 import { MarkdownDataStore } from '../data/MarkdownDataStore.js';
 import { SessionManager } from '../SessionManager.js';
 import { parseRvScript } from '../rv/parser.js';
@@ -35,7 +35,7 @@ export async function runBatch(
 ): Promise<string> {
 	const outputs: string[] = [];
 
-	const fs = new FileSystem(vaultPath);
+	const fs = new NodeFileSystem(vaultPath);
 	const dataStore = new MarkdownDataStore(fs, fs);
 	const sessionManager = new SessionManager(dataStore, fs, {
 		strategy,

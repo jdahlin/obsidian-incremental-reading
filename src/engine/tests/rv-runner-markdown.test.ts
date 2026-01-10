@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseRvScript, runRvCommands } from '../rv';
-import { MockVault } from './MockVault';
+import { MockFileSystem } from './MockFileSystem';
 import { MarkdownDataStore } from '../data/MarkdownDataStore';
 import { MarkdownEngineStore } from './MarkdownEngineStore';
 import { SessionManager } from '../SessionManager';
@@ -16,7 +16,7 @@ const files = readdirSync(rvDir)
 	.sort();
 
 class VaultNotePlatform implements NotePlatform {
-	constructor(private vault: MockVault) {}
+	constructor(private vault: MockFileSystem) {}
 
 	async getNote(noteId: string): Promise<string | null> {
 		return this.vault.read(`${noteId}.md`);
@@ -39,7 +39,7 @@ describe('.rv script runner (MarkdownDataStore)', () => {
 			const commands = parseRvScript(content);
 
 			const factory = async () => {
-				const vault = new MockVault();
+				const vault = new MockFileSystem();
 				const platform = new VaultNotePlatform(vault);
 				const dataStore = new MarkdownDataStore(vault, platform);
 				const store = new MarkdownEngineStore(dataStore, vault);
