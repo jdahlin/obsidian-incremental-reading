@@ -1,5 +1,6 @@
 .turbo
 coverage
+*.tsbuildinfo
 # vscode
 .vscode 
 
