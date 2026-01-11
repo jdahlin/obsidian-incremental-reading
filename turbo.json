@@ -25,6 +25,10 @@
 			"dependsOn": ["^build"],
 			"outputLogs": "errors-only"
 		},
+		"test:coverage": {
+			"dependsOn": ["^build"],
+			"outputLogs": "full"
+		},
 		"test:watch": {
 			"cache": false,
 			"persistent": true

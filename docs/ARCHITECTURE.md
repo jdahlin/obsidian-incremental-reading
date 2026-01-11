@@ -487,6 +487,151 @@ try {
 
 ---
 
+## Anki Import Architecture
+
+The `@anthropic/anki-importer` package imports Anki collections into the IR vault structure, enabling unified review of both native IR content and imported Anki cards.
+
+### Design Principle: Unified Review Queue
+
+All reviewable content uses the same sidecar system, regardless of source:
+
+```
+Vault/
+├── My Topic.md                    # Native IR topic
+├── Anki/
+│   ├── Spanish/
+│   │   └── 1234567890.md          # Imported Anki note
+│   ├── _Models/
+│   │   └── Basic.md               # Model definitions
+│   └── _Media/
+│       └── image.jpg              # Media files
+└── IR/
+    └── Review Items/
+        ├── ABC123.md              # Sidecar for "My Topic.md"
+        └── DEF456.md              # Sidecar for "Anki/Spanish/1234567890.md"
+```
+
+**Key insight**: Notes can live anywhere. All sidecars go to `IR/Review Items/`. The `note_path` field links each sidecar to its note.
+
+### Import Flow
+
+```
+Anki DB (collection.anki2)
+         │
+         ▼
+┌─────────────────────────────┐
+│     importAnkiDatabase()    │
+│  - Read notetypes, decks    │
+│  - Read notes, cards        │
+│  - Parse scheduling state   │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│      writeAnkiData()        │
+│                             │
+│  Notes → Anki/{Deck}/*.md   │
+│  Sidecars → IR/Review Items │
+│  Models → Anki/_Models/     │
+│  Media → Anki/_Media/       │
+└─────────────────────────────┘
+```
+
+### Note Output Format
+
+Path: `Anki/{DeckPath}/{note_id}.md`
+
+```yaml
+---
+ir_note_id: ABC123def456
+anki_note_id: "1234567890123"
+anki_model_id: "9876543210"
+tags: [spanish, verbs]
+created: 2024-01-15
+type: cloze
+priority: 50
+cloze: [c1, c2]
+---
+
+## Front
+
+La palabra {{c1::hola}} significa {{c2::hello}}.
+
+## Back
+
+Additional notes here.
+```
+
+### Sidecar Output Format
+
+Path: `IR/Review Items/{ir_note_id}.md`
+
+```yaml
+---
+ir_note_id: ABC123def456
+note_path: Anki/Spanish/1234567890.md # Links to note file
+anki_note_id: '1234567890123'
+type: cloze
+priority: 50
+clozes:
+    c1:
+        cloze_uid: xyz789abc123
+        status: review
+        due: 2024-01-20T10:00:00.000Z
+        stability: 14.5
+        difficulty: 4.2
+        reps: 10
+        lapses: 1
+        last_review: 2024-01-15T10:00:00.000Z
+    c2:
+        cloze_uid: def456ghi789
+        status: new
+        due: 2024-01-15T00:00:00.000Z
+        stability: 0
+        difficulty: 5
+        reps: 0
+        lapses: 0
+        last_review: null
+---
+```
+
+### Card Types
+
+| Anki Type       | IR Type           | Notes                    |
+| --------------- | ----------------- | ------------------------ |
+| Basic           | `basic`           | Front/Back fields        |
+| Cloze           | `cloze`           | One card per cloze index |
+| Image Occlusion | `image_occlusion` | Treated like cloze       |
+| Other           | `basic`           | Falls back to basic      |
+
+### Scheduling Conversion
+
+Anki scheduling state is converted to FSRS-compatible format:
+
+| Anki Field | IR Field   | Conversion                                 |
+| ---------- | ---------- | ------------------------------------------ |
+| queue      | status     | 0→new, 1→learning, 2→review, etc.          |
+| due        | due        | Days offset → absolute date                |
+| ivl        | stability  | Used as initial stability                  |
+| factor     | difficulty | `(3000 - clamp(factor, 1300, 3000)) / 170` |
+| reps       | reps       | Direct copy                                |
+| lapses     | lapses     | Direct copy                                |
+
+### CLI Usage
+
+```bash
+# Import from default Anki location
+pnpm run cli --import --vault ./my-vault
+
+# Import from custom location
+pnpm run cli --import --vault ./my-vault --import-path ~/Anki2/Profile
+
+# Filter by deck
+pnpm run cli --import --vault ./my-vault --deck-filter "Spanish*"
+```
+
+---
+
 ## Dependencies
 
 | Package        | Purpose         | Notes    |

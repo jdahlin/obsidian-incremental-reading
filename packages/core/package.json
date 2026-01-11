@@ -13,6 +13,7 @@
 		"dev": "tsc --watch",
 		"lint": "eslint .",
 		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit"
 	},
@@ -30,6 +31,6 @@
 		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^22.0.0",
 		"typescript": "^5.9.3",
-		"vitest": "^4.0.16"
+		"vitest": "catalog:"
 	}
 }
