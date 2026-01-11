@@ -27,7 +27,7 @@ function isTestCommand(value: unknown): value is TestCommand {
 function makePlugin(app: App): CommandPlugin & { commands: TestCommand[] } {
 	const commands: TestCommand[] = []
 	return {
-		app: app as any,
+		app: app as unknown as CommandPlugin['app'],
 		settings: {
 			newCardsPerDay: 10,
 			maximumInterval: 365,
