@@ -282,7 +282,7 @@ describe('native image occlusion rendering', () => {
 				const isCurrentCard = rect.clozeIndex === currentClozeIndex
 				const bgColor = isCurrentCard ? '#ff6b6b' : '#808080'
 
-				return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; opacity: 0.8; pointer-events: none;"></div>`
+				return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; border: 2px solid black; pointer-events: none;"></div>`
 			})
 			.join('\n')
 
