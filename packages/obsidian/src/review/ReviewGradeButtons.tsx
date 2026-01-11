@@ -1,8 +1,8 @@
-import type { FunctionalComponent } from 'preact';
-import './ReviewGradeButtons.css';
+import type { FunctionalComponent } from 'preact'
+import './ReviewGradeButtons.css'
 
 export interface ReviewGradeButtonsProps {
-	onGrade: (grade: number) => void | Promise<void>;
+	onGrade: (grade: number) => void | Promise<void>
 }
 
 export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = ({ onGrade }) => {
@@ -11,7 +11,7 @@ export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = 
 		{ value: 2, className: 'ir-grade ir-grade-hard' },
 		{ value: 3, className: 'ir-grade ir-grade-good' },
 		{ value: 4, className: 'ir-grade ir-grade-easy' },
-	];
+	]
 
 	return (
 		<div className="ir-grade-buttons">
@@ -21,12 +21,12 @@ export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = 
 					type="button"
 					className={grade.className}
 					onClick={() => {
-						void onGrade(grade.value);
+						void onGrade(grade.value)
 					}}
 				>
 					{grade.value}
 				</button>
 			))}
 		</div>
-	);
-};
+	)
+}

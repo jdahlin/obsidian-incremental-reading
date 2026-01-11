@@ -1,37 +1,37 @@
-import type { StreakInfo, TodayStats } from '@repo/core/core/types';
-import type { App } from 'obsidian';
-import { startOfDay } from '@repo/core/core/dates';
-import { calculateStreak } from '@repo/core/stats/aggregations';
-import { readAllReviews, readReviewsSince } from './revlog';
+import type { StreakInfo, TodayStats } from '@repo/core/core/types'
+import type { App } from 'obsidian'
+import { startOfDay } from '@repo/core/core/dates'
+import { calculateStreak } from '@repo/core/stats/aggregations'
+import { readAllReviews, readReviewsSince } from './revlog'
 
 export async function getTodayStats(app: App, now: Date = new Date()): Promise<TodayStats> {
-	const today = startOfDay(now);
-	const reviews = await readReviewsSince(app, today);
-	const stats: TodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
+	const today = startOfDay(now)
+	const reviews = await readReviewsSince(app, today)
+	const stats: TodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 }
 	for (const review of reviews) {
-		stats.reviewed += 1;
+		stats.reviewed += 1
 		switch (review.rating) {
 			case 1:
-				stats.again += 1;
-				break;
+				stats.again += 1
+				break
 			case 2:
-				stats.hard += 1;
-				break;
+				stats.hard += 1
+				break
 			case 3:
-				stats.good += 1;
-				break;
+				stats.good += 1
+				break
 			case 4:
-				stats.easy += 1;
-				break;
+				stats.easy += 1
+				break
 			default:
-				break;
+				break
 		}
 	}
-	return stats;
+	return stats
 }
 
 export async function getStreakInfo(app: App, now: Date = new Date()): Promise<StreakInfo> {
-	const reviews = await readAllReviews(app);
-	const dates = reviews.map((review) => new Date(review.ts));
-	return calculateStreak(dates, now);
+	const reviews = await readAllReviews(app)
+	const dates = reviews.map((review) => new Date(review.ts))
+	return calculateStreak(dates, now)
 }

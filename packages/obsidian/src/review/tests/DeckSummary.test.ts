@@ -1,35 +1,35 @@
-import type { DeckInfo } from '@repo/core/types';
-import { describe, expect, it } from 'vitest';
-import { DeckSummary } from '../DeckSummary';
+import type { DeckInfo } from '@repo/core/types'
+import { describe, expect, it } from 'vitest'
+import { DeckSummary } from '../DeckSummary'
 
-type ComponentFn = (props: Record<string, unknown>) => unknown;
+type ComponentFn = (props: Record<string, unknown>) => unknown
 
 interface VNodeLike {
-	type?: ComponentFn | string;
-	props?: Record<string, unknown> & { children?: unknown };
+	type?: ComponentFn | string
+	props?: Record<string, unknown> & { children?: unknown }
 }
 
 function collectText(node: unknown, acc: string[] = []): string[] {
-	if (node == null || typeof node === 'boolean') return acc;
+	if (node == null || typeof node === 'boolean') return acc
 	if (typeof node === 'string' || typeof node === 'number') {
-		acc.push(String(node));
-		return acc;
+		acc.push(String(node))
+		return acc
 	}
 	if (Array.isArray(node)) {
-		for (const child of node) collectText(child, acc);
-		return acc;
+		for (const child of node) collectText(child, acc)
+		return acc
 	}
 	if (typeof node === 'object') {
-		const vnode = node as VNodeLike;
-		const component = vnode.type;
+		const vnode = node as VNodeLike
+		const component = vnode.type
 		if (typeof component === 'function') {
-			return collectText(component(vnode.props ?? {}), acc);
+			return collectText(component(vnode.props ?? {}), acc)
 		}
 		if (vnode.props && 'children' in vnode.props) {
-			collectText(vnode.props.children, acc);
+			collectText(vnode.props.children, acc)
 		}
 	}
-	return acc;
+	return acc
 }
 
 function makeDeck(
@@ -39,7 +39,7 @@ function makeDeck(
 	counts: { new: number; learning: number; due: number },
 	children: DeckInfo[] = [],
 ): DeckInfo {
-	return { path, name, depth, counts, children, collapsed: false };
+	return { path, name, depth, counts, children, collapsed: false }
 }
 
 describe('deckSummary', () => {
@@ -48,7 +48,7 @@ describe('deckSummary', () => {
 			makeDeck('A', 'A', 0, { new: 1, learning: 2, due: 3 }, [
 				makeDeck('A/B', 'B', 1, { new: 0, learning: 1, due: 0 }),
 			]),
-		];
+		]
 
 		const vnode = DeckSummary({
 			decks,
@@ -60,14 +60,14 @@ describe('deckSummary', () => {
 			onSelect: () => undefined,
 			onStudy: () => undefined,
 			onStats: () => undefined,
-		});
+		})
 
-		const text = collectText(vnode).join(' ').replace(/\s+/g, ' ').trim();
-		expect(text).toContain('Decks');
-		expect(text).toContain('All decks');
-		expect(text).toContain('Today: 5 reviewed');
-		expect(text).toContain('Streak: 7 days');
-	});
+		const text = collectText(vnode).join(' ').replace(/\s+/g, ' ').trim()
+		expect(text).toContain('Decks')
+		expect(text).toContain('All decks')
+		expect(text).toContain('Today: 5 reviewed')
+		expect(text).toContain('Streak: 7 days')
+	})
 
 	it('hides streak when disabled', () => {
 		const vnode = DeckSummary({
@@ -80,9 +80,9 @@ describe('deckSummary', () => {
 			onSelect: () => undefined,
 			onStudy: () => undefined,
 			onStats: () => undefined,
-		});
+		})
 
-		const text = collectText(vnode).join(' ').replace(/\s+/g, ' ').trim();
-		expect(text).not.toContain('Streak:');
-	});
-});
+		const text = collectText(vnode).join(' ').replace(/\s+/g, ' ').trim()
+		expect(text).not.toContain('Streak:')
+	})
+})

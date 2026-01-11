@@ -1,11 +1,11 @@
-import type { StreakInfo, TodayStats } from '@repo/core/core/types';
-import type { FunctionalComponent } from 'preact';
-import './DeckSummaryFooter.css';
+import type { StreakInfo, TodayStats } from '@repo/core/core/types'
+import type { FunctionalComponent } from 'preact'
+import './DeckSummaryFooter.css'
 
 export interface DeckSummaryFooterProps {
-	todayStats: TodayStats;
-	streak: StreakInfo;
-	showStreak: boolean;
+	todayStats: TodayStats
+	streak: StreakInfo
+	showStreak: boolean
 }
 
 export const DeckSummaryFooter: FunctionalComponent<DeckSummaryFooterProps> = ({
@@ -26,5 +26,5 @@ export const DeckSummaryFooter: FunctionalComponent<DeckSummaryFooterProps> = ({
 				</span>
 			) : null}
 		</div>
-	);
-};
+	)
+}

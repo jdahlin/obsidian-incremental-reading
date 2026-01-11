@@ -1,16 +1,16 @@
-import type { FunctionalComponent } from 'preact';
-import type { DebugInfo } from './review-screen-state';
-import { formatClozeQuestion } from '@repo/core/core/cloze';
-import { ReviewCard } from './ReviewCard';
-import { ReviewDebugInfo } from './ReviewDebugInfo';
-import { ReviewShowAnswerButton } from './ReviewShowAnswerButton';
-import './ReviewQuestionScreen.css';
+import type { FunctionalComponent } from 'preact'
+import type { DebugInfo } from './review-screen-state'
+import { formatClozeQuestion } from '@repo/core/core/cloze'
+import { ReviewCard } from './ReviewCard'
+import { ReviewDebugInfo } from './ReviewDebugInfo'
+import { ReviewShowAnswerButton } from './ReviewShowAnswerButton'
+import './ReviewQuestionScreen.css'
 
 export interface ReviewQuestionScreenProps {
-	content: string;
-	clozeIndex: number | null;
-	debugInfo: DebugInfo;
-	onShowAnswer: () => void;
+	content: string
+	clozeIndex: number | null
+	debugInfo: DebugInfo
+	onShowAnswer: () => void
 }
 
 export const ReviewQuestionScreen: FunctionalComponent<ReviewQuestionScreenProps> = ({
@@ -19,7 +19,7 @@ export const ReviewQuestionScreen: FunctionalComponent<ReviewQuestionScreenProps
 	debugInfo,
 	onShowAnswer,
 }) => {
-	const displayContent = clozeIndex != null ? formatClozeQuestion(content, clozeIndex) : content;
+	const displayContent = clozeIndex != null ? formatClozeQuestion(content, clozeIndex) : content
 
 	return (
 		<div className="ir-review-screen">
@@ -29,5 +29,5 @@ export const ReviewQuestionScreen: FunctionalComponent<ReviewQuestionScreenProps
 			</div>
 			<ReviewDebugInfo info={debugInfo} />
 		</div>
-	);
-};
+	)
+}

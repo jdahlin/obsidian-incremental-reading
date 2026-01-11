@@ -3,11 +3,11 @@
  * Copies media files from Anki's collection.media folder to Obsidian vault.
  */
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 
 export interface MediaMapping {
-	[numericName: string]: string; // "0" → "image.png"
+	[numericName: string]: string // "0" → "image.png"
 }
 
 /**
@@ -15,20 +15,20 @@ export interface MediaMapping {
  * Falls back to 'attachments' if not configured.
  */
 export function getAttachmentFolder(vaultPath: string): string {
-	const configPath = join(vaultPath, '.obsidian', 'app.json');
+	const configPath = join(vaultPath, '.obsidian', 'app.json')
 	if (existsSync(configPath)) {
 		try {
 			const config = JSON.parse(readFileSync(configPath, 'utf-8')) as {
-				attachmentFolderPath?: string;
-			};
+				attachmentFolderPath?: string
+			}
 			if (config.attachmentFolderPath !== undefined && config.attachmentFolderPath !== '') {
-				return config.attachmentFolderPath;
+				return config.attachmentFolderPath
 			}
 		} catch {
 			// Ignore parse errors, use default
 		}
 	}
-	return 'attachments';
+	return 'attachments'
 }
 
 /**
@@ -36,14 +36,14 @@ export function getAttachmentFolder(vaultPath: string): string {
  * The 'media' file maps numeric filenames to original names.
  */
 export function readMediaMapping(ankiProfilePath: string): MediaMapping {
-	const mediaFile = join(ankiProfilePath, 'media');
+	const mediaFile = join(ankiProfilePath, 'media')
 	if (!existsSync(mediaFile)) {
-		return {};
+		return {}
 	}
 	try {
-		return JSON.parse(readFileSync(mediaFile, 'utf-8')) as MediaMapping;
+		return JSON.parse(readFileSync(mediaFile, 'utf-8')) as MediaMapping
 	} catch {
-		return {};
+		return {}
 	}
 }
 
@@ -51,16 +51,16 @@ export function readMediaMapping(ankiProfilePath: string): MediaMapping {
  * Build a reverse mapping from original filenames to numeric names.
  */
 export function buildReverseMediaMapping(mapping: MediaMapping): Map<string, string> {
-	const reverse = new Map<string, string>();
+	const reverse = new Map<string, string>()
 	for (const [num, name] of Object.entries(mapping)) {
-		reverse.set(name, num);
+		reverse.set(name, num)
 	}
-	return reverse;
+	return reverse
 }
 
 export interface CopyMediaResult {
-	copied: Map<string, string>; // original filename → vault path
-	missing: string[]; // files that couldn't be found
+	copied: Map<string, string> // original filename → vault path
+	missing: string[] // files that couldn't be found
 }
 
 /**
@@ -72,62 +72,62 @@ export function copyMediaFiles(
 	vaultPath: string,
 	referencedFiles: Set<string>,
 ): CopyMediaResult {
-	const attachmentFolder = getAttachmentFolder(vaultPath);
-	const mediaDir = join(ankiProfilePath, 'collection.media');
+	const attachmentFolder = getAttachmentFolder(vaultPath)
+	const mediaDir = join(ankiProfilePath, 'collection.media')
 
-	const copied = new Map<string, string>();
-	const missing: string[] = [];
+	const copied = new Map<string, string>()
+	const missing: string[] = []
 
 	// Ensure attachment folder exists
-	const attachmentPath = join(vaultPath, attachmentFolder);
+	const attachmentPath = join(vaultPath, attachmentFolder)
 	if (!existsSync(attachmentPath)) {
-		mkdirSync(attachmentPath, { recursive: true });
+		mkdirSync(attachmentPath, { recursive: true })
 	}
 
 	// Check if there's a media mapping file (legacy Anki)
-	const mapping = readMediaMapping(ankiProfilePath);
-	const hasMapping = Object.keys(mapping).length > 0;
-	const reverseMap = hasMapping ? buildReverseMediaMapping(mapping) : null;
+	const mapping = readMediaMapping(ankiProfilePath)
+	const hasMapping = Object.keys(mapping).length > 0
+	const reverseMap = hasMapping ? buildReverseMediaMapping(mapping) : null
 
 	for (const filename of referencedFiles) {
-		let srcPath: string;
+		let srcPath: string
 
 		if (reverseMap !== null) {
 			// Legacy: use mapping to find numeric filename
-			const numericName = reverseMap.get(filename);
+			const numericName = reverseMap.get(filename)
 			if (numericName === undefined) {
-				missing.push(filename);
-				continue;
+				missing.push(filename)
+				continue
 			}
-			srcPath = join(mediaDir, numericName);
+			srcPath = join(mediaDir, numericName)
 		} else {
 			// Modern: files use their actual names directly
-			srcPath = join(mediaDir, filename);
+			srcPath = join(mediaDir, filename)
 		}
 
-		const destPath = join(attachmentPath, filename);
+		const destPath = join(attachmentPath, filename)
 
 		if (existsSync(srcPath)) {
 			// Ensure parent directory exists (for nested paths)
-			const parentDir = dirname(destPath);
+			const parentDir = dirname(destPath)
 			if (!existsSync(parentDir)) {
-				mkdirSync(parentDir, { recursive: true });
+				mkdirSync(parentDir, { recursive: true })
 			}
 
-			copyFileSync(srcPath, destPath);
-			copied.set(filename, `${attachmentFolder}/${filename}`);
+			copyFileSync(srcPath, destPath)
+			copied.set(filename, `${attachmentFolder}/${filename}`)
 		} else {
-			missing.push(filename);
+			missing.push(filename)
 		}
 	}
 
-	return { copied, missing };
+	return { copied, missing }
 }
 
 /**
  * Get the default Anki profile path on macOS.
  */
 export function getDefaultAnkiPath(): string {
-	const home = process.env.HOME ?? '';
-	return join(home, 'Library', 'Application Support', 'Anki2', 'User 1');
+	const home = process.env.HOME ?? ''
+	return join(home, 'Library', 'Application Support', 'Anki2', 'User 1')
 }

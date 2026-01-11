@@ -1,8 +1,8 @@
-import type { FunctionalComponent } from 'preact';
-import type { DebugInfo } from './review-screen-state';
+import type { FunctionalComponent } from 'preact'
+import type { DebugInfo } from './review-screen-state'
 
 export interface ReviewDebugInfoProps {
-	info: DebugInfo;
+	info: DebugInfo
 }
 
 export const ReviewDebugInfo: FunctionalComponent<ReviewDebugInfoProps> = ({ info }) => {
@@ -54,5 +54,5 @@ export const ReviewDebugInfo: FunctionalComponent<ReviewDebugInfoProps> = ({ inf
 				{info.lapses}
 			</div>
 		</div>
-	);
-};
+	)
+}

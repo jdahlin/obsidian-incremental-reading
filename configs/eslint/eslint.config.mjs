@@ -1,5 +1,5 @@
-import antfu from '@antfu/eslint-config';
-import { allBoundaries } from './boundaries.mjs';
+import antfu from '@antfu/eslint-config'
+import { allBoundaries } from './boundaries.mjs'
 
 const baseConfig = antfu({
 	typescript: {
@@ -59,7 +59,7 @@ const baseConfig = antfu({
 		'**/manifest.json',
 		'**/versions.json',
 	],
-});
+})
 
 // Disable type-aware rules for JS/MJS config files
 const jsConfigOverride = {
@@ -76,7 +76,7 @@ const jsConfigOverride = {
 		'@typescript-eslint/switch-exhaustiveness-check': 'off',
 		'@typescript-eslint/strict-boolean-expressions': 'off',
 	},
-};
+}
 
 // Relax type-safety rules in test files
 const testOverride = {
@@ -91,9 +91,9 @@ const testOverride = {
 		'@typescript-eslint/strict-boolean-expressions': 'off',
 		'@typescript-eslint/no-explicit-any': 'off',
 	},
-};
+}
 
 // antfu() returns a FlatConfigComposer which extends Promise
 // Call .toConfigs() for a flat array, or use .append() for composition
-export default baseConfig;
-export { allBoundaries, jsConfigOverride, testOverride };
+export default baseConfig
+export { allBoundaries, jsConfigOverride, testOverride }

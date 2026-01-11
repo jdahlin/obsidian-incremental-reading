@@ -1,11 +1,11 @@
-import type { FunctionalComponent } from 'preact';
-import type { SessionStats } from './review-screen-types';
-import { ReviewSessionSummary } from './ReviewSessionSummary';
-import './ReviewFinishedScreen.css';
+import type { FunctionalComponent } from 'preact'
+import type { SessionStats } from './review-screen-types'
+import { ReviewSessionSummary } from './ReviewSessionSummary'
+import './ReviewFinishedScreen.css'
 
 export interface ReviewFinishedScreenProps {
-	sessionStats: SessionStats;
-	onBack: () => void;
+	sessionStats: SessionStats
+	onBack: () => void
 }
 
 export const ReviewFinishedScreen: FunctionalComponent<ReviewFinishedScreenProps> = ({
@@ -25,5 +25,5 @@ export const ReviewFinishedScreen: FunctionalComponent<ReviewFinishedScreenProps
 				</div>
 			</div>
 		</div>
-	);
-};
+	)
+}
