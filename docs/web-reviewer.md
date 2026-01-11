@@ -26,13 +26,181 @@ A standalone web-based review interface for incremental reading, decoupled from 
 
 ### Reused from `@repo/core`
 
-| Component                   | Purpose                                        |
-| --------------------------- | ---------------------------------------------- |
-| `FileSystem` interface      | Abstract file I/O                              |
-| `MarkdownDataStore`         | Read/write sidecar files in `IR/Review Items/` |
-| `formatReviewContent`       | Render clozes for question/answer phases       |
-| `buildQueue` (JD1 strategy) | Priority-based queue ordering                  |
-| FSRS scheduling             | Grade reviews, compute next due date           |
+| Component              | Purpose                                        |
+| ---------------------- | ---------------------------------------------- |
+| `FileSystem` interface | Abstract file I/O                              |
+| `MarkdownDataStore`    | Read/write sidecar files in `IR/Review Items/` |
+| `SessionManager`       | Queue logic, review recording, strategies      |
+| `formatReviewContent`  | Render clozes for question/answer phases       |
+| `buildDeckTree`        | Build folder hierarchy from items              |
+| FSRS scheduling        | Grade reviews, compute next due date           |
+
+## Code Reuse Strategy
+
+### Extract from `@repo/obsidian` → `@repo/core`
+
+The `EngineReviewController` contains ~600 LOC of valuable logic that's currently coupled to Obsidian. We can extract a platform-agnostic `ReviewController` to `@repo/core`.
+
+#### Types to Move
+
+```typescript
+// @repo/core/review/types.ts
+
+export type ReviewScreenState =
+  | { type: 'folder'; decks: DeckInfo[]; selectedPath: string | null; ... }
+  | { type: 'question'; content: string; debugInfo: DebugInfo; canUndo: boolean }
+  | { type: 'answer'; content: string; debugInfo: DebugInfo; canUndo: boolean }
+  | { type: 'finished'; sessionStats: SessionStats }
+
+export interface DebugInfo {
+  queue: string
+  status: string
+  priority: number
+  due: string | null
+  stability: number
+  difficulty: number
+  reps: number
+  lapses: number
+}
+
+export interface SessionStats {
+  reviewed: number
+  again: number
+  hard: number
+  good: number
+  easy: number
+}
+
+export interface DeckCounts {
+  new: number
+  learning: number
+  due: number
+}
+```
+
+#### Platform Adapter Interface
+
+```typescript
+// @repo/core/review/ReviewPlatform.ts
+
+export interface ReviewPlatform {
+	// Content rendering (platform-specific)
+	getContent(itemId: string, phase: 'question' | 'answer'): Promise<string>
+
+	// Stats (reads from revlog)
+	getTodayStats(now: Date): Promise<TodayStats>
+	getStreakInfo(now: Date): Promise<StreakInfo>
+
+	// Optional platform hooks
+	onDataChange?(callback: () => void): () => void
+	updateSessionFile?(data: SessionStateData): Promise<void>
+}
+```
+
+#### ReviewController (Platform-Agnostic)
+
+```typescript
+// @repo/core/review/ReviewController.ts
+
+export class ReviewController {
+	private model: ReviewModel
+	private listeners = new Set<(state: ReviewScreenState) => void>()
+	private sessionManager: SessionManager
+
+	constructor(
+		private dataStore: DataStore,
+		private notePlatform: NotePlatform,
+		private platform: ReviewPlatform,
+		private config: SessionConfig,
+	) {}
+
+	// State machine
+	subscribe(listener: (state: ReviewScreenState) => void): () => void
+	getState(): ReviewScreenState
+
+	// Actions (pure state transitions)
+	selectDeck(path: string | null): void
+	async startReview(): Promise<void>
+	showAnswer(): void
+	async grade(rating: 1 | 2 | 3 | 4): Promise<void>
+	async skip(): Promise<void>
+	async bury(): Promise<void>
+	async postpone(days: number): Promise<void>
+	async undo(): Promise<void>
+	async suspend(): Promise<void>
+
+	// Keyboard handling
+	handleKeyDown(event: KeyboardEvent): void | Promise<void>
+
+	// Lifecycle
+	mount(): void
+	unmount(): void
+}
+```
+
+#### Pure Functions to Extract
+
+```typescript
+// @repo/core/review/utils.ts
+
+export function determinePhase(item: SessionItem | null): 'question' | 'answer'
+export function getQueueName(status: string): 'new' | 'learning' | 'review'
+export function buildDebugInfo(item: SessionItem): DebugInfo
+export function flattenDecks(decks: DeckInfo[]): DeckInfo[]
+export function buildSessionStats(manager: SessionManager): SessionStats
+```
+
+### Benefits
+
+| Package             | Before                           | After                                               |
+| ------------------- | -------------------------------- | --------------------------------------------------- |
+| `@repo/obsidian`    | 600 LOC `EngineReviewController` | ~100 LOC `ObsidianReviewPlatform` adapter           |
+| `@repo/web`         | Build from scratch               | Reuse `ReviewController` + REST adapter             |
+| `@repo/api-backend` | Stateless routes                 | Can use `ReviewController` for server-side sessions |
+
+### Refactoring Plan
+
+**Phase 0** (before new packages):
+
+1. Extract types from `obsidian/src/review/` to `core/src/review/types.ts`
+2. Extract pure functions to `core/src/review/utils.ts`
+3. Create `ReviewPlatform` interface in `core/src/review/ReviewPlatform.ts`
+4. Create `ReviewController` in `core/src/review/ReviewController.ts`
+5. Refactor `EngineReviewController` to use new `ReviewController` + `ObsidianReviewPlatform`
+6. Ensure Obsidian plugin still works
+
+**Phase 1** (new packages):
+
+1. `@repo/api-backend` creates `NodeFileSystem` and REST routes
+2. REST routes use `SessionManager` directly (stateless) or `ReviewController` (stateful sessions)
+3. `@repo/web` uses REST API, implements `useReviewController` hook
+
+### Architecture After Refactoring
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         @repo/core                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │ DataStore    │  │ SessionMgr   │  │ ReviewController       │ │
+│  │ FileSystem   │  │ FSRS, JD1    │  │ (state machine)        │ │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘ │
+│                                              │                   │
+│                              ┌───────────────┼───────────────┐   │
+│                              │               │               │   │
+│                              ▼               ▼               ▼   │
+│                    ReviewPlatform    ReviewPlatform   ReviewPlatform
+│                      (interface)       (interface)     (interface)
+└─────────────────────────────────────────────────────────────────┘
+                              │               │               │
+          ┌───────────────────┘               │               └──────────────┐
+          ▼                                   ▼                              ▼
+┌──────────────────┐              ┌──────────────────┐            ┌──────────────────┐
+│ @repo/obsidian   │              │ @repo/api-backend│            │ @repo/web        │
+│                  │              │                  │            │                  │
+│ ObsidianPlatform │              │ (stateless REST) │            │ WebPlatform      │
+│ (MarkdownRender) │              │                  │            │ (REST client)    │
+└──────────────────┘              └──────────────────┘            └──────────────────┘
+```
 
 ### New Packages
 
@@ -423,18 +591,52 @@ import { zValidator } from '@hono/zod-validator'
 
 ## Implementation Phases
 
+### Phase 0: Extract ReviewController to Core
+
+**Goal:** Decouple review logic from Obsidian before building new packages.
+
+1. **Extract types** (~50 LOC)
+    - Move `ReviewScreenState`, `DebugInfo`, `SessionStats` to `core/src/review/types.ts`
+    - Move `DeckCounts` type
+
+2. **Extract pure functions** (~30 LOC)
+    - `determinePhase()`, `getQueueName()`, `buildDebugInfo()`
+    - `flattenDecks()`, `buildSessionStats()`
+
+3. **Create ReviewPlatform interface** (~20 LOC)
+    - Define `getContent()`, `getTodayStats()`, `getStreakInfo()`
+    - Optional hooks: `onDataChange()`, `updateSessionFile()`
+
+4. **Create ReviewController** (~400 LOC)
+    - Port state machine logic from `EngineReviewController`
+    - Remove Obsidian-specific code (history, navigation)
+    - Keep: `subscribe()`, `selectDeck()`, `startReview()`, `grade()`, `skip()`, `bury()`, `undo()`
+
+5. **Create ObsidianReviewPlatform** (~100 LOC)
+    - Implement `ReviewPlatform` using Obsidian APIs
+    - Use `MarkdownRenderer` for `getContent()`
+
+6. **Refactor EngineReviewController** → thin wrapper
+    - Delegates to `ReviewController` + `ObsidianReviewPlatform`
+    - Keeps only Obsidian-specific: history recording, view state serialization
+
+7. **Verify Obsidian plugin still works**
+    - Run existing tests
+    - Manual testing
+
 ### Phase 1: Core Review Loop
 
 **Goal:** Functional review flow with existing data.
 
 1. Create `@repo/api-backend` package
-    - NodeFileSystem implementation
-    - Wire up MarkdownDataStore from core
+    - `NodeFileSystem` implementation (~50 LOC)
+    - Wire up `MarkdownDataStore` from core
     - Implement `/api/queue`, `/api/items/:id/content`, `/api/items/:id/review`
     - Basic CLI with vault path argument
 
 2. Create `@repo/web` package
     - Vite + React setup
+    - `useReviewController` hook using REST API
     - ReviewScreen with question/answer phases
     - Rating buttons, submit review
     - Basic progress indicator
