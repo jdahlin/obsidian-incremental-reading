@@ -9,6 +9,6 @@
 	"main": "vitest.config.ts",
 	"devDependencies": {
 		"vite": "^6.3.0",
-		"vitest": "^4.0.16"
+		"vitest": "catalog:"
 	}
 }

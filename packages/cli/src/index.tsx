@@ -119,18 +119,17 @@ void (async () => {
 		const os = await import('node:os')
 
 		// Default Anki path
-		const defaultAnkiPath = path.join(
-			os.homedir(),
-			'Library/Application Support/Anki2/User 1',
-		)
+		const defaultAnkiPath = path.join(os.homedir(), 'Library/Application Support/Anki2/User 1')
 		const ankiProfilePath = importPath ?? defaultAnkiPath
 		const ankiDbPath = path.join(ankiProfilePath, 'collection.anki2')
 		const ankiMediaPath = path.join(ankiProfilePath, 'collection.media')
 		const outputDir = path.join(vault, 'Anki')
+		const sidecarDir = path.join(vault, 'IR/Review Items')
 
 		console.log('Importing from Anki...')
 		console.log(`  Source: ${ankiDbPath}`)
-		console.log(`  Output: ${outputDir}`)
+		console.log(`  Notes:  ${outputDir}`)
+		console.log(`  Cards:  ${sidecarDir}`)
 		console.log()
 
 		try {
@@ -153,6 +152,8 @@ void (async () => {
 			console.log('Writing markdown files...')
 			const result = await writeAnkiData(data, {
 				outputDir,
+				sidecarDir,
+				vaultRelativePrefix: 'Anki',
 				mediaDir: ankiMediaPath,
 				collectionCreatedAt,
 			})
