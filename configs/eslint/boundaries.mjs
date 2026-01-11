@@ -15,14 +15,14 @@ function createBoundary(files, blockedPackages) {
 	const patterns = blockedPackages.map((pkg) => ({
 		group: [`${pkg}`, `${pkg}/*`],
 		message: `Importing from ${pkg} is not allowed in this package.`,
-	}));
+	}))
 
 	return {
 		files,
 		rules: {
 			'no-restricted-imports': ['error', { patterns }],
 		},
-	};
+	}
 }
 
 /**
@@ -31,7 +31,7 @@ function createBoundary(files, blockedPackages) {
 export const coreBoundary = createBoundary(
 	['packages/core/src/**/*.ts'],
 	['@repo/obsidian', '@repo/cli', 'obsidian', 'ink', 'react'],
-);
+)
 
 /**
  * @repo/obsidian - Cannot import from cli package
@@ -39,7 +39,7 @@ export const coreBoundary = createBoundary(
 export const obsidianBoundary = createBoundary(
 	['packages/obsidian/src/**/*.ts', 'packages/obsidian/src/**/*.tsx'],
 	['@repo/cli', 'ink', 'react'],
-);
+)
 
 /**
  * @repo/cli - Cannot import from obsidian package
@@ -47,6 +47,6 @@ export const obsidianBoundary = createBoundary(
 export const cliBoundary = createBoundary(
 	['packages/cli/src/**/*.ts', 'packages/cli/src/**/*.tsx'],
 	['@repo/obsidian', 'obsidian', 'preact'],
-);
+)
 
-export const allBoundaries = [coreBoundary, obsidianBoundary, cliBoundary];
+export const allBoundaries = [coreBoundary, obsidianBoundary, cliBoundary]

@@ -1,5 +1,5 @@
 export interface DeckCountsValue {
-	new: number;
-	learning: number;
-	due: number;
+	new: number
+	learning: number
+	due: number
 }

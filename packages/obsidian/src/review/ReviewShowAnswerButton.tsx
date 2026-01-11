@@ -1,8 +1,8 @@
-import type { FunctionalComponent } from 'preact';
-import './ReviewShowAnswerButton.css';
+import type { FunctionalComponent } from 'preact'
+import './ReviewShowAnswerButton.css'
 
 export interface ReviewShowAnswerButtonProps {
-	onShowAnswer: () => void;
+	onShowAnswer: () => void
 }
 
 export const ReviewShowAnswerButton: FunctionalComponent<ReviewShowAnswerButtonProps> = ({
@@ -12,5 +12,5 @@ export const ReviewShowAnswerButton: FunctionalComponent<ReviewShowAnswerButtonP
 		<button type="button" className="ir-show-answer" onClick={onShowAnswer}>
 			Show Answer
 		</button>
-	);
-};
+	)
+}

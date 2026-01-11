@@ -1,74 +1,74 @@
-import type { DataStore, Rating, ReviewItem, ReviewRecord, ReviewState } from '../types';
-import type { EngineSnapshot, EngineStore } from './types';
-import { getScheduler } from '../scheduling';
+import type { DataStore, Rating, ReviewItem, ReviewRecord, ReviewState } from '../types'
+import type { EngineSnapshot, EngineStore } from './types'
+import { getScheduler } from '../scheduling'
 
 interface NoteRecord {
-	id: string;
-	content: string;
-	title?: string;
-	priority?: number;
+	id: string
+	content: string
+	title?: string
+	priority?: number
 }
 
 interface ClozeRecord {
-	id: string;
-	noteId: string;
-	start: number;
-	end: number;
-	hint?: string;
+	id: string
+	noteId: string
+	start: number
+	end: number
+	hint?: string
 }
 
 interface GradeRecord {
-	itemId: string;
-	rating: number;
+	itemId: string
+	rating: number
 }
 
 interface PostponeRecord {
-	itemId: string;
-	days: number;
+	itemId: string
+	days: number
 }
 
 interface ShowRecord {
-	itemId: string;
-	phase?: string;
+	itemId: string
+	phase?: string
 }
 
 interface SessionConfig {
-	strategy: string;
-	examDate: string | null;
-	capacity?: number;
-	clump?: number;
-	cooldown?: number;
-	newCardsLimit?: number;
-	folder?: string;
-	counts?: { new: number; learning: number; due: number };
-	sessionStats?: { reviewed: number; again: number; hard: number; good: number; easy: number };
+	strategy: string
+	examDate: string | null
+	capacity?: number
+	clump?: number
+	cooldown?: number
+	newCardsLimit?: number
+	folder?: string
+	counts?: { new: number; learning: number; due: number }
+	sessionStats?: { reviewed: number; again: number; hard: number; good: number; easy: number }
 }
 
 interface EngineState {
-	notes: Record<string, NoteRecord>;
-	clozes: Record<string, ClozeRecord>;
-	states: Record<string, ReviewState>;
-	grades: GradeRecord[];
-	again: string[];
-	history: string[];
-	postponed: PostponeRecord[];
-	dismissed: string[];
-	priority: Record<string, number>;
-	scroll: Record<string, number>;
-	shown: ShowRecord[];
-	due: Record<string, string>;
-	clock: string | null;
-	session: SessionConfig;
-	scheduler: string;
-	nextItem: string | null;
-	nextItems: string[];
+	notes: Record<string, NoteRecord>
+	clozes: Record<string, ClozeRecord>
+	states: Record<string, ReviewState>
+	grades: GradeRecord[]
+	again: string[]
+	history: string[]
+	postponed: PostponeRecord[]
+	dismissed: string[]
+	priority: Record<string, number>
+	scroll: Record<string, number>
+	shown: ShowRecord[]
+	due: Record<string, string>
+	clock: string | null
+	session: SessionConfig
+	scheduler: string
+	nextItem: string | null
+	nextItems: string[]
 	// New field for persistent review logs (DataStore.appendReview)
-	reviewLogs: ReviewRecord[];
+	reviewLogs: ReviewRecord[]
 }
 
 export class MemoryDataStore implements EngineStore, DataStore {
-	private noteCounter = 0;
-	private clozeCounters = new Map<string, number>();
+	private noteCounter = 0
+	private clozeCounters = new Map<string, number>()
 	private state: EngineState = {
 		notes: {},
 		clozes: {},
@@ -88,7 +88,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		nextItem: null,
 		nextItems: [],
 		reviewLogs: [],
-	};
+	}
 
 	// --- EngineStore Implementation ---
 
@@ -96,36 +96,36 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		content: string,
 		options: { title?: string; priority?: number } = {},
 	): Promise<string> {
-		const noteId = this.nextNoteId();
-		this.state.notes[noteId] = { id: noteId, content, ...options };
-		return noteId;
+		const noteId = this.nextNoteId()
+		this.state.notes[noteId] = { id: noteId, content, ...options }
+		return noteId
 	}
 
 	async createExtract(sourceId: string, start: number, end: number): Promise<string> {
-		const noteId = this.nextNoteId();
+		const noteId = this.nextNoteId()
 		this.state.notes[noteId] = {
 			id: noteId,
 			content: `extract:${sourceId}:${start}-${end}`,
-		};
-		return noteId;
+		}
+		return noteId
 	}
 
 	async addCloze(noteId: string, start: number, end: number, hint?: string): Promise<string> {
-		const clozeId = this.nextClozeId(noteId);
-		this.state.clozes[clozeId] = { id: clozeId, noteId, start, end, hint };
-		return clozeId;
+		const clozeId = this.nextClozeId(noteId)
+		this.state.clozes[clozeId] = { id: clozeId, noteId, start, end, hint }
+		return clozeId
 	}
 
 	async recordGrade(itemId: string, rating: number): Promise<void> {
-		this.state.grades.push({ itemId, rating });
-		if (itemId) this.state.history.push(itemId);
+		this.state.grades.push({ itemId, rating })
+		if (itemId) this.state.history.push(itemId)
 		if (itemId) {
-			const now = this.getNow();
-			const scheduler = getScheduler(this.state.scheduler);
-			let itemState = this.state.states[itemId] || this.getInitialState();
+			const now = this.getNow()
+			const scheduler = getScheduler(this.state.scheduler)
+			let itemState = this.state.states[itemId] || this.getInitialState()
 
 			// Grade
-			itemState = scheduler.grade(itemState, rating as Rating, now);
+			itemState = scheduler.grade(itemState, rating as Rating, now)
 
 			// Apply exam adjustment
 			if (
@@ -133,62 +133,62 @@ export class MemoryDataStore implements EngineStore, DataStore {
 				this.state.session.examDate !== '' &&
 				scheduler.applyExamAdjustment !== undefined
 			) {
-				const examDate = new Date(this.state.session.examDate);
-				itemState = scheduler.applyExamAdjustment(itemState, examDate, now);
+				const examDate = new Date(this.state.session.examDate)
+				itemState = scheduler.applyExamAdjustment(itemState, examDate, now)
 			}
 
-			this.state.states[itemId] = itemState;
+			this.state.states[itemId] = itemState
 
 			// Update legacy due map
 			if (itemState.due) {
-				this.state.due[itemId] = formatDate(itemState.due);
+				this.state.due[itemId] = formatDate(itemState.due)
 			}
 		}
 	}
 
 	async recordAgain(itemId: string): Promise<void> {
-		if (itemId) this.state.again.push(itemId);
+		if (itemId) this.state.again.push(itemId)
 	}
 
 	async recordPostpone(itemId: string, days: number): Promise<void> {
-		this.state.postponed.push({ itemId, days });
+		this.state.postponed.push({ itemId, days })
 
-		const now = this.getNow();
-		const currentState = this.state.states[itemId] || this.getInitialState();
-		const newDue = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+		const now = this.getNow()
+		const currentState = this.state.states[itemId] || this.getInitialState()
+		const newDue = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
 
 		const newState: ReviewState = {
 			...currentState,
 			due: newDue,
 			status: currentState.status === 'new' ? 'review' : currentState.status,
-		};
+		}
 
-		this.state.states[itemId] = newState;
-		this.state.due[itemId] = formatDate(newDue);
+		this.state.states[itemId] = newState
+		this.state.due[itemId] = formatDate(newDue)
 	}
 
 	async recordDismiss(itemId: string): Promise<void> {
-		if (itemId) this.state.dismissed.push(itemId);
+		if (itemId) this.state.dismissed.push(itemId)
 	}
 
 	async recordPriority(itemId: string, value: number): Promise<void> {
-		if (itemId) this.state.priority[itemId] = value;
+		if (itemId) this.state.priority[itemId] = value
 	}
 
 	async recordScroll(itemId: string, value: number): Promise<void> {
-		if (itemId) this.state.scroll[itemId] = value;
+		if (itemId) this.state.scroll[itemId] = value
 	}
 
 	async recordShow(itemId: string, phase?: string): Promise<void> {
-		this.state.shown.push({ itemId, phase });
+		this.state.shown.push({ itemId, phase })
 	}
 
 	setNextItem(itemId: string | null): void {
-		this.state.nextItem = itemId;
+		this.state.nextItem = itemId
 	}
 
 	setNextItems(itemIds: string[]): void {
-		this.state.nextItems = itemIds;
+		this.state.nextItems = itemIds
 	}
 
 	setSession(config: Record<string, unknown>): void {
@@ -202,19 +202,19 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			folder: config.folder as string | undefined,
 			counts: config.counts as SessionConfig['counts'],
 			sessionStats: config.sessionStats as SessionConfig['sessionStats'],
-		};
+		}
 	}
 
 	setScheduler(id: string): void {
-		this.state.scheduler = id;
+		this.state.scheduler = id
 	}
 
 	setClock(value: string): void {
-		this.state.clock = value;
+		this.state.clock = value
 	}
 
 	getClock(): string | null {
-		return this.state.clock;
+		return this.state.clock
 	}
 
 	async snapshot(): Promise<EngineSnapshot> {
@@ -236,18 +236,18 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			scheduler: this.state.scheduler,
 			stats: buildStats(this.state),
 			queue: this.state.nextItems.slice(),
-		};
+		}
 	}
 
 	// --- DataStore Implementation ---
 
 	async listItems(): Promise<ReviewItem[]> {
-		const items: ReviewItem[] = [];
+		const items: ReviewItem[] = []
 
 		// Topics (Notes)
 		for (const note of Object.values(this.state.notes)) {
 			// Skip if dismissed
-			if (this.state.dismissed.includes(note.id)) continue;
+			if (this.state.dismissed.includes(note.id)) continue
 
 			items.push({
 				id: note.id,
@@ -256,16 +256,16 @@ export class MemoryDataStore implements EngineStore, DataStore {
 				type: 'topic',
 				priority: this.state.priority[note.id] ?? note.priority ?? 50,
 				created: new Date(), // Dummy
-			});
+			})
 		}
 
 		// Clozes
 		for (const cloze of Object.values(this.state.clozes)) {
-			if (this.state.dismissed.includes(cloze.id)) continue;
+			if (this.state.dismissed.includes(cloze.id)) continue
 
 			const notePriority =
-				this.state.priority[cloze.noteId] ?? this.state.notes[cloze.noteId]?.priority ?? 50;
-			const clozePriority = this.state.priority[cloze.id] ?? notePriority;
+				this.state.priority[cloze.noteId] ?? this.state.notes[cloze.noteId]?.priority ?? 50
+			const clozePriority = this.state.priority[cloze.id] ?? notePriority
 
 			items.push({
 				id: cloze.id,
@@ -275,62 +275,62 @@ export class MemoryDataStore implements EngineStore, DataStore {
 				clozeIndex: Number.parseInt(cloze.id.split('::c')[1] ?? '0', 10),
 				priority: clozePriority,
 				created: new Date(), // Dummy
-			});
+			})
 		}
 
-		return items;
+		return items
 	}
 
 	async getState(itemId: string): Promise<ReviewState | null> {
-		return this.state.states[itemId] || null;
+		return this.state.states[itemId] || null
 	}
 
 	async setState(itemId: string, state: ReviewState): Promise<void> {
-		this.state.states[itemId] = state;
+		this.state.states[itemId] = state
 		if (state.due) {
-			this.state.due[itemId] = formatDate(state.due);
+			this.state.due[itemId] = formatDate(state.due)
 		}
 	}
 
 	async appendReview(record: ReviewRecord): Promise<void> {
-		this.state.reviewLogs.push(record);
+		this.state.reviewLogs.push(record)
 		// Update legacy tracking for tests
-		this.state.grades.push({ itemId: record.itemId, rating: record.rating });
+		this.state.grades.push({ itemId: record.itemId, rating: record.rating })
 		if (record.itemId) {
-			this.state.history.push(record.itemId);
+			this.state.history.push(record.itemId)
 		}
 		if (record.rating === 1 && record.itemId) {
-			this.state.again.push(record.itemId);
+			this.state.again.push(record.itemId)
 		}
 	}
 
 	async setScrollPos(itemId: string, pos: number): Promise<void> {
-		this.state.scroll[itemId] = pos;
+		this.state.scroll[itemId] = pos
 	}
 
 	async getScrollPos(itemId: string): Promise<number | null> {
-		return this.state.scroll[itemId] ?? null;
+		return this.state.scroll[itemId] ?? null
 	}
 
 	// --- Private Helpers ---
 
 	private nextNoteId(): string {
-		this.noteCounter += 1;
-		return `note-${this.noteCounter}`;
+		this.noteCounter += 1
+		return `note-${this.noteCounter}`
 	}
 
 	private nextClozeId(noteId: string): string {
-		const next = (this.clozeCounters.get(noteId) ?? 0) + 1;
-		this.clozeCounters.set(noteId, next);
-		return `${noteId}::c${next}`;
+		const next = (this.clozeCounters.get(noteId) ?? 0) + 1
+		this.clozeCounters.set(noteId, next)
+		return `${noteId}::c${next}`
 	}
 
 	private getNow(): Date {
 		if (this.state.clock !== undefined && this.state.clock !== '') {
-			const parsed = new Date(`${this.state.clock}T00:00:00Z`);
-			if (!Number.isNaN(parsed.getTime())) return parsed;
+			const parsed = new Date(`${this.state.clock}T00:00:00Z`)
+			if (!Number.isNaN(parsed.getTime())) return parsed
 		}
-		return new Date(0);
+		return new Date(0)
 	}
 
 	private getInitialState(): ReviewState {
@@ -342,22 +342,22 @@ export class MemoryDataStore implements EngineStore, DataStore {
 			reps: 0,
 			lapses: 0,
 			lastReview: null,
-		};
+		}
 	}
 
 	private mapStatesToSnapshot(states: Record<string, ReviewState>): Record<string, unknown> {
-		const result: Record<string, unknown> = {};
+		const result: Record<string, unknown> = {}
 		for (const key of Object.keys(states)) {
-			result[key] = states[key]; // Directly expose for now
+			result[key] = states[key] // Directly expose for now
 		}
-		return sortRecord(result);
+		return sortRecord(result)
 	}
 }
 
 function buildStats(state: EngineState): Record<string, unknown> {
-	const noteCount = Object.keys(state.notes).length;
-	const clozeCount = Object.keys(state.clozes).length;
-	const itemCount = noteCount + clozeCount;
+	const noteCount = Object.keys(state.notes).length
+	const clozeCount = Object.keys(state.clozes).length
+	const itemCount = noteCount + clozeCount
 	return {
 		notes: { count: noteCount },
 		clozes: { count: clozeCount },
@@ -381,24 +381,24 @@ function buildStats(state: EngineState): Record<string, unknown> {
 			volatileSize: state.again.length,
 			historySize: state.history.length,
 		},
-	};
+	}
 }
 
 function sortRecord<T>(record: Record<string, T>): Record<string, T> {
 	return Object.keys(record)
 		.sort()
 		.reduce<Record<string, T>>((acc, key) => {
-			const value = record[key];
+			const value = record[key]
 			if (value !== undefined) {
-				acc[key] = value;
+				acc[key] = value
 			}
-			return acc;
-		}, {});
+			return acc
+		}, {})
 }
 
 function formatDate(date: Date): string {
-	const year = date.getUTCFullYear();
-	const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-	const day = String(date.getUTCDate()).padStart(2, '0');
-	return `${year}-${month}-${day}`;
+	const year = date.getUTCFullYear()
+	const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+	const day = String(date.getUTCDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
 }

@@ -1,15 +1,15 @@
-import type { FunctionalComponent } from 'preact';
-import type { DeckCountsValue } from './deck-summary-types';
-import { rowClass } from './deck-summary-utils';
-import { DeckCounts } from './DeckCounts';
-import './DeckRow.css';
+import type { FunctionalComponent } from 'preact'
+import type { DeckCountsValue } from './deck-summary-types'
+import { rowClass } from './deck-summary-utils'
+import { DeckCounts } from './DeckCounts'
+import './DeckRow.css'
 
 export interface DeckRowProps {
-	label: string;
-	depth: number;
-	counts: DeckCountsValue;
-	selected: boolean;
-	onSelect: () => void;
+	label: string
+	depth: number
+	counts: DeckCountsValue
+	selected: boolean
+	onSelect: () => void
 }
 
 export const DeckRow: FunctionalComponent<DeckRowProps> = ({
@@ -26,5 +26,5 @@ export const DeckRow: FunctionalComponent<DeckRowProps> = ({
 			</span>
 			<DeckCounts counts={counts} />
 		</div>
-	);
-};
+	)
+}

@@ -1,9 +1,9 @@
-import type { FunctionalComponent } from 'preact';
-import type { DeckCountsValue } from './deck-summary-types';
-import './DeckCounts.css';
+import type { FunctionalComponent } from 'preact'
+import type { DeckCountsValue } from './deck-summary-types'
+import './DeckCounts.css'
 
 export interface DeckCountsProps {
-	counts: DeckCountsValue;
+	counts: DeckCountsValue
 }
 
 export const DeckCounts: FunctionalComponent<DeckCountsProps> = ({ counts }) => {
@@ -13,5 +13,5 @@ export const DeckCounts: FunctionalComponent<DeckCountsProps> = ({ counts }) => 
 			<span className="ir-count-learning">{counts.learning}</span>
 			<span className="ir-count-due">{counts.due}</span>
 		</span>
-	);
-};
+	)
+}

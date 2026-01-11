@@ -1,116 +1,116 @@
-import { load as yamlParse, dump as yamlStringify } from 'js-yaml';
+import { load as yamlParse, dump as yamlStringify } from 'js-yaml'
 
 export function parseYaml(value: string): unknown {
-	return yamlParse(value);
+	return yamlParse(value)
 }
 
 export function stringifyYaml(value: unknown): string {
-	return yamlStringify(value);
+	return yamlStringify(value)
 }
 
 function normalizePath(path: string): string {
-	const normalized = path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '');
-	return normalized === '/' ? '' : normalized.replace(/\/+$/, '');
+	const normalized = path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '')
+	return normalized === '/' ? '' : normalized.replace(/\/+$/, '')
 }
 
 function splitFrontmatter(content: string): { frontmatter: string | null; body: string } {
-	const lines = content.split('\n');
+	const lines = content.split('\n')
 	if (!lines[0] || lines[0].trim() !== '---') {
-		return { frontmatter: null, body: content };
+		return { frontmatter: null, body: content }
 	}
-	let endIndex = -1;
+	let endIndex = -1
 	for (let i = 1; i < lines.length; i += 1) {
 		if (lines[i]?.trim() === '---') {
-			endIndex = i;
-			break;
+			endIndex = i
+			break
 		}
 	}
 	if (endIndex === -1) {
-		return { frontmatter: null, body: content };
+		return { frontmatter: null, body: content }
 	}
-	const frontmatter = lines.slice(1, endIndex).join('\n');
-	const body = lines.slice(endIndex + 1).join('\n');
-	return { frontmatter, body };
+	const frontmatter = lines.slice(1, endIndex).join('\n')
+	const body = lines.slice(endIndex + 1).join('\n')
+	return { frontmatter, body }
 }
 
 class VaultAdapter {
 	constructor(private vault: Vault) {}
 
 	async exists(path: string): Promise<boolean> {
-		return this.vault.getAbstractFileByPath(path) != null;
+		return this.vault.getAbstractFileByPath(path) != null
 	}
 
 	async read(path: string): Promise<string> {
-		return this.vault.getContent(path);
+		return this.vault.getContent(path)
 	}
 
 	async write(path: string, content: string): Promise<void> {
-		const existing = this.vault.getAbstractFileByPath(path);
+		const existing = this.vault.getAbstractFileByPath(path)
 		if (existing instanceof TFile) {
-			await this.vault.modify(existing, content);
-			return;
+			await this.vault.modify(existing, content)
+			return
 		}
-		await this.vault.create(path, content);
+		await this.vault.create(path, content)
 	}
 
 	async remove(path: string): Promise<void> {
-		this.vault.deletePath(path);
+		this.vault.deletePath(path)
 	}
 
 	async mkdir(path: string): Promise<void> {
-		await this.vault.createFolder(path);
+		await this.vault.createFolder(path)
 	}
 }
 
 export class TAbstractFile {
-	path: string;
-	name: string;
-	parent: TFolder | null;
+	path: string
+	name: string
+	parent: TFolder | null
 
 	constructor(path: string, parent: TFolder | null) {
-		this.path = path;
-		this.name = path.split('/').pop() ?? path;
-		this.parent = parent;
+		this.path = path
+		this.name = path.split('/').pop() ?? path
+		this.parent = parent
 	}
 }
 
 export class TFolder extends TAbstractFile {
-	children: TAbstractFile[] = [];
+	children: TAbstractFile[] = []
 }
 
 export class TFile extends TAbstractFile {
-	extension: string;
-	basename: string;
-	stat: { ctime: number; mtime: number };
+	extension: string
+	basename: string
+	stat: { ctime: number; mtime: number }
 
 	constructor(path: string, parent: TFolder | null) {
-		super(path, parent);
-		const name = this.name;
-		const dot = name.lastIndexOf('.');
+		super(path, parent)
+		const name = this.name
+		const dot = name.lastIndexOf('.')
 		if (dot >= 0) {
-			this.extension = name.slice(dot + 1);
-			this.basename = name.slice(0, dot);
+			this.extension = name.slice(dot + 1)
+			this.basename = name.slice(0, dot)
 		} else {
-			this.extension = '';
-			this.basename = name;
+			this.extension = ''
+			this.basename = name
 		}
-		const now = Date.now();
-		this.stat = { ctime: now, mtime: now };
+		const now = Date.now()
+		this.stat = { ctime: now, mtime: now }
 	}
 }
 
 interface VaultEntry {
-	file: TAbstractFile;
-	content?: string;
+	file: TAbstractFile
+	content?: string
 }
 
 export interface EventRef {
-	_eventRef?: boolean;
+	_eventRef?: boolean
 }
 
 export class Events {
 	on(_name: string, _callback: (...data: any[]) => any, _ctx?: any): EventRef {
-		return {};
+		return {}
 	}
 
 	off(_name: string, _callback: (...data: any[]) => any): void {}
@@ -121,185 +121,185 @@ export class Events {
 }
 
 export class Vault extends Events {
-	private entries: Map<string, VaultEntry> = new Map();
-	adapter: VaultAdapter;
+	private entries: Map<string, VaultEntry> = new Map()
+	adapter: VaultAdapter
 
 	constructor() {
-		super();
-		this.adapter = new VaultAdapter(this);
+		super()
+		this.adapter = new VaultAdapter(this)
 	}
 
 	async rename(file: TFile, newPath: string): Promise<void> {
-		const oldPath = normalizePath(file.path);
-		const normalizedNewPath = normalizePath(newPath);
-		if (!normalizedNewPath) throw new Error('Invalid path');
-		if (oldPath === normalizedNewPath) return;
-		if (this.entries.has(normalizedNewPath)) throw new Error('Path already exists');
+		const oldPath = normalizePath(file.path)
+		const normalizedNewPath = normalizePath(newPath)
+		if (!normalizedNewPath) throw new Error('Invalid path')
+		if (oldPath === normalizedNewPath) return
+		if (this.entries.has(normalizedNewPath)) throw new Error('Path already exists')
 
-		const existing = this.entries.get(oldPath);
-		if (!existing || !(existing.file instanceof TFile)) throw new Error('File not found');
+		const existing = this.entries.get(oldPath)
+		if (!existing || !(existing.file instanceof TFile)) throw new Error('File not found')
 
-		const parentPath = normalizedNewPath.split('/').slice(0, -1).join('/');
-		const parent = parentPath ? this.ensureFolder(parentPath) : null;
+		const parentPath = normalizedNewPath.split('/').slice(0, -1).join('/')
+		const parent = parentPath ? this.ensureFolder(parentPath) : null
 
 		if (file.parent) {
-			file.parent.children = file.parent.children.filter((child) => child !== file);
+			file.parent.children = file.parent.children.filter((child) => child !== file)
 		}
 
-		file.path = normalizedNewPath;
-		file.name = normalizedNewPath.split('/').pop() ?? normalizedNewPath;
-		const dot = file.name.lastIndexOf('.');
+		file.path = normalizedNewPath
+		file.name = normalizedNewPath.split('/').pop() ?? normalizedNewPath
+		const dot = file.name.lastIndexOf('.')
 		if (dot >= 0) {
-			file.extension = file.name.slice(dot + 1);
-			file.basename = file.name.slice(0, dot);
+			file.extension = file.name.slice(dot + 1)
+			file.basename = file.name.slice(0, dot)
 		} else {
-			file.extension = '';
-			file.basename = file.name;
+			file.extension = ''
+			file.basename = file.name
 		}
-		file.parent = parent;
+		file.parent = parent
 
-		this.entries.delete(oldPath);
-		this.entries.set(normalizedNewPath, { file, content: existing.content });
-		if (parent) parent.children.push(file);
+		this.entries.delete(oldPath)
+		this.entries.set(normalizedNewPath, { file, content: existing.content })
+		if (parent) parent.children.push(file)
 	}
 
 	getAbstractFileByPath(path: string): TAbstractFile | null {
-		const normalized = normalizePath(path);
-		return this.entries.get(normalized)?.file ?? null;
+		const normalized = normalizePath(path)
+		return this.entries.get(normalized)?.file ?? null
 	}
 
 	getMarkdownFiles(): TFile[] {
-		const files: TFile[] = [];
+		const files: TFile[] = []
 		for (const entry of this.entries.values()) {
 			if (entry.file instanceof TFile && entry.file.extension === 'md') {
-				files.push(entry.file);
+				files.push(entry.file)
 			}
 		}
-		return files;
+		return files
 	}
 
 	async create(path: string, content: string): Promise<TFile> {
-		const normalized = normalizePath(path);
-		const parentPath = normalized.split('/').slice(0, -1).join('/');
-		const parent = parentPath ? this.ensureFolder(parentPath) : null;
-		const file = new TFile(normalized, parent);
-		this.entries.set(normalized, { file, content });
-		if (parent) parent.children.push(file);
-		return file;
+		const normalized = normalizePath(path)
+		const parentPath = normalized.split('/').slice(0, -1).join('/')
+		const parent = parentPath ? this.ensureFolder(parentPath) : null
+		const file = new TFile(normalized, parent)
+		this.entries.set(normalized, { file, content })
+		if (parent) parent.children.push(file)
+		return file
 	}
 
 	async createFolder(path: string): Promise<TFolder> {
-		return this.ensureFolder(path);
+		return this.ensureFolder(path)
 	}
 
 	async read(file: TFile): Promise<string> {
-		return this.getContent(file.path);
+		return this.getContent(file.path)
 	}
 
 	async modify(file: TFile, content: string): Promise<void> {
-		this.entries.set(file.path, { file, content });
-		file.stat.mtime = Date.now();
+		this.entries.set(file.path, { file, content })
+		file.stat.mtime = Date.now()
 	}
 
 	async append(file: TFile, content: string): Promise<void> {
-		const existing = this.getContent(file.path);
-		await this.modify(file, `${existing}${content}`);
+		const existing = this.getContent(file.path)
+		await this.modify(file, `${existing}${content}`)
 	}
 
 	getContent(path: string): string {
-		const normalized = normalizePath(path);
-		const entry = this.entries.get(normalized);
-		return entry?.content ?? '';
+		const normalized = normalizePath(path)
+		const entry = this.entries.get(normalized)
+		return entry?.content ?? ''
 	}
 
 	setContent(path: string, content: string): void {
-		const existing = this.getAbstractFileByPath(path);
+		const existing = this.getAbstractFileByPath(path)
 		if (existing instanceof TFile) {
-			this.entries.set(existing.path, { file: existing, content });
+			this.entries.set(existing.path, { file: existing, content })
 		}
 	}
 
 	deletePath(path: string): void {
-		const normalized = normalizePath(path);
-		const entry = this.entries.get(normalized);
-		if (!entry) return;
-		this.entries.delete(normalized);
+		const normalized = normalizePath(path)
+		const entry = this.entries.get(normalized)
+		if (!entry) return
+		this.entries.delete(normalized)
 		if (entry.file.parent) {
 			entry.file.parent.children = entry.file.parent.children.filter(
 				(child) => child !== entry.file,
-			);
+			)
 		}
 	}
 
 	private ensureFolder(path: string): TFolder {
-		const normalized = normalizePath(path);
+		const normalized = normalizePath(path)
 		if (!normalized) {
-			const root = this.entries.get('')?.file;
-			if (root instanceof TFolder) return root;
-			const folder = new TFolder('', null);
-			this.entries.set('', { file: folder });
-			return folder;
+			const root = this.entries.get('')?.file
+			if (root instanceof TFolder) return root
+			const folder = new TFolder('', null)
+			this.entries.set('', { file: folder })
+			return folder
 		}
-		const existing = this.getAbstractFileByPath(normalized);
-		if (existing instanceof TFolder) return existing;
-		const segments = normalized.split('/');
-		let currentPath = '';
-		let parent: TFolder | null = null;
+		const existing = this.getAbstractFileByPath(normalized)
+		if (existing instanceof TFolder) return existing
+		const segments = normalized.split('/')
+		let currentPath = ''
+		let parent: TFolder | null = null
 		for (const segment of segments) {
-			currentPath = currentPath ? `${currentPath}/${segment}` : segment;
-			const currentExisting = this.getAbstractFileByPath(currentPath);
+			currentPath = currentPath ? `${currentPath}/${segment}` : segment
+			const currentExisting = this.getAbstractFileByPath(currentPath)
 			if (currentExisting instanceof TFolder) {
-				parent = currentExisting;
-				continue;
+				parent = currentExisting
+				continue
 			}
-			const folder: TFolder = new TFolder(currentPath, parent);
-			const entry: VaultEntry = { file: folder };
-			this.entries.set(currentPath, entry);
-			if (parent) parent.children.push(folder);
-			parent = folder;
+			const folder: TFolder = new TFolder(currentPath, parent)
+			const entry: VaultEntry = { file: folder }
+			this.entries.set(currentPath, entry)
+			if (parent) parent.children.push(folder)
+			parent = folder
 		}
-		return parent ?? new TFolder(normalized, null);
+		return parent ?? new TFolder(normalized, null)
 	}
 }
 
 interface CacheLink {
-	link: string;
-	original: string;
-	displayText: string;
+	link: string
+	original: string
+	displayText: string
 }
 
 interface FileCache {
-	frontmatter: Record<string, unknown>;
-	links?: CacheLink[];
-	embeds?: CacheLink[];
+	frontmatter: Record<string, unknown>
+	links?: CacheLink[]
+	embeds?: CacheLink[]
 }
 
 export class MetadataCache {
 	constructor(private vault: Vault) {}
 
 	getFileCache(file: TFile): FileCache | null {
-		const content = this.vault.getContent(file.path);
-		if (!content) return null;
-		const { frontmatter } = splitFrontmatter(content);
-		if (!frontmatter) return null;
-		const parsed = parseYaml(frontmatter);
-		if (!parsed || typeof parsed !== 'object') return null;
+		const content = this.vault.getContent(file.path)
+		if (!content) return null
+		const { frontmatter } = splitFrontmatter(content)
+		if (!frontmatter) return null
+		const parsed = parseYaml(frontmatter)
+		if (!parsed || typeof parsed !== 'object') return null
 		return {
 			frontmatter: parsed as Record<string, unknown>,
 			links: [],
 			embeds: [],
-		};
+		}
 	}
 
 	getFirstLinkpathDest(link: string, _sourcePath: string): TFile | null {
 		// Simple resolution: look for a file with that name
-		const files = this.vault.getMarkdownFiles();
+		const files = this.vault.getMarkdownFiles()
 		for (const file of files) {
 			if (file.basename === link || file.path === link || file.path === `${link}.md`) {
-				return file;
+				return file
 			}
 		}
-		return null;
+		return null
 	}
 }
 
@@ -310,52 +310,52 @@ export class FileManager {
 		file: TFile,
 		callback: (fm: Record<string, unknown>) => void,
 	): Promise<void> {
-		const content = this.vault.getContent(file.path);
-		const { frontmatter, body } = splitFrontmatter(content);
-		const parsed = frontmatter ? parseYaml(frontmatter) : null;
+		const content = this.vault.getContent(file.path)
+		const { frontmatter, body } = splitFrontmatter(content)
+		const parsed = frontmatter ? parseYaml(frontmatter) : null
 		const record =
-			parsed && typeof parsed === 'object' ? { ...(parsed as Record<string, unknown>) } : {};
-		callback(record);
-		const yaml = stringifyYaml(record).trim();
-		const bodyClean = body.replace(/^\n+/, '');
-		const parts = ['---', yaml, '---'];
-		if (bodyClean) parts.push(bodyClean);
-		this.vault.setContent(file.path, parts.join('\n'));
+			parsed && typeof parsed === 'object' ? { ...(parsed as Record<string, unknown>) } : {}
+		callback(record)
+		const yaml = stringifyYaml(record).trim()
+		const bodyClean = body.replace(/^\n+/, '')
+		const parts = ['---', yaml, '---']
+		if (bodyClean) parts.push(bodyClean)
+		this.vault.setContent(file.path, parts.join('\n'))
 	}
 
 	async trashFile(file: TFile): Promise<void> {
-		this.vault.deletePath(file.path);
+		this.vault.deletePath(file.path)
 	}
 
 	async renameFile(file: TFile, newPath: string): Promise<void> {
-		await this.vault.rename(file, newPath);
+		await this.vault.rename(file, newPath)
 	}
 }
 
 export class WorkspaceLeaf {
-	viewType: string | null = null;
-	view: unknown = null;
-	lastViewState: { type: string; active?: boolean } | null = null;
+	viewType: string | null = null
+	view: unknown = null
+	lastViewState: { type: string; active?: boolean } | null = null
 
 	async setViewState(state: { type: string; active?: boolean }): Promise<void> {
-		this.viewType = state.type;
-		this.lastViewState = state;
+		this.viewType = state.type
+		this.lastViewState = state
 	}
 }
 
 export class Workspace {
-	private leaves: WorkspaceLeaf[] = [];
-	private activeFile: TFile | null = null;
-	private activeView: unknown = null;
-	activeLeaf: WorkspaceLeaf | null = null;
-	activeLeafFocus = false;
+	private leaves: WorkspaceLeaf[] = []
+	private activeFile: TFile | null = null
+	private activeView: unknown = null
+	activeLeaf: WorkspaceLeaf | null = null
+	activeLeafFocus = false
 
 	getLeavesOfType(type: string): WorkspaceLeaf[] {
-		return this.leaves.filter((leaf) => leaf.viewType === type);
+		return this.leaves.filter((leaf) => leaf.viewType === type)
 	}
 
 	getMostRecentLeaf(): WorkspaceLeaf | null {
-		return this.leaves[0] ?? null;
+		return this.leaves[0] ?? null
 	}
 
 	async revealLeaf(_leaf: WorkspaceLeaf): Promise<void> {}
@@ -364,86 +364,86 @@ export class Workspace {
 		leaf: WorkspaceLeaf,
 		paramsOrPushHistory?:
 			| {
-					focus?: boolean;
+					focus?: boolean
 			  }
 			| boolean,
 		focus?: boolean,
 	): void {
-		this.activeLeaf = leaf;
+		this.activeLeaf = leaf
 		if (typeof paramsOrPushHistory === 'object' && paramsOrPushHistory) {
-			this.activeLeafFocus = !!paramsOrPushHistory.focus;
-			return;
+			this.activeLeafFocus = !!paramsOrPushHistory.focus
+			return
 		}
 		if (typeof focus === 'boolean') {
-			this.activeLeafFocus = focus;
-			return;
+			this.activeLeafFocus = focus
+			return
 		}
-		this.activeLeafFocus = false;
+		this.activeLeafFocus = false
 	}
 
 	getActiveFile(): TFile | null {
-		return this.activeFile;
+		return this.activeFile
 	}
 
 	setActiveFile(file: TFile | null): void {
-		this.activeFile = file;
+		this.activeFile = file
 	}
 
 	getActiveViewOfType<T>(viewType: new (...args: unknown[]) => T): T | null {
-		const view = this.activeView;
-		if (view instanceof viewType) return view;
-		return null;
+		const view = this.activeView
+		if (view instanceof viewType) return view
+		return null
 	}
 
 	setActiveView(view: unknown): void {
-		this.activeView = view;
+		this.activeView = view
 	}
 
 	addLeaf(leaf: WorkspaceLeaf): void {
-		this.leaves.push(leaf);
+		this.leaves.push(leaf)
 	}
 }
 
 export class App {
-	vault: Vault;
-	metadataCache: MetadataCache;
-	fileManager: FileManager;
-	workspace: Workspace;
+	vault: Vault
+	metadataCache: MetadataCache
+	fileManager: FileManager
+	workspace: Workspace
 
 	constructor() {
-		this.vault = new Vault();
-		this.metadataCache = new MetadataCache(this.vault);
-		this.fileManager = new FileManager(this.vault);
-		this.workspace = new Workspace();
+		this.vault = new Vault()
+		this.metadataCache = new MetadataCache(this.vault)
+		this.fileManager = new FileManager(this.vault)
+		this.workspace = new Workspace()
 	}
 }
 
 export class Plugin {
-	app: App;
-	commands: unknown[] = [];
-	settingTabs: PluginSettingTab[] = [];
-	editorExtensions: unknown[] = [];
-	views: { type: string; creator: (leaf: WorkspaceLeaf) => unknown }[] = [];
-	private storedData: unknown = null;
+	app: App
+	commands: unknown[] = []
+	settingTabs: PluginSettingTab[] = []
+	editorExtensions: unknown[] = []
+	views: { type: string; creator: (leaf: WorkspaceLeaf) => unknown }[] = []
+	private storedData: unknown = null
 
 	constructor(app?: App) {
-		this.app = app ?? new App();
+		this.app = app ?? new App()
 	}
 
 	addCommand(command: unknown): void {
-		this.commands.push(command);
+		this.commands.push(command)
 	}
 
 	addSettingTab(tab: PluginSettingTab): void {
-		this.settingTabs.push(tab);
+		this.settingTabs.push(tab)
 	}
 
 	registerEditorExtension(extension: unknown): void {
-		this.editorExtensions.push(extension);
+		this.editorExtensions.push(extension)
 	}
 
 	registerView(type: string, creator: (leaf: WorkspaceLeaf) => unknown): void {
-		this.views.push({ type, creator });
+		this.views.push({ type, creator })
 	}
 
 	registerEvent(_event: unknown): void {}
@@ -453,52 +453,52 @@ export class Plugin {
 	registerInterval(_id: number): void {}
 
 	async loadData(): Promise<unknown> {
-		return this.storedData;
+		return this.storedData
 	}
 
 	async saveData(data: unknown): Promise<void> {
-		this.storedData = data;
+		this.storedData = data
 	}
 
 	setData(data: unknown): void {
-		this.storedData = data;
+		this.storedData = data
 	}
 }
 
 export class FakeElement {
-	children: FakeElement[] = [];
-	innerHTML = '';
-	textContent = '';
-	classList = new Set<string>();
-	className = '';
-	tabIndex = 0;
-	components: unknown[] = [];
+	children: FakeElement[] = []
+	innerHTML = ''
+	textContent = ''
+	classList = new Set<string>()
+	className = ''
+	tabIndex = 0
+	components: unknown[] = []
 
 	createEl(_tag: string, options?: { text?: string }): FakeElement {
-		const el = new FakeElement();
-		if (options?.text) el.textContent = options.text;
-		this.children.push(el);
-		return el;
+		const el = new FakeElement()
+		if (options?.text) el.textContent = options.text
+		this.children.push(el)
+		return el
 	}
 
 	createDiv(className?: string): FakeElement {
-		const div = this.createEl('div');
-		if (className) div.addClass(className);
-		return div;
+		const div = this.createEl('div')
+		if (className) div.addClass(className)
+		return div
 	}
 
 	addClass(name: string): void {
-		this.classList.add(name);
-		this.className = Array.from(this.classList).join(' ');
+		this.classList.add(name)
+		this.className = Array.from(this.classList).join(' ')
 	}
 
 	empty(): void {
-		this.children = [];
-		this.innerHTML = '';
-		this.textContent = '';
-		this.classList.clear();
-		this.className = '';
-		this.components = [];
+		this.children = []
+		this.innerHTML = ''
+		this.textContent = ''
+		this.classList.clear()
+		this.className = ''
+		this.components = []
 	}
 
 	setCssProps(_props: Record<string, string>): void {}
@@ -513,16 +513,16 @@ export class FakeElement {
 }
 
 export class Modal {
-	contentEl = new FakeElement();
+	contentEl = new FakeElement()
 
 	constructor(public app: App) {}
 
 	open(): void {
-		this.onOpen();
+		this.onOpen()
 	}
 
 	close(): void {
-		this.onClose();
+		this.onClose()
 	}
 
 	onOpen(): void {}
@@ -531,13 +531,13 @@ export class Modal {
 }
 
 export class ItemView {
-	contentEl = new FakeElement();
+	contentEl = new FakeElement()
 
 	constructor(public leaf: WorkspaceLeaf) {}
 }
 
 export class MarkdownView {
-	editor: unknown = null;
+	editor: unknown = null
 
 	constructor(public file: TFile | null = null) {}
 }
@@ -554,12 +554,12 @@ export class MarkdownRenderer {
 		_path: string,
 		_source: unknown,
 	): Promise<void> {
-		container.textContent = markdown;
+		container.textContent = markdown
 	}
 }
 
 export class PluginSettingTab {
-	containerEl = new FakeElement();
+	containerEl = new FakeElement()
 
 	constructor(
 		public app: App,
@@ -570,263 +570,263 @@ export class PluginSettingTab {
 }
 
 export class Setting {
-	static createdComponents: { type: string; component: unknown }[] = [];
+	static createdComponents: { type: string; component: unknown }[] = []
 
 	constructor(public containerEl: FakeElement) {}
 
 	setName(_name: string): this {
-		return this;
+		return this
 	}
 
 	setDesc(_desc: string): this {
-		return this;
+		return this
 	}
 
 	setHeading(): this {
-		return this;
+		return this
 	}
 
 	addText(callback: (component: TextComponent) => void): this {
-		const component = new TextComponent();
-		Setting.createdComponents.push({ type: 'text', component });
-		this.containerEl.components.push(component);
-		callback(component);
-		return this;
+		const component = new TextComponent()
+		Setting.createdComponents.push({ type: 'text', component })
+		this.containerEl.components.push(component)
+		callback(component)
+		return this
 	}
 
 	addSlider(callback: (component: SliderComponent) => void): this {
-		const component = new SliderComponent();
-		Setting.createdComponents.push({ type: 'slider', component });
-		this.containerEl.components.push(component);
-		callback(component);
-		return this;
+		const component = new SliderComponent()
+		Setting.createdComponents.push({ type: 'slider', component })
+		this.containerEl.components.push(component)
+		callback(component)
+		return this
 	}
 
 	addToggle(callback: (component: ToggleComponent) => void): this {
-		const component = new ToggleComponent();
-		Setting.createdComponents.push({ type: 'toggle', component });
-		this.containerEl.components.push(component);
-		callback(component);
-		return this;
+		const component = new ToggleComponent()
+		Setting.createdComponents.push({ type: 'toggle', component })
+		this.containerEl.components.push(component)
+		callback(component)
+		return this
 	}
 
 	addButton(callback: (component: ButtonComponent) => void): this {
-		const component = new ButtonComponent();
-		Setting.createdComponents.push({ type: 'button', component });
-		this.containerEl.components.push(component);
-		callback(component);
-		return this;
+		const component = new ButtonComponent()
+		Setting.createdComponents.push({ type: 'button', component })
+		this.containerEl.components.push(component)
+		callback(component)
+		return this
 	}
 
 	addDropdown(callback: (component: DropdownComponent) => void): this {
-		const component = new DropdownComponent();
-		Setting.createdComponents.push({ type: 'dropdown', component });
-		this.containerEl.components.push(component);
-		callback(component);
-		return this;
+		const component = new DropdownComponent()
+		Setting.createdComponents.push({ type: 'dropdown', component })
+		this.containerEl.components.push(component)
+		callback(component)
+		return this
 	}
 
 	static resetComponents(): void {
-		Setting.createdComponents = [];
+		Setting.createdComponents = []
 	}
 }
 
 export class SliderComponent {
-	private onChangeHandler: ((value: number) => void) | null = null;
-	private value = 0;
+	private onChangeHandler: ((value: number) => void) | null = null
+	private value = 0
 
 	setLimits(_min: number, _max: number, _step: number): this {
-		return this;
+		return this
 	}
 
 	setValue(value: number): this {
-		this.value = value;
-		return this;
+		this.value = value
+		return this
 	}
 
 	setDynamicTooltip(): this {
-		return this;
+		return this
 	}
 
 	onChange(handler: (value: number) => void): this {
-		this.onChangeHandler = handler;
-		return this;
+		this.onChangeHandler = handler
+		return this
 	}
 
 	triggerChange(value: number): void {
-		this.value = value;
-		this.onChangeHandler?.(value);
+		this.value = value
+		this.onChangeHandler?.(value)
 	}
 }
 
 export class ToggleComponent {
-	private onChangeHandler: ((value: boolean) => void) | null = null;
-	private value = false;
+	private onChangeHandler: ((value: boolean) => void) | null = null
+	private value = false
 
 	setValue(value: boolean): this {
-		this.value = value;
-		return this;
+		this.value = value
+		return this
 	}
 
 	onChange(handler: (value: boolean) => void): this {
-		this.onChangeHandler = handler;
-		return this;
+		this.onChangeHandler = handler
+		return this
 	}
 
 	triggerChange(value: boolean): void {
-		this.value = value;
-		this.onChangeHandler?.(value);
+		this.value = value
+		this.onChangeHandler?.(value)
 	}
 }
 
 export class TextComponent {
-	inputEl = new FakeElement();
-	private onChangeHandler: ((value: string) => void) | null = null;
+	inputEl = new FakeElement()
+	private onChangeHandler: ((value: string) => void) | null = null
 
 	setValue(value: string): this {
-		this.inputEl.textContent = value;
-		return this;
+		this.inputEl.textContent = value
+		return this
 	}
 
 	onChange(handler: (value: string) => void): this {
-		this.onChangeHandler = handler;
-		return this;
+		this.onChangeHandler = handler
+		return this
 	}
 
 	triggerChange(value: string): void {
-		this.onChangeHandler?.(value);
+		this.onChangeHandler?.(value)
 	}
 }
 
 export class ButtonComponent {
-	private onClickHandler: (() => void) | null = null;
+	private onClickHandler: (() => void) | null = null
 
 	setButtonText(_text: string): this {
-		return this;
+		return this
 	}
 
 	setCta(): this {
-		return this;
+		return this
 	}
 
 	onClick(handler: () => void): this {
-		this.onClickHandler = handler;
-		return this;
+		this.onClickHandler = handler
+		return this
 	}
 
 	triggerClick(): void {
-		this.onClickHandler?.();
+		this.onClickHandler?.()
 	}
 }
 
 export class DropdownComponent {
-	private onChangeHandler: ((value: string) => void) | null = null;
-	private value = '';
-	private options: Map<string, string> = new Map();
+	private onChangeHandler: ((value: string) => void) | null = null
+	private value = ''
+	private options: Map<string, string> = new Map()
 
 	addOption(value: string, display: string): this {
-		this.options.set(value, display);
-		return this;
+		this.options.set(value, display)
+		return this
 	}
 
 	setValue(value: string): this {
-		this.value = value;
-		return this;
+		this.value = value
+		return this
 	}
 
 	onChange(handler: (value: string) => void): this {
-		this.onChangeHandler = handler;
-		return this;
+		this.onChangeHandler = handler
+		return this
 	}
 
 	triggerChange(value: string): void {
-		this.value = value;
-		this.onChangeHandler?.(value);
+		this.value = value
+		this.onChangeHandler?.(value)
 	}
 }
 
 export class Notice {
-	static messages: string[] = [];
+	static messages: string[] = []
 
 	constructor(message: string) {
-		Notice.messages.push(message);
+		Notice.messages.push(message)
 	}
 
 	static clear(): void {
-		Notice.messages = [];
+		Notice.messages = []
 	}
 
 	hide(): void {}
 }
 
 export class Editor {
-	private text: string;
-	private selectionStart: number;
-	private selectionEnd: number;
+	private text: string
+	private selectionStart: number
+	private selectionEnd: number
 
 	constructor(text: string, selectionStart = 0, selectionEnd?: number) {
-		this.text = text;
-		this.selectionStart = selectionStart;
-		this.selectionEnd = selectionEnd ?? text.length;
+		this.text = text
+		this.selectionStart = selectionStart
+		this.selectionEnd = selectionEnd ?? text.length
 	}
 
 	getSelection(): string {
-		return this.text.slice(this.selectionStart, this.selectionEnd);
+		return this.text.slice(this.selectionStart, this.selectionEnd)
 	}
 
 	replaceSelection(value: string): void {
-		const before = this.text.slice(0, this.selectionStart);
-		const after = this.text.slice(this.selectionEnd);
-		this.text = `${before}${value}${after}`;
-		this.selectionEnd = this.selectionStart + value.length;
+		const before = this.text.slice(0, this.selectionStart)
+		const after = this.text.slice(this.selectionEnd)
+		this.text = `${before}${value}${after}`
+		this.selectionEnd = this.selectionStart + value.length
 	}
 
 	getValue(): string {
-		return this.text;
+		return this.text
 	}
 
 	getCursor(which: 'from' | 'to'): { line: number; ch: number } {
-		const index = which === 'from' ? this.selectionStart : this.selectionEnd;
-		return this.indexToPos(index);
+		const index = which === 'from' ? this.selectionStart : this.selectionEnd
+		return this.indexToPos(index)
 	}
 
 	setSelection(from: { line: number; ch: number }, to: { line: number; ch: number }): void {
-		this.selectionStart = this.posToIndex(from);
-		this.selectionEnd = this.posToIndex(to);
+		this.selectionStart = this.posToIndex(from)
+		this.selectionEnd = this.posToIndex(to)
 	}
 
 	setSelectionByOffset(start: number, end: number): void {
-		this.selectionStart = start;
-		this.selectionEnd = end;
+		this.selectionStart = start
+		this.selectionEnd = end
 	}
 
 	setValue(value: string): void {
-		this.text = value;
-		this.selectionStart = 0;
-		this.selectionEnd = value.length;
+		this.text = value
+		this.selectionStart = 0
+		this.selectionEnd = value.length
 	}
 
 	private indexToPos(index: number): { line: number; ch: number } {
-		const lines = this.text.split('\n');
-		let remaining = index;
+		const lines = this.text.split('\n')
+		let remaining = index
 		for (let i = 0; i < lines.length; i += 1) {
-			const line = lines[i] ?? '';
+			const line = lines[i] ?? ''
 			if (remaining <= line.length) {
-				return { line: i, ch: remaining };
+				return { line: i, ch: remaining }
 			}
-			remaining -= line.length + 1;
+			remaining -= line.length + 1
 		}
-		return { line: lines.length - 1, ch: (lines[lines.length - 1] ?? '').length };
+		return { line: lines.length - 1, ch: (lines[lines.length - 1] ?? '').length }
 	}
 
 	private posToIndex(pos: { line: number; ch: number }): number {
-		const lines = this.text.split('\n');
-		let index = 0;
+		const lines = this.text.split('\n')
+		let index = 0
 		for (let i = 0; i < pos.line && i < lines.length; i += 1) {
-			index += (lines[i] ?? '').length + 1;
+			index += (lines[i] ?? '').length + 1
 		}
-		return index + pos.ch;
+		return index + pos.ch
 	}
 }
 
-export type MarkdownViewType = MarkdownView;
+export type MarkdownViewType = MarkdownView

@@ -57,9 +57,9 @@ function autoPostpone(
 	queue: SessionItem[],
 	maxDaily: number,
 ): {
-	toReview: SessionItem[];
-	postponed: SessionItem[];
-};
+	toReview: SessionItem[]
+	postponed: SessionItem[]
+}
 ```
 
 **Implementation:**
@@ -127,8 +127,8 @@ Two strategies in `src/engine/strategies/`:
 
 ```typescript
 // IR/manual-queue.md or frontmatter flag
-function addToOutstanding(itemId: string): void;
-function getOutstandingItems(): ReviewItem[];
+function addToOutstanding(itemId: string): void
+function getOutstandingItems(): ReviewItem[]
 ```
 
 **Difficulty: Low-Medium**
@@ -160,8 +160,8 @@ function getOutstandingItems(): ReviewItem[];
 **What's needed:**
 
 ```typescript
-function postponeItem(itemId: string, days: number): Promise<void>;
-function mercy(queue: SessionItem[], keepCount: number, spreadDays: number): Promise<void>;
+function postponeItem(itemId: string, days: number): Promise<void>
+function mercy(queue: SessionItem[], keepCount: number, spreadDays: number): Promise<void>
 ```
 
 **Difficulty: Medium**

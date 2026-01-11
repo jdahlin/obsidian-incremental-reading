@@ -118,11 +118,11 @@ All file creation uses try/catch to handle concurrent operations:
 
 ```typescript
 try {
-	await app.vault.create(path, content);
+	await app.vault.create(path, content)
 } catch {
-	const file = app.vault.getAbstractFileByPath(path);
+	const file = app.vault.getAbstractFileByPath(path)
 	if (file instanceof TFile) {
-		await app.vault.append(file, content);
+		await app.vault.append(file, content)
 	}
 }
 ```
@@ -131,8 +131,8 @@ try {
 
 ```typescript
 // Topics skip question phase, cloze items show question first
-const isClozeItem = item?.type === 'item' && item?.clozeIndex;
-this.phase = isClozeItem ? 'question' : 'answer';
+const isClozeItem = item?.type === 'item' && item?.clozeIndex
+this.phase = isClozeItem ? 'question' : 'answer'
 ```
 
 ### Content Rendering
@@ -142,8 +142,8 @@ this.phase = isClozeItem ? 'question' : 'answer';
 const formatted =
 	this.phase === 'question'
 		? formatClozeQuestion(content, item.clozeIndex)
-		: formatClozeAnswer(content, item.clozeIndex);
-await MarkdownRenderer.render(app, formatted, container, notePath, this);
+		: formatClozeAnswer(content, item.clozeIndex)
+await MarkdownRenderer.render(app, formatted, container, notePath, this)
 ```
 
 ### Test Directory Convention

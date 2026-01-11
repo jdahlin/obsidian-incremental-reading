@@ -1,14 +1,14 @@
-import type { FunctionalComponent } from 'preact';
-import type { DebugInfo } from './review-screen-state';
-import { ReviewCard } from './ReviewCard';
-import { ReviewDebugInfo } from './ReviewDebugInfo';
-import { ReviewGradeButtons } from './ReviewGradeButtons';
-import './ReviewAnswerScreen.css';
+import type { FunctionalComponent } from 'preact'
+import type { DebugInfo } from './review-screen-state'
+import { ReviewCard } from './ReviewCard'
+import { ReviewDebugInfo } from './ReviewDebugInfo'
+import { ReviewGradeButtons } from './ReviewGradeButtons'
+import './ReviewAnswerScreen.css'
 
 export interface ReviewAnswerScreenProps {
-	content: string;
-	debugInfo: DebugInfo;
-	onGrade: (grade: number) => void | Promise<void>;
+	content: string
+	debugInfo: DebugInfo
+	onGrade: (grade: number) => void | Promise<void>
 }
 
 export const ReviewAnswerScreen: FunctionalComponent<ReviewAnswerScreenProps> = ({
@@ -24,5 +24,5 @@ export const ReviewAnswerScreen: FunctionalComponent<ReviewAnswerScreenProps> = 
 			</div>
 			<ReviewDebugInfo info={debugInfo} />
 		</div>
-	);
-};
+	)
+}
