@@ -83,24 +83,26 @@ export class MarkdownDataStore implements DataStore {
 					const notePriority = data.priority ?? 50
 					for (const key of Object.keys(data.clozes)) {
 						const clozeIndex = Number.parseInt(key.substring(1), 10)
+						if (Number.isNaN(clozeIndex)) continue // Skip invalid cloze indices
 						const clozeId = `${data.ir_note_id}::${key}`
 						items.push({
 							id: clozeId,
 							noteId: data.ir_note_id,
 							notePath: data.note_path,
 							type: 'image_occlusion',
-							clozeIndex: Number.isNaN(clozeIndex) ? null : clozeIndex,
+							clozeIndex,
 							priority: notePriority,
 							created: new Date(),
 						})
 					}
 				} else {
-					// Single image occlusion without cloze regions
+					// Single image occlusion without cloze regions - default to clozeIndex 1
 					items.push({
 						id: data.ir_note_id,
 						noteId: data.ir_note_id,
 						notePath: data.note_path,
 						type: 'image_occlusion',
+						clozeIndex: 1,
 						priority: data.priority ?? 50,
 						created: new Date(),
 					})
@@ -123,6 +125,7 @@ export class MarkdownDataStore implements DataStore {
 				const notePriority = data.priority ?? 50
 				for (const key of Object.keys(data.clozes)) {
 					const clozeIndex = Number.parseInt(key.substring(1), 10)
+					if (Number.isNaN(clozeIndex)) continue // Skip invalid cloze indices
 					const clozeId = `${data.ir_note_id}::${key}`
 
 					items.push({
@@ -130,7 +133,7 @@ export class MarkdownDataStore implements DataStore {
 						noteId: data.ir_note_id,
 						notePath: data.note_path,
 						type: 'cloze',
-						clozeIndex: Number.isNaN(clozeIndex) ? null : clozeIndex,
+						clozeIndex,
 						priority: notePriority,
 						created: new Date(),
 					})

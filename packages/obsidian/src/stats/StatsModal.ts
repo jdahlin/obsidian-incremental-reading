@@ -1,4 +1,5 @@
 import type { ItemWithState } from '@repo/core/core/types'
+import type { ReviewItem } from '@repo/core/types'
 import type { App } from 'obsidian'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 import {
@@ -13,6 +14,14 @@ import { ObsidianVault } from '../adapters/ObsidianVault'
 import { getStreakInfo, getTodayStats } from '../data/review-stats'
 import { readAllReviews } from '../data/revlog'
 import './StatsModal.css'
+
+/** Get clozeIndex from a ReviewItem, or null if not applicable */
+function getClozeIndex(item: ReviewItem): number | null {
+	if (item.type === 'cloze' || item.type === 'image_occlusion') {
+		return item.clozeIndex
+	}
+	return null
+}
 
 export class StatsModal extends Modal {
 	constructor(
@@ -87,7 +96,7 @@ export class StatsModal extends Modal {
 				noteId: engineItem.noteId,
 				notePath: engineItem.notePath,
 				type: engineItem.type === 'topic' ? 'topic' : 'item',
-				clozeIndex: engineItem.clozeIndex,
+				clozeIndex: getClozeIndex(engineItem),
 				state: state
 					? {
 							status: state.status,

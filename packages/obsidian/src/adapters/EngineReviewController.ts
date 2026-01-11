@@ -10,6 +10,7 @@ import type {
 	DataStore,
 	NotePlatform,
 	Rating,
+	ReviewItem,
 	ReviewState,
 	SessionConfig,
 	SessionItem,
@@ -27,6 +28,14 @@ import { formatReviewContent } from '@repo/core/core/content'
 import { buildDeckTree, getCountsForFolder } from '@repo/core/core/decks'
 import { SessionManager } from '@repo/core/SessionManager'
 import { buildSessionState } from '../data/session'
+
+/** Get clozeIndex from a ReviewItem, or null if not applicable */
+function getClozeIndex(item: ReviewItem): number | null {
+	if (item.type === 'cloze' || item.type === 'image_occlusion') {
+		return item.clozeIndex
+	}
+	return null
+}
 
 /** Extended platform adapter with optional session state support */
 interface ExtendedPlatformAdapter extends ReviewPlatformAdapter {
@@ -197,7 +206,7 @@ export class EngineReviewController {
 				noteId: engineItem.noteId,
 				notePath: engineItem.notePath,
 				type: this.mapItemType(engineItem.type),
-				clozeIndex: engineItem.clozeIndex,
+				clozeIndex: getClozeIndex(engineItem),
 				state: state
 					? {
 							status: state.status,
@@ -454,7 +463,7 @@ export class EngineReviewController {
 			noteId: si.item.noteId,
 			notePath: si.item.notePath,
 			type: this.mapItemType(si.item.type),
-			clozeIndex: si.item.clozeIndex,
+			clozeIndex: getClozeIndex(si.item),
 			state: this.reviewStateToItemState(si.state),
 			priority: si.item.priority,
 			created: si.item.created,
@@ -504,7 +513,7 @@ export class EngineReviewController {
 					rawMarkdown,
 					si.item.type,
 					this.model.phase,
-					si.item.clozeIndex,
+					getClozeIndex(si.item),
 				)
 			}
 		}
