@@ -4,21 +4,16 @@
  * Writes card scheduling state (sidecars) to markdown files.
  */
 
-import type {SchedulingStatus} from '../importer/cards.js';
-import type {IRNoteId} from '../ir-types.js';
+import type { SchedulingStatus } from '../importer/cards.js'
+import type { IRNoteId } from '../ir-types.js'
 import type { Card, Model, Note } from '../types.js'
 import type { WriteError } from './index.js'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { stringify as yamlStringify } from 'yaml'
-import {
-	dueToDate,
-	factorToDifficulty,
-	queueToStatus
-	
-} from '../importer/cards.js'
+import { dueToDate, factorToDifficulty, queueToStatus } from '../importer/cards.js'
 import { extractClozeIndices } from '../importer/notes.js'
-import { generateClozeUid  } from '../ir-types.js'
+import { generateClozeUid } from '../ir-types.js'
 import { NotetypeKind } from '../types.js'
 
 // =============================================================================
@@ -41,6 +36,7 @@ interface ClozeState extends FSRSState {
 
 interface BasicSidecar {
 	readonly ir_note_id: string
+	readonly note_path: string
 	readonly anki_note_id: string
 	readonly type: 'basic'
 	readonly priority: number
@@ -49,6 +45,7 @@ interface BasicSidecar {
 
 interface ClozeSidecar {
 	readonly ir_note_id: string
+	readonly note_path: string
 	readonly anki_note_id: string
 	readonly type: 'cloze' | 'image_occlusion'
 	readonly priority: number
@@ -64,7 +61,7 @@ type Sidecar = BasicSidecar | ClozeSidecar
 type NoteType = 'basic' | 'cloze' | 'image_occlusion' | 'standard'
 
 function getNoteType(model: Model): NoteType {
-	const fieldNames = model.fields.map(f => f.name.toLowerCase())
+	const fieldNames = model.fields.map((f) => f.name.toLowerCase())
 	if (fieldNames.includes('occlusion') && fieldNames.includes('image')) {
 		return 'image_occlusion'
 	}
@@ -84,10 +81,7 @@ function getNoteType(model: Model): NoteType {
 /**
  * Create FSRS state from Anki card
  */
-function createFSRSState(
-	card: Card,
-	collectionCreatedAt: number,
-): FSRSState | null {
+function createFSRSState(card: Card, collectionCreatedAt: number): FSRSState | null {
 	const status = queueToStatus(card.queue, card.type)
 	if (status === null) {
 		return null // Suspended
@@ -111,6 +105,7 @@ function createFSRSState(
  */
 function generateSidecar(
 	note: Note,
+	notePath: string,
 	cards: Card[],
 	model: Model,
 	irNoteId: string,
@@ -119,7 +114,7 @@ function generateSidecar(
 	const noteType = getNoteType(model)
 
 	// Filter out suspended cards
-	const activeCards = cards.filter(c => {
+	const activeCards = cards.filter((c) => {
 		const status = queueToStatus(c.queue, c.type)
 		return status !== null
 	})
@@ -135,7 +130,7 @@ function generateSidecar(
 
 		for (const idx of clozeIndices) {
 			// Find card for this cloze (ord = cloze_index - 1)
-			const card = activeCards.find(c => (c.ord as number) === idx - 1)
+			const card = activeCards.find((c) => (c.ord as number) === idx - 1)
 			if (card) {
 				const state = createFSRSState(card, collectionCreatedAt)
 				if (state) {
@@ -165,6 +160,7 @@ function generateSidecar(
 
 		return {
 			ir_note_id: irNoteId,
+			note_path: notePath,
 			anki_note_id: String(note.id),
 			type: noteType,
 			priority: 50,
@@ -180,6 +176,7 @@ function generateSidecar(
 
 		return {
 			ir_note_id: irNoteId,
+			note_path: notePath,
 			anki_note_id: String(note.id),
 			type: 'basic',
 			priority: 50,
@@ -205,13 +202,17 @@ function sidecarToMarkdown(sidecar: Sidecar): string {
 // =============================================================================
 
 /**
- * Write all card scheduling sidecars
+ * Write all card scheduling sidecars to IR/Review Items/
+ *
+ * @param notePathMap - Map of note ID to vault-relative note path
+ * @param outputDir - Absolute path to IR/Review Items/ directory
  */
 export async function writeCards(
 	notes: readonly Note[],
 	cards: readonly Card[],
 	modelMap: Map<number, Model>,
 	irNoteIdMap: Map<number, IRNoteId>,
+	notePathMap: Map<number, string>,
 	outputDir: string,
 	collectionCreatedAt: number,
 	errors: WriteError[],
@@ -238,8 +239,13 @@ export async function writeCards(
 		const irNoteId = irNoteIdMap.get(note.id as number)
 		if (!irNoteId) continue
 
+		// Get vault-relative note path (coordinated with notes writer)
+		const notePath = notePathMap.get(note.id as number)
+		if (!notePath) continue
+
 		const sidecar = generateSidecar(
 			note,
+			notePath,
 			noteCards,
 			model,
 			irNoteId,
