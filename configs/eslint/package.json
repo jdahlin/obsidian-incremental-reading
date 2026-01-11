@@ -15,7 +15,7 @@
 		"eslint-plugin-format": "^1.0.1"
 	},
 	"devDependencies": {
-		"eslint": "^9.39.2",
-		"typescript": "^5.9.3"
+		"eslint": "catalog:",
+		"typescript": "catalog:"
 	}
 }

@@ -22,15 +22,15 @@
 		"@codemirror/state": "6.5.0",
 		"@codemirror/view": "^6.29.1",
 		"@repo/eslint-config": "workspace:*",
-		"@types/js-yaml": "^4.0.9",
-		"js-yaml": "^4.1.1",
+		"@types/js-yaml": "catalog:",
+		"js-yaml": "catalog:",
 		"@repo/tsconfig": "workspace:*",
 		"@repo/vitest-config": "workspace:*",
-		"@types/node": "^22.0.0",
+		"@types/node": "catalog:",
 		"esbuild": "0.25.5",
 		"eslint-plugin-obsidianmd": "0.1.9",
 		"jsdom": "^27.4.0",
-		"typescript": "^5.9.3",
+		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}
 }

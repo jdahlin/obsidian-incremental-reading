@@ -13,7 +13,7 @@
 		"lint": "turbo lint",
 		"test": "turbo test",
 		"test:watch": "turbo test:watch",
-		"test:coverage": "turbo test:coverage",
+		"test:coverage": "turbo test:coverage && tsx scripts/coverage-summary.ts",
 		"typecheck": "turbo typecheck",
 		"format": "prettier --write --log-level=error .",
 		"format:check": "prettier --check .",
@@ -33,13 +33,13 @@
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@vitest/coverage-v8": "catalog:",
-		"eslint": "^9.39.2",
+		"eslint": "catalog:",
 		"husky": "^9.1.7",
 		"nano-staged": "^0.9.0",
 		"prettier": "^3.7.4",
-		"tsx": "^4.21.0",
+		"tsx": "catalog:",
 		"turbo": "^2.7.2",
-		"typescript": "^5.9.3",
+		"typescript": "catalog:",
 		"vitest": "catalog:"
 	},
 	"pnpm": {
