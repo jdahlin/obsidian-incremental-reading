@@ -10,7 +10,7 @@ import type { SessionStateData } from '../data/session'
 import { getStreakInfo, getTodayStats } from '../data/review-stats'
 import { writeSessionState } from '../data/session'
 import { loadReviewItemHtml } from '../review/content'
-import { StatsModal } from '../stats/StatsModal'
+import { VIEW_TYPE_STATS } from '../stats/StatsView'
 
 export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 	constructor(
@@ -34,8 +34,17 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		return loadReviewItemHtml({ app: this.app, view: this.view, extractTag }, item, phase)
 	}
 
-	openStats(extractTag: string): void {
-		new StatsModal(this.app, extractTag).open()
+	openStats(_extractTag: string): void {
+		const { workspace } = this.app
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
+		if (!leaf) {
+			const mostRecent = workspace.getMostRecentLeaf()
+			if (!mostRecent) return
+			leaf = mostRecent
+			void leaf.setViewState({ type: VIEW_TYPE_STATS, active: true })
+		}
+		void workspace.revealLeaf(leaf)
+		workspace.setActiveLeaf(leaf, { focus: true })
 	}
 
 	getPreselectedPath(decks: DeckInfo[]): string | null {
