@@ -6,10 +6,14 @@ import type {
 	TodayStats,
 } from '@repo/core/core/types'
 import type { App, TAbstractFile } from 'obsidian'
+import type { CardInfo } from '../adapters/EngineReviewController'
 import type { SessionStateData } from '../data/session'
+import { TFile } from 'obsidian'
+import { deleteReviewItemFile, readReviewItemFile, writeReviewItemFile } from '../data/review-items'
 import { getStreakInfo, getTodayStats } from '../data/review-stats'
 import { writeSessionState } from '../data/session'
 import { loadReviewItemHtml } from '../review/content'
+import { CardInfoModal } from '../stats/CardInfoModal'
 import { VIEW_TYPE_STATS } from '../stats/StatsView'
 
 export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
@@ -83,6 +87,36 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 
 	async updateSessionState(data: SessionStateData): Promise<void> {
 		await writeSessionState(this.app, data)
+	}
+
+	async openNote(notePath: string): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(notePath)
+		if (file instanceof TFile) {
+			await this.app.workspace.getLeaf('tab').openFile(file)
+		}
+	}
+
+	async deleteItem(noteId: string, clozeKey?: string): Promise<void> {
+		if (clozeKey) {
+			// Delete only the specific cloze entry
+			const data = await readReviewItemFile(this.app, noteId)
+			if (data?.clozes && data.clozes[clozeKey]) {
+				delete data.clozes[clozeKey]
+				// If no more clozes and no topic, delete the whole file
+				if (Object.keys(data.clozes).length === 0 && !data.topic) {
+					await deleteReviewItemFile(this.app, noteId)
+				} else {
+					await writeReviewItemFile(this.app, noteId, data)
+				}
+			}
+		} else {
+			// Delete the entire review item file
+			await deleteReviewItemFile(this.app, noteId)
+		}
+	}
+
+	showCardInfo(info: CardInfo): void {
+		new CardInfoModal(this.app, info).open()
 	}
 
 	private collectDeckPaths(decks: DeckInfo[]): Set<string> {
