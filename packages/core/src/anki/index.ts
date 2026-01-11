@@ -78,7 +78,7 @@ export async function importAnkiDatabase(config: AnkiImportConfig): Promise<Anki
 	};
 	const result = convertAnkiToIR(ankiData, importOptions);
 	console.log(
-		`Converted ${result.stats.total} notes (${result.stats.cloze} cloze, ${result.stats.basic} basic, ${result.stats.skipped} skipped)`,
+		`Converted ${result.stats.total} notes (${result.stats.cloze} cloze, ${result.stats.basic} basic, ${result.stats.imageOcclusion} image occlusion, ${result.stats.topic} topic, ${result.stats.skipped} skipped)`,
 	);
 
 	// 3. Copy media files
@@ -152,7 +152,7 @@ function buildSidecarContent(note: {
 	id: string;
 	deckPath: string;
 	filename: string;
-	type: 'topic' | 'item';
+	type: 'topic' | 'item' | 'basic' | 'image_occlusion';
 	cards: Array<{ clozeIndex?: number; state: ReviewState }>;
 }): string {
 	const notePath = `Anki/${note.deckPath}/${note.filename}.md`;
@@ -183,6 +183,19 @@ function buildSidecarContent(note: {
 			};
 		}
 		data.clozes = clozes;
+	} else if (note.type === 'basic') {
+		// Basic cards have separate scheduling per side (though typically 1 card)
+		const firstCard = note.cards[0];
+		if (firstCard) {
+			data.basic = serializeState(firstCard.state);
+		}
+	} else if (note.type === 'image_occlusion') {
+		// Image occlusion cards - each card is a separate occlusion region
+		// For now, use topic-style scheduling for the whole note
+		const firstCard = note.cards[0];
+		if (firstCard) {
+			data.image_occlusion = serializeState(firstCard.state);
+		}
 	} else {
 		// Topic scheduling
 		const firstCard = note.cards[0];

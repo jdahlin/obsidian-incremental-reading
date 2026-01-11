@@ -6,11 +6,7 @@ const baseConfig = antfu({
 		tsconfigPath: 'tsconfig.json',
 	},
 	jsonc: false, // Disable JSON linting to avoid type-aware rule conflicts
-	stylistic: {
-		indent: 'tab', // Match prettier config
-		quotes: 'single',
-		semi: true,
-	},
+	stylistic: false, // Disable all stylistic rules - Prettier handles formatting
 	rules: {
 		// Prevent inline TypeScript suppressions - require documented ts-expect-error
 		'@typescript-eslint/ban-ts-comment': [
@@ -50,18 +46,9 @@ const baseConfig = antfu({
 		'no-cond-assign': 'off', // Allow assignment in while loops
 		'ts/no-use-before-define': 'off', // Allow hoisted functions
 
-		// Disable stylistic rules that conflict with Prettier
+		// Disable antfu-specific rules that conflict with Prettier
 		'antfu/if-newline': 'off',
 		'antfu/consistent-list-newline': 'off',
-		'style/arrow-parens': 'off',
-		'style/brace-style': 'off',
-		'style/operator-linebreak': 'off',
-		'style/indent-binary-ops': 'off',
-		'style/quotes': 'off',
-		'style/jsx-one-expression-per-line': 'off',
-		'style/multiline-ternary': 'off',
-		'style/indent': 'off',
-		'style/no-mixed-spaces-and-tabs': 'off',
 	},
 	ignores: [
 		'**/package.json',

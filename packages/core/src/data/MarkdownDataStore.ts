@@ -8,10 +8,12 @@ const REVLOG_FOLDER = 'IR/Revlog';
 interface ReviewItemFile {
 	ir_note_id: string;
 	note_path: string;
-	type?: 'topic' | 'item';
+	type?: 'topic' | 'item' | 'basic' | 'image_occlusion';
 	priority?: number;
 	cloze?: string[];
 	topic?: ReviewState;
+	basic?: ReviewState;
+	image_occlusion?: ReviewState;
 	clozes?: Record<string, ClozeEntry>;
 }
 
@@ -64,7 +66,48 @@ export class MarkdownDataStore implements DataStore {
 			const data = this.parseReviewItemFile(content);
 			if (!data) continue;
 
-			if (data.type === 'topic' || !data.type) {
+			// Handle basic cards
+			if (data.type === 'basic') {
+				items.push({
+					id: data.ir_note_id,
+					noteId: data.ir_note_id,
+					notePath: data.note_path,
+					type: 'basic',
+					priority: data.priority ?? 50,
+					created: new Date(),
+				});
+			}
+			// Handle image occlusion cards (may have multiple cloze regions)
+			else if (data.type === 'image_occlusion') {
+				if (data.clozes) {
+					const notePriority = data.priority ?? 50;
+					for (const key of Object.keys(data.clozes)) {
+						const clozeIndex = Number.parseInt(key.substring(1), 10);
+						const clozeId = `${data.ir_note_id}::${key}`;
+						items.push({
+							id: clozeId,
+							noteId: data.ir_note_id,
+							notePath: data.note_path,
+							type: 'image_occlusion',
+							clozeIndex: Number.isNaN(clozeIndex) ? null : clozeIndex,
+							priority: notePriority,
+							created: new Date(),
+						});
+					}
+				} else {
+					// Single image occlusion without cloze regions
+					items.push({
+						id: data.ir_note_id,
+						noteId: data.ir_note_id,
+						notePath: data.note_path,
+						type: 'image_occlusion',
+						priority: data.priority ?? 50,
+						created: new Date(),
+					});
+				}
+			}
+			// Handle topic cards
+			else if (data.type === 'topic' || !data.type) {
 				items.push({
 					id: data.ir_note_id,
 					noteId: data.ir_note_id,
@@ -75,7 +118,8 @@ export class MarkdownDataStore implements DataStore {
 				});
 			}
 
-			if (data.clozes) {
+			// Handle cloze cards (type: item)
+			if (data.clozes && data.type !== 'image_occlusion') {
 				const notePriority = data.priority ?? 50;
 				for (const key of Object.keys(data.clozes)) {
 					const clozeIndex = Number.parseInt(key.substring(1), 10);
@@ -238,14 +282,21 @@ ${line}`
 		if (fm === null) return null;
 		try {
 			const parsed = parse(fm) as RawReviewItemFile;
+			const validTypes = ['topic', 'item', 'basic', 'image_occlusion'] as const;
+			const parsedType = validTypes.includes(parsed.type as (typeof validTypes)[number])
+				? (parsed.type as ReviewItemFile['type'])
+				: undefined;
 			return {
 				ir_note_id: parsed.ir_note_id ?? '',
 				note_path: parsed.note_path ?? '',
-				type:
-					parsed.type === 'item' ? 'item' : parsed.type === 'topic' ? 'topic' : undefined,
+				type: parsedType,
 				priority: parsed.priority,
 				cloze: parsed.cloze,
 				topic: this.parseState(parsed.topic),
+				basic: this.parseState((parsed as Record<string, unknown>).basic as RawItemState),
+				image_occlusion: this.parseState(
+					(parsed as Record<string, unknown>).image_occlusion as RawItemState,
+				),
 				clozes: this.parseClozes(parsed.clozes),
 			};
 		} catch (e) {

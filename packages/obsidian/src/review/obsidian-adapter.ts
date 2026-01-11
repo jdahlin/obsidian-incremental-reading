@@ -6,7 +6,9 @@ import type {
 	TodayStats,
 } from '@repo/core/core/types';
 import type { App, TAbstractFile } from 'obsidian';
+import type { SessionStateData } from '../data/session';
 import { getStreakInfo, getTodayStats } from '../data/review-stats';
+import { writeSessionState } from '../data/session';
 import { loadReviewItemHtml } from '../review/content';
 import { StatsModal } from '../stats/StatsModal';
 
@@ -68,6 +70,10 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		return () => {
 			refs.forEach((ref) => vault.offref(ref));
 		};
+	}
+
+	async updateSessionState(data: SessionStateData): Promise<void> {
+		await writeSessionState(this.app, data);
 	}
 
 	private collectDeckPaths(decks: DeckInfo[]): Set<string> {

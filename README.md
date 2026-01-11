@@ -136,7 +136,7 @@ Settings available in the plugin options:
 ## Credits
 
 - Inspired by [SuperMemo](https://supermemo.guru/wiki/Incremental_reading)
-- Scheduling algorithm: [FSRS](https://github.com/open-spaced-repetition/fsrs4anki)
+- Scheduling algorithm is [FSRS](https://github.com/open-spaced-repetition/fsrs4anki)
 - Built on the [Obsidian Plugin API](https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin)
 
 ## License

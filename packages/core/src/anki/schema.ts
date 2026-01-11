@@ -94,8 +94,13 @@ export const ANKI_QUEUE = {
 
 /**
  * Anki model types.
+ * Note: Basic and Image Occlusion are detected by name pattern,
+ * not by Anki's internal type value (which is only 0=standard or 1=cloze).
  */
 export const ANKI_MODEL_TYPE = {
 	STANDARD: 0,
 	CLOZE: 1,
+	// Extended types detected by name pattern (not native Anki values)
+	BASIC: 2,
+	IMAGE_OCCLUSION: 3,
 } as const;

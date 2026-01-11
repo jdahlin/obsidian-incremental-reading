@@ -15,13 +15,17 @@ export interface ClozeEntry extends ItemState {
 	cloze_uid: string;
 }
 
+export type ReviewItemType = 'topic' | 'item' | 'basic' | 'image_occlusion';
+
 export interface ReviewItemFile {
 	ir_note_id: string;
 	note_path: string;
-	type?: 'topic' | 'item';
+	type?: ReviewItemType;
 	priority?: number;
 	cloze?: string[];
 	topic?: ItemState;
+	basic?: ItemState;
+	image_occlusion?: ItemState;
 	clozes?: Record<string, ClozeEntry>;
 }
 
@@ -55,10 +59,14 @@ export async function readReviewItemFile(app: App, noteId: string): Promise<Revi
 
 	const ir_note_id = typeof raw.ir_note_id === 'string' ? raw.ir_note_id : noteId;
 	const note_path = typeof raw.note_path === 'string' ? raw.note_path : '';
-	const type = raw.type === 'item' ? 'item' : raw.type === 'topic' ? 'topic' : undefined;
+	const type = parseReviewItemType(raw.type);
 	const priority = normalizeNumber(raw.priority, 50);
 	const cloze = Array.isArray(raw.cloze) ? raw.cloze.map((value) => String(value)) : undefined;
 	const topic = parseItemState(isRecord(raw.topic) ? raw.topic : undefined);
+	const basic = parseItemState(isRecord(raw.basic) ? raw.basic : undefined);
+	const image_occlusion = parseItemState(
+		isRecord(raw.image_occlusion) ? raw.image_occlusion : undefined,
+	);
 	const clozes = parseClozes(isRecord(raw.clozes) ? raw.clozes : undefined);
 
 	return {
@@ -68,8 +76,17 @@ export async function readReviewItemFile(app: App, noteId: string): Promise<Revi
 		priority,
 		cloze,
 		topic: topic ?? undefined,
+		basic: basic ?? undefined,
+		image_occlusion: image_occlusion ?? undefined,
 		clozes: clozes ?? undefined,
 	};
+}
+
+function parseReviewItemType(value: unknown): ReviewItemType | undefined {
+	if (value === 'topic' || value === 'item' || value === 'basic' || value === 'image_occlusion') {
+		return value;
+	}
+	return undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -97,6 +114,14 @@ export async function writeReviewItemFile(
 
 	if (data.topic) {
 		record.topic = serializeItemState(data.topic);
+	}
+
+	if (data.basic) {
+		record.basic = serializeItemState(data.basic);
+	}
+
+	if (data.image_occlusion) {
+		record.image_occlusion = serializeItemState(data.image_occlusion);
 	}
 
 	if (data.clozes && Object.keys(data.clozes).length) {
