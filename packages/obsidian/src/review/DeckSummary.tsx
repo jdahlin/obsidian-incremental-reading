@@ -7,7 +7,7 @@ import { DeckSummaryFooter } from './DeckSummaryFooter'
 import { DeckSummaryHeader } from './DeckSummaryHeader'
 import './DeckSummary.css'
 
-export interface DeckSummaryProps {
+interface DeckSummaryProps {
 	decks: DeckInfo[]
 	selectedPath: string | null
 	allCounts: DeckCountsValue
