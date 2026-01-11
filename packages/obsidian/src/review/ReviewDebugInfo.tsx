@@ -1,7 +1,7 @@
 import type { FunctionalComponent } from 'preact'
 import type { DebugInfo } from './review-screen-state'
 
-export interface ReviewDebugInfoProps {
+interface ReviewDebugInfoProps {
 	info: DebugInfo
 }
 

@@ -3,7 +3,7 @@ import type { FunctionalComponent } from 'preact'
 import type { DeckCountsValue } from './deck-summary-types'
 import { DeckSummary } from './DeckSummary'
 
-export interface ReviewFolderScreenProps {
+interface ReviewFolderScreenProps {
 	decks: DeckInfo[]
 	selectedPath: string | null
 	allCounts: DeckCountsValue

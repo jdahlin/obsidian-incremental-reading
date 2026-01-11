@@ -16,7 +16,7 @@ import { deckId, parseDeckPath } from '../types.js'
 /**
  * Convert raw deck row to hydrated Deck
  */
-export function hydrateDeck(row: DeckRow): Deck {
+function hydrateDeck(row: DeckRow): Deck {
 	// Anki uses \x1f as hierarchy separator in some versions, normalize to ::
 	// eslint-disable-next-line no-control-regex
 	const normalizedName = row.name.replace(/\x1F/g, '::')

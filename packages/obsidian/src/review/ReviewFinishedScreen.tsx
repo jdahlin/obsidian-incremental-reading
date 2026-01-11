@@ -3,7 +3,7 @@ import type { SessionStats } from './review-screen-types'
 import { ReviewSessionSummary } from './ReviewSessionSummary'
 import './ReviewFinishedScreen.css'
 
-export interface ReviewFinishedScreenProps {
+interface ReviewFinishedScreenProps {
 	sessionStats: SessionStats
 	onBack: () => void
 }

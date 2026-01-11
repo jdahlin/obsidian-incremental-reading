@@ -228,9 +228,3 @@ async function copyMedia(
 
 	return count
 }
-
-export { writeCards } from './cards.js'
-export { writeDecks } from './decks.js'
-// Re-export individual writers
-export { writeModels } from './models.js'
-export { writeNotes } from './notes.js'

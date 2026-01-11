@@ -16,7 +16,7 @@ import { cardId, cardOrd, CardQueue, CardType, deckId, noteId } from '../types.j
 /**
  * Convert raw card row to hydrated Card
  */
-export function hydrateCard(row: CardRow): Card {
+function hydrateCard(row: CardRow): Card {
 	return {
 		id: cardId(row.id),
 		noteId: noteId(row.nid),
@@ -138,11 +138,7 @@ export function factorToDifficulty(factor: number): number {
  * @param queue - Card queue (determines interpretation)
  * @param collectionCreatedAt - Collection creation timestamp (seconds)
  */
-export function dueToDate(
-	due: number,
-	queue: CardQueue,
-	collectionCreatedAt: number,
-): Date {
+export function dueToDate(due: number, queue: CardQueue, collectionCreatedAt: number): Date {
 	if (queue === CardQueue.New) {
 		// New cards: due is position in new queue, not a date
 		return new Date()
@@ -195,9 +191,11 @@ export function cardToFSRSState(
 /**
  * Import cards with FSRS scheduling state
  */
-export function importCardsWithScheduling(
-	db: Database.Database,
-): { cards: Card[]; scheduling: Map<number, FSRSSchedulingState>; collectionCreatedAt: number } {
+export function importCardsWithScheduling(db: Database.Database): {
+	cards: Card[]
+	scheduling: Map<number, FSRSSchedulingState>
+	collectionCreatedAt: number
+} {
 	const cards = importCards(db)
 	const collectionCreatedAt = getCollectionCreationTime(db)
 	const scheduling = new Map<number, FSRSSchedulingState>()

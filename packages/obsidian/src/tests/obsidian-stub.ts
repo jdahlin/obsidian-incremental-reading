@@ -104,11 +104,11 @@ interface VaultEntry {
 	content?: string
 }
 
-export interface EventRef {
+interface EventRef {
 	_eventRef?: boolean
 }
 
-export class Events {
+class Events {
 	on(_name: string, _callback: (...data: unknown[]) => unknown, _ctx?: unknown): EventRef {
 		return {}
 	}
@@ -828,5 +828,3 @@ export class Editor {
 		return index + pos.ch
 	}
 }
-
-export type MarkdownViewType = MarkdownView

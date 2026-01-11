@@ -1,7 +1,7 @@
 import type { FunctionalComponent } from 'preact'
 import './ReviewShowAnswerButton.css'
 
-export interface ReviewShowAnswerButtonProps {
+interface ReviewShowAnswerButtonProps {
 	onShowAnswer: () => void
 }
 

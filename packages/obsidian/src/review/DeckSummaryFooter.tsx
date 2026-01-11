@@ -2,7 +2,7 @@ import type { StreakInfo, TodayStats } from '@repo/core/core/types'
 import type { FunctionalComponent } from 'preact'
 import './DeckSummaryFooter.css'
 
-export interface DeckSummaryFooterProps {
+interface DeckSummaryFooterProps {
 	todayStats: TodayStats
 	streak: StreakInfo
 	showStreak: boolean

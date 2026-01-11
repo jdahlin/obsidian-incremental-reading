@@ -1,7 +1,7 @@
 import type { FunctionalComponent } from 'preact'
 import './ReviewGradeButtons.css'
 
-export interface ReviewGradeButtonsProps {
+interface ReviewGradeButtonsProps {
 	onGrade: (grade: number) => void | Promise<void>
 }
 
