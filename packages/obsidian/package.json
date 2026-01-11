@@ -17,11 +17,9 @@
 		"@repo/core": "workspace:*",
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",
-		"d3-time": "^3.1.0",
-		"d3-time-format": "^4.1.0",
 		"obsidian": "latest",
 		"preact": "^10.26.9",
-		"sql.js": "^1.13.0"
+		"sql.js": "catalog:"
 	},
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",
@@ -31,13 +29,9 @@
 		"@repo/vitest-config": "workspace:*",
 		"@types/d3-array": "^3.2.2",
 		"@types/d3-scale": "^4.0.9",
-		"@types/d3-time": "^3.0.4",
-		"@types/d3-time-format": "^4.0.3",
 		"@types/js-yaml": "catalog:",
 		"@types/node": "catalog:",
-		"@types/sql.js": "^1.4.9",
 		"esbuild": "0.25.5",
-		"eslint-plugin-obsidianmd": "0.1.9",
 		"js-yaml": "catalog:",
 		"jsdom": "^27.4.0",
 		"typescript": "catalog:",

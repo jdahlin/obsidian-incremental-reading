@@ -19,7 +19,7 @@ import { fieldOrd, modelId, NotetypeKind, parseTemplateConfig, templateOrd } fro
  * Heuristic: Cloze notetypes typically have a single template
  * with "cloze" in the name (case-insensitive)
  */
-export function detectNotetypeKind(
+function detectNotetypeKind(
 	notetype: NotetypeRow,
 	templates: TemplateRow[],
 ): typeof NotetypeKind.Normal | typeof NotetypeKind.Cloze {
@@ -32,14 +32,6 @@ export function detectNotetypeKind(
 	return NotetypeKind.Normal
 }
 
-/**
- * Check if notetype is an Image Occlusion type
- */
-export function isImageOcclusionNotetype(fields: FieldRow[]): boolean {
-	const fieldNames = fields.map((f) => f.name.toLowerCase())
-	return fieldNames.includes('occlusion') && fieldNames.includes('image')
-}
-
 // =============================================================================
 // Hydration Functions
 // =============================================================================
@@ -47,7 +39,7 @@ export function isImageOcclusionNotetype(fields: FieldRow[]): boolean {
 /**
  * Convert raw field row to hydrated Field
  */
-export function hydrateField(row: FieldRow): Field {
+function hydrateField(row: FieldRow): Field {
 	return {
 		name: row.name,
 		ord: fieldOrd(row.ord),
@@ -57,7 +49,7 @@ export function hydrateField(row: FieldRow): Field {
 /**
  * Convert raw template row to hydrated Template
  */
-export function hydrateTemplate(row: TemplateRow): Template {
+function hydrateTemplate(row: TemplateRow): Template {
 	const config = parseTemplateConfig(row.config)
 	return {
 		name: row.name,
@@ -70,7 +62,7 @@ export function hydrateTemplate(row: TemplateRow): Template {
 /**
  * Convert raw notetype row and related data to hydrated Model
  */
-export function hydrateModel(
+function hydrateModel(
 	notetypeRow: NotetypeRow,
 	fieldRows: FieldRow[],
 	templateRows: TemplateRow[],
@@ -116,10 +108,6 @@ export function importModels(db: Database.Database): Model[] {
 	}
 
 	return notetypes.map((nt) =>
-		hydrateModel(
-			nt,
-			fieldsByNtid.get(nt.id) ?? [],
-			templatesByNtid.get(nt.id) ?? [],
-		),
+		hydrateModel(nt, fieldsByNtid.get(nt.id) ?? [], templatesByNtid.get(nt.id) ?? []),
 	)
 }

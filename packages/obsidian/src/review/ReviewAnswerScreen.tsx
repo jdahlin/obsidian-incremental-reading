@@ -5,7 +5,7 @@ import { ReviewDebugInfo } from './ReviewDebugInfo'
 import { ReviewGradeButtons } from './ReviewGradeButtons'
 import './ReviewAnswerScreen.css'
 
-export interface ReviewAnswerScreenProps {
+interface ReviewAnswerScreenProps {
 	content: string
 	debugInfo: DebugInfo
 	onGrade: (grade: number) => void | Promise<void>

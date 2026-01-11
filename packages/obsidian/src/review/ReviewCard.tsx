@@ -1,8 +1,9 @@
 import type { FunctionalComponent } from 'preact'
 import './ReviewCard.css'
 
-export interface ReviewCardProps {
+interface ReviewCardProps {
 	content: string
+	showAnswer?: boolean
 }
 
 export const ReviewCard: FunctionalComponent<ReviewCardProps> = ({ content }) => {

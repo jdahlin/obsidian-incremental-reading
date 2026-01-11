@@ -4,7 +4,7 @@ import type { DeckCountsValue } from './deck-summary-types'
 import { DeckRow } from './DeckRow'
 import './DeckList.css'
 
-export interface DeckListProps {
+interface DeckListProps {
 	rows: DeckInfo[]
 	selectedPath: string | null
 	allCounts: DeckCountsValue

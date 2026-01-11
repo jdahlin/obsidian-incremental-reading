@@ -36,7 +36,7 @@ interface ModelFrontmatter {
 /**
  * Convert Model to markdown content
  */
-export function modelToMarkdown(model: Model): string {
+function modelToMarkdown(model: Model): string {
 	const frontmatter: ModelFrontmatter = {
 		anki_model_id: String(model.id),
 		name: model.name,
@@ -63,7 +63,7 @@ export function modelToMarkdown(model: Model): string {
 /**
  * Get filename for a model
  */
-export function getModelFilename(model: Model): string {
+function getModelFilename(model: Model): string {
 	return `${sanitizeFilename(model.name)}.md`
 }
 

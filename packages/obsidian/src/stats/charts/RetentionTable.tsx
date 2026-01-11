@@ -2,7 +2,7 @@ import type { RetentionReport, StatsDatabase } from '@repo/core/stats'
 import type { FunctionalComponent } from 'preact'
 import { useMemo, useState } from 'preact/hooks'
 
-export interface RetentionTableProps {
+interface RetentionTableProps {
 	statsDb: StatsDatabase
 	targetRetention: number
 }

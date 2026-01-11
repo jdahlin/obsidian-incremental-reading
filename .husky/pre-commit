@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 
 npm run -s typecheck
+npm run knip
 ./node_modules/.bin/nano-staged
 npm run -s lint

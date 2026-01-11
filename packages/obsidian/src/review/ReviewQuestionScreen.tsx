@@ -6,7 +6,7 @@ import { ReviewDebugInfo } from './ReviewDebugInfo'
 import { ReviewShowAnswerButton } from './ReviewShowAnswerButton'
 import './ReviewQuestionScreen.css'
 
-export interface ReviewQuestionScreenProps {
+interface ReviewQuestionScreenProps {
 	content: string
 	clozeIndex: number | null
 	debugInfo: DebugInfo

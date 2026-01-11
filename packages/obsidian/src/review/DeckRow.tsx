@@ -4,7 +4,7 @@ import { rowClass } from './deck-summary-utils'
 import { DeckCounts } from './DeckCounts'
 import './DeckRow.css'
 
-export interface DeckRowProps {
+interface DeckRowProps {
 	label: string
 	depth: number
 	counts: DeckCountsValue

@@ -29,7 +29,7 @@ function createBoundary(files, blockedPackages) {
 /**
  * @repo/core - Cannot import from obsidian, cli, or anki-importer packages
  */
-export const coreBoundary = createBoundary(
+const coreBoundary = createBoundary(
 	['packages/core/src/**/*.ts'],
 	['@repo/obsidian', '@repo/cli', '@repo/anki-importer', 'obsidian', 'ink', 'react'],
 )
@@ -37,7 +37,7 @@ export const coreBoundary = createBoundary(
 /**
  * @repo/anki-importer - Cannot import from obsidian or cli packages
  */
-export const ankiImporterBoundary = createBoundary(
+const ankiImporterBoundary = createBoundary(
 	['packages/anki-importer/src/**/*.ts'],
 	['@repo/obsidian', '@repo/cli', 'obsidian', 'ink', 'react', 'preact'],
 )
@@ -45,7 +45,7 @@ export const ankiImporterBoundary = createBoundary(
 /**
  * @repo/obsidian - Cannot import from cli package
  */
-export const obsidianBoundary = createBoundary(
+const obsidianBoundary = createBoundary(
 	['packages/obsidian/src/**/*.ts', 'packages/obsidian/src/**/*.tsx'],
 	['@repo/cli', 'ink', 'react'],
 )
@@ -53,7 +53,7 @@ export const obsidianBoundary = createBoundary(
 /**
  * @repo/cli - Cannot import from obsidian package
  */
-export const cliBoundary = createBoundary(
+const cliBoundary = createBoundary(
 	['packages/cli/src/**/*.ts', 'packages/cli/src/**/*.tsx'],
 	['@repo/obsidian', 'obsidian', 'preact'],
 )

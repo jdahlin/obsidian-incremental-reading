@@ -11,7 +11,7 @@ import { FutureDueChart } from './charts/FutureDueChart'
 import { RetentionTable } from './charts/RetentionTable'
 import { ReviewsHistoryChart } from './charts/ReviewsHistoryChart'
 
-export interface StatsRootProps {
+interface StatsRootProps {
 	app: App
 	settings: IncrementalReadingSettings
 }

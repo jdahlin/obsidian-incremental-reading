@@ -4,7 +4,7 @@ import { max, min } from 'd3-array'
 import { scaleLinear } from 'd3-scale'
 import { useCallback, useMemo, useRef, useState } from 'preact/hooks'
 
-export interface FutureDueChartProps {
+interface FutureDueChartProps {
 	statsDb: StatsDatabase
 	days: number
 }

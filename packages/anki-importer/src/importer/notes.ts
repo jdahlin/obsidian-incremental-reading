@@ -16,7 +16,7 @@ import { modelId, noteId, parseFieldValues, parseTags } from '../types.js'
 /**
  * Convert raw note row to hydrated Note
  */
-export function hydrateNote(row: NoteRow): Note {
+function hydrateNote(row: NoteRow): Note {
 	return {
 		id: noteId(row.id),
 		guid: row.guid,
