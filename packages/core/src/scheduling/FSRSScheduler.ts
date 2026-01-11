@@ -1,6 +1,7 @@
 import type { Card, RecordLog } from 'ts-fsrs'
 import type { Rating, ReviewState, Scheduler, SchedulingParams } from '../types'
 import { FSRS, Rating as FSRSRating, State as FSRSState, generatorParameters } from 'ts-fsrs'
+import { assertNever } from '../core/assert'
 
 export class FSRSScheduler implements Scheduler {
 	private fsrs: FSRS
@@ -91,7 +92,7 @@ export class FSRSScheduler implements Scheduler {
 			case 4:
 				return FSRSRating.Easy
 			default:
-				return FSRSRating.Good
+				return assertNever(rating)
 		}
 	}
 
