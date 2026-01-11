@@ -5,7 +5,7 @@ import { ReviewFinishedScreen } from './ReviewFinishedScreen'
 import { ReviewFolderScreen } from './ReviewFolderScreen'
 import { ReviewQuestionScreen } from './ReviewQuestionScreen'
 
-export interface ReviewScreenRouterProps {
+interface ReviewScreenRouterProps {
 	state: ReviewScreenState
 	actions: ReviewScreenActions
 }

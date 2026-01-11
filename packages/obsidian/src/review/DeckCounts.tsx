@@ -2,7 +2,7 @@ import type { FunctionalComponent } from 'preact'
 import type { DeckCountsValue } from './deck-summary-types'
 import './DeckCounts.css'
 
-export interface DeckCountsProps {
+interface DeckCountsProps {
 	counts: DeckCountsValue
 }
 

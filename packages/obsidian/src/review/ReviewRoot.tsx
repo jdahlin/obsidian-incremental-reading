@@ -9,7 +9,7 @@ import { ObsidianReviewAdapter } from './obsidian-adapter'
 import { ReviewScreenRouter } from './ReviewScreenRouter'
 import { useReviewState } from './useReviewState'
 
-export interface ReviewRootProps {
+interface ReviewRootProps {
 	app: App
 	view: unknown
 	settings: IncrementalReadingSettings

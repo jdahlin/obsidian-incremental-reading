@@ -93,7 +93,7 @@ function htmlToMarkdown(html: string): string {
 /**
  * Convert Note to markdown content
  */
-export function noteToMarkdown(note: Note, model: Model, irNoteId: string): string {
+function noteToMarkdown(note: Note, model: Model, irNoteId: string): string {
 	const noteType = getNoteType(model)
 	const clozeIndices =
 		noteType === 'cloze' || noteType === 'image_occlusion'
@@ -133,7 +133,7 @@ export function noteToMarkdown(note: Note, model: Model, irNoteId: string): stri
 /**
  * Get filename for a note
  */
-export function getNoteFilename(note: Note): string {
+function getNoteFilename(note: Note): string {
 	return `${note.id}.md`
 }
 

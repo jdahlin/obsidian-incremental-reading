@@ -2,11 +2,20 @@
 	"$schema": "https://unpkg.com/knip@5/schema.json",
 	"workspaces": {
 		"packages/obsidian": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/main.ts", "src/**/tests/*.test.ts"],
 			"ignoreDependencies": ["obsidian"]
 		},
 		"packages/cli": {
-			"entry": ["src/index.tsx"],
 			"project": ["src/**/*.{ts,tsx}"]
+		},
+		"packages/anki-importer": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/tests/**/*.test.ts"]
+		},
+		"packages/core": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/tests/**/*.test.ts"]
 		},
 		"configs/vitest": {
 			"ignoreDependencies": ["vite"]
