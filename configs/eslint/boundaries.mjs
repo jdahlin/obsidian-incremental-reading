@@ -4,8 +4,9 @@
  *
  * Package hierarchy:
  * - @repo/core: Pure business logic, no external dependencies
+ * - @repo/anki-importer: Anki import utility, depends on core only
  * - @repo/obsidian: Obsidian plugin, depends on core
- * - @repo/cli: CLI tool, depends on core
+ * - @repo/cli: CLI tool, depends on core and anki-importer
  */
 
 /**
@@ -26,11 +27,19 @@ function createBoundary(files, blockedPackages) {
 }
 
 /**
- * @repo/core - Cannot import from obsidian or cli packages
+ * @repo/core - Cannot import from obsidian, cli, or anki-importer packages
  */
 export const coreBoundary = createBoundary(
 	['packages/core/src/**/*.ts'],
-	['@repo/obsidian', '@repo/cli', 'obsidian', 'ink', 'react'],
+	['@repo/obsidian', '@repo/cli', '@repo/anki-importer', 'obsidian', 'ink', 'react'],
+)
+
+/**
+ * @repo/anki-importer - Cannot import from obsidian or cli packages
+ */
+export const ankiImporterBoundary = createBoundary(
+	['packages/anki-importer/src/**/*.ts'],
+	['@repo/obsidian', '@repo/cli', 'obsidian', 'ink', 'react', 'preact'],
 )
 
 /**
@@ -49,4 +58,4 @@ export const cliBoundary = createBoundary(
 	['@repo/obsidian', 'obsidian', 'preact'],
 )
 
-export const allBoundaries = [coreBoundary, obsidianBoundary, cliBoundary]
+export const allBoundaries = [coreBoundary, ankiImporterBoundary, obsidianBoundary, cliBoundary]
