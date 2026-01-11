@@ -27,7 +27,7 @@
 		},
 		"test:coverage": {
 			"dependsOn": ["^build"],
-			"outputLogs": "full"
+			"outputLogs": "errors-only"
 		},
 		"test:watch": {
 			"cache": false,
