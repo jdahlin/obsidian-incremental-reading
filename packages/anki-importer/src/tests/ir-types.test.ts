@@ -1,3 +1,4 @@
+import type { SidecarFrontmatter } from '../ir-types.js'
 import { describe, expect, it } from 'vitest'
 import {
 	deckNameToPath,
@@ -18,9 +19,8 @@ import {
 	sanitizeFilename,
 	SchedulingStatus,
 } from '../ir-types.js'
-import type { SidecarFrontmatter } from '../ir-types.js'
 
-describe('ID Generation', () => {
+describe('iD Generation', () => {
 	describe('generateIRNoteId', () => {
 		it('generates 12-character IDs', () => {
 			const id = generateIRNoteId()
@@ -29,7 +29,7 @@ describe('ID Generation', () => {
 
 		it('generates alphanumeric IDs', () => {
 			const id = generateIRNoteId()
-			expect(/^[A-Za-z0-9]{12}$/.test(id)).toBe(true)
+			expect(/^[A-Z0-9]{12}$/i.test(id)).toBe(true)
 		})
 
 		it('generates unique IDs', () => {
@@ -57,7 +57,7 @@ describe('ID Generation', () => {
 	})
 })
 
-describe('Validation', () => {
+describe('validation', () => {
 	describe('isValidIRNoteId', () => {
 		it('validates correct format', () => {
 			expect(isValidIRNoteId('H4573WdOw2q0')).toBe(true)
@@ -111,7 +111,7 @@ describe('Validation', () => {
 	})
 })
 
-describe('Type Guards', () => {
+describe('type Guards', () => {
 	describe('isSchedulingStatus', () => {
 		it('returns true for valid statuses', () => {
 			expect(isSchedulingStatus('new')).toBe(true)
@@ -159,7 +159,7 @@ describe('Type Guards', () => {
 		})
 	})
 
-	describe('Sidecar type guards', () => {
+	describe('sidecar type guards', () => {
 		const basicSidecar: SidecarFrontmatter = {
 			ir_note_id: 'abc123def456',
 			note_path: 'Anki/Test/123.md',
@@ -231,7 +231,7 @@ describe('Type Guards', () => {
 	})
 })
 
-describe('Conversion Helpers', () => {
+describe('conversion Helpers', () => {
 	describe('factorToDifficulty', () => {
 		it('converts Anki factor to FSRS difficulty', () => {
 			// Formula: (3000 - clamp(factor, 1300, 3000)) / 170
@@ -261,16 +261,14 @@ describe('Conversion Helpers', () => {
 	})
 })
 
-describe('Path Utilities', () => {
+describe('path Utilities', () => {
 	describe('sanitizeFilename', () => {
 		it('replaces unsafe characters', () => {
 			expect(sanitizeFilename('file<>:"/\\|?*name')).toBe('file_________name')
 		})
 
 		it('preserves spaces and parentheses', () => {
-			expect(sanitizeFilename('Basic (and reversed card)')).toBe(
-				'Basic (and reversed card)',
-			)
+			expect(sanitizeFilename('Basic (and reversed card)')).toBe('Basic (and reversed card)')
 		})
 
 		it('trims whitespace', () => {
@@ -280,9 +278,7 @@ describe('Path Utilities', () => {
 
 	describe('deckNameToPath', () => {
 		it('converts Anki deck hierarchy to filesystem path', () => {
-			expect(deckNameToPath('Parent::Child::Grandchild')).toBe(
-				'Parent/Child/Grandchild',
-			)
+			expect(deckNameToPath('Parent::Child::Grandchild')).toBe('Parent/Child/Grandchild')
 		})
 
 		it('handles single segment', () => {
@@ -313,15 +309,15 @@ describe('Path Utilities', () => {
 	})
 })
 
-describe('Constants', () => {
-	it('SchedulingStatus has correct values', () => {
+describe('constants', () => {
+	it('schedulingStatus has correct values', () => {
 		expect(SchedulingStatus.New).toBe('new')
 		expect(SchedulingStatus.Learning).toBe('learning')
 		expect(SchedulingStatus.Review).toBe('review')
 		expect(SchedulingStatus.Relearning).toBe('relearning')
 	})
 
-	it('NoteType has correct values', () => {
+	it('noteType has correct values', () => {
 		expect(NoteType.Basic).toBe('basic')
 		expect(NoteType.Cloze).toBe('cloze')
 		expect(NoteType.ImageOcclusion).toBe('image_occlusion')
