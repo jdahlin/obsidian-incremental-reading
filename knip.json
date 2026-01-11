@@ -1,0 +1,19 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"workspaces": {
+		"packages/obsidian": {
+			"ignoreDependencies": ["obsidian"]
+		},
+		"packages/cli": {
+			"entry": ["src/index.tsx"],
+			"project": ["src/**/*.{ts,tsx}"]
+		},
+		"configs/vitest": {
+			"ignoreDependencies": ["vite"]
+		},
+		"configs/ts": {
+			"ignoreDependencies": ["preact"]
+		}
+	},
+	"ignore": ["**/*.d.ts", "**/dist/**", "**/coverage/**", "**/main.js"]
+}
