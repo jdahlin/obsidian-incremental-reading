@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 
-import { getDefaultAnkiPath, importAnkiDatabase } from '@repo/core/anki'
-import { render } from 'ink'
 import meow from 'meow'
-import React from 'react'
-import { App } from './App.js'
-import { runBatch } from './batch.js'
 
 // Enter alternate screen buffer (like vim/less)
 const enterAltScreen = '\x1B[?1049h'
@@ -101,7 +96,7 @@ const {
 	snapshot,
 	import: doImport,
 	importPath,
-	deckFilter,
+	deckFilter: _deckFilter, // TODO: implement deck filtering
 } = cli.flags
 
 // --snapshot: render once with colors and exit (for debugging)
@@ -113,77 +108,128 @@ if (snapshot) {
 const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r')
 const reviewFilter = review !== undefined && review !== '' ? review : undefined
 
-// Import mode - import from Anki and exit
-if (doImport) {
-	const ankiProfilePath = importPath ?? getDefaultAnkiPath()
+// Main entry point - wrapped in async IIFE for lazy loading
+void (async () => {
+	// Import mode - import from Anki and exit
+	if (doImport) {
+		// Lazy load the anki-importer to avoid loading it when not needed
+		const { importAnkiDatabase, writeAnkiData, getCollectionCreationTime, openAnkiDatabase } =
+			await import('@anthropic/anki-importer')
+		const path = await import('node:path')
+		const os = await import('node:os')
 
-	void importAnkiDatabase({
-		ankiProfilePath,
-		vaultPath: vault,
-		deckFilter,
-	})
-		.then((result) => {
-			console.log('\nImport Summary:')
-			console.log(`  Notes imported: ${result.notesImported}`)
-			console.log(`  Media files copied: ${result.mediaFilesCopied}`)
-			if (result.mediaMissing.length > 0) {
-				console.log(`  Media files missing: ${result.mediaMissing.length}`)
+		// Default Anki path
+		const defaultAnkiPath = path.join(
+			os.homedir(),
+			'Library/Application Support/Anki2/User 1',
+		)
+		const ankiProfilePath = importPath ?? defaultAnkiPath
+		const ankiDbPath = path.join(ankiProfilePath, 'collection.anki2')
+		const ankiMediaPath = path.join(ankiProfilePath, 'collection.media')
+		const outputDir = path.join(vault, 'Anki')
+
+		console.log('Importing from Anki...')
+		console.log(`  Source: ${ankiDbPath}`)
+		console.log(`  Output: ${outputDir}`)
+		console.log()
+
+		try {
+			// Import data from Anki
+			const data = importAnkiDatabase(ankiDbPath)
+
+			console.log('Import Statistics:')
+			console.log(`  Models:  ${data.stats.modelCount}`)
+			console.log(`  Decks:   ${data.stats.deckCount}`)
+			console.log(`  Notes:   ${data.stats.noteCount}`)
+			console.log(`  Cards:   ${data.stats.cardCount}`)
+			console.log()
+
+			// Get collection creation time for scheduling
+			const db = openAnkiDatabase(ankiDbPath)
+			const collectionCreatedAt = getCollectionCreationTime(db)
+			db.close()
+
+			// Write to markdown
+			console.log('Writing markdown files...')
+			const result = await writeAnkiData(data, {
+				outputDir,
+				mediaDir: ankiMediaPath,
+				collectionCreatedAt,
+			})
+
+			console.log('\nWrite Statistics:')
+			console.log(`  Models:  ${result.modelsWritten}`)
+			console.log(`  Notes:   ${result.notesWritten}`)
+			console.log(`  Cards:   ${result.cardsWritten}`)
+			console.log(`  Decks:   ${result.decksWritten}`)
+			console.log(`  Media:   ${result.mediaWritten}`)
+
+			if (result.errors.length > 0) {
+				console.log(`  Errors:  ${result.errors.length}`)
 			}
+
+			console.log('\nDone!')
+			process.exit(0)
+		} catch (err) {
+			console.error('Import failed:', err instanceof Error ? err.message : err)
+			process.exit(1)
+		}
+	} else if (batch) {
+		// Batch mode - read from stdin, output to stdout
+		const { runBatch } = await import('./batch.js')
+
+		let input = ''
+		process.stdin.setEncoding('utf8')
+		process.stdin.on('data', (chunk: string) => {
+			input += chunk
+		})
+		process.stdin.on('end', () => {
+			void runBatch(vault, input, strategy as 'Anki' | 'JD1').then((output) => {
+				process.stdout.write(output)
+			})
+		})
+	} else {
+		// Interactive mode - lazy load ink and React
+		const { render } = await import('ink')
+		const React = await import('react')
+		const { App } = await import('./App.js')
+
+		// Enter full screen mode (unless snapshot)
+		if (!snapshot) {
+			process.stdout.write(enterAltScreen + hideCursor)
+		}
+
+		// Cleanup on exit
+		const cleanup = () => {
+			if (!snapshot) {
+				process.stdout.write(showCursor + exitAltScreen)
+			}
+		}
+		process.on('exit', cleanup)
+		process.on('SIGINT', () => {
+			cleanup()
 			process.exit(0)
 		})
-		.catch((err: Error) => {
-			console.error('Import failed:', err.message)
-			process.exit(1)
-		})
-} else if (batch) {
-	// Batch mode - read from stdin, output to stdout
-	let input = ''
-	process.stdin.setEncoding('utf8')
-	process.stdin.on('data', (chunk: string) => {
-		input += chunk
-	})
-	process.stdin.on('end', () => {
-		void runBatch(vault, input, strategy as 'Anki' | 'JD1').then((output) => {
-			process.stdout.write(output)
-		})
-	})
-} else {
-	// Interactive mode
-	// Enter full screen mode (unless snapshot)
-	if (!snapshot) {
-		process.stdout.write(enterAltScreen + hideCursor)
-	}
-
-	// Cleanup on exit
-	const cleanup = () => {
-		if (!snapshot) {
-			process.stdout.write(showCursor + exitAltScreen)
-		}
-	}
-	process.on('exit', cleanup)
-	process.on('SIGINT', () => {
-		cleanup()
-		process.exit(0)
-	})
-	process.on('SIGTERM', () => {
-		cleanup()
-		process.exit(0)
-	})
-
-	void render(
-		<App
-			vaultPath={vault}
-			initialDeck={deck}
-			strategy={strategy as 'Anki' | 'JD1'}
-			newCardLimit={limit}
-			reviewMode={reviewMode}
-			reviewFilter={reviewFilter}
-			exitAfterRender={snapshot}
-		/>,
-		{ exitOnCtrlC: true },
-	)
-		.waitUntilExit()
-		.then(() => {
+		process.on('SIGTERM', () => {
 			cleanup()
+			process.exit(0)
 		})
-}
+
+		void render(
+			React.createElement(App, {
+				vaultPath: vault,
+				initialDeck: deck,
+				strategy: strategy as 'Anki' | 'JD1',
+				newCardLimit: limit,
+				reviewMode,
+				reviewFilter,
+				exitAfterRender: snapshot,
+			}),
+			{ exitOnCtrlC: true },
+		)
+			.waitUntilExit()
+			.then(() => {
+				cleanup()
+			})
+	}
+})()
