@@ -202,6 +202,8 @@ export class EngineReviewController {
 		if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
 
 		if (event.key === 'Escape' && this.model.screen === 'review') {
+			event.preventDefault()
+			event.stopImmediatePropagation()
 			void this.onBack()
 			return
 		}
@@ -209,6 +211,7 @@ export class EngineReviewController {
 
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			if (this.model.phase === 'question') {
 				this.onShowAnswer()
 			} else {
@@ -219,30 +222,35 @@ export class EngineReviewController {
 
 		if (['1', '2', '3', '4'].includes(event.key)) {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			return this.onGrade(Number(event.key))
 		}
 
 		// More menu keyboard shortcuts
 		if (event.key === 'e') {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			this.onEdit()
 			return
 		}
 
 		if (event.key === 's') {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			this.onSkip()
 			return
 		}
 
 		if (event.key === 'z' || (event.ctrlKey && event.key === 'z')) {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			this.onUndo()
 			return
 		}
 
 		if (event.key === 'i') {
 			event.preventDefault()
+			event.stopImmediatePropagation()
 			this.onCardInfo()
 		}
 	}

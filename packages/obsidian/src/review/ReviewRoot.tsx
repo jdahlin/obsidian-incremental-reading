@@ -64,13 +64,41 @@ export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, se
 		focusRoot()
 	}, [])
 
+	// Focus the root when entering review mode (question or answer screen)
+	useEffect(() => {
+		if (state.type === 'question' || state.type === 'answer') {
+			// Use requestAnimationFrame to ensure DOM is ready before focusing
+			requestAnimationFrame(() => {
+				focusRoot()
+			})
+		}
+	}, [state.type])
+
 	useEffect(() => {
 		const handler = (event: KeyboardEvent): void => {
 			const root = rootRef.current
 			if (!root) return
-			const target = event.target as Node | null
-			if (target && !root.contains(target)) return
+
+			// Skip if target is an input element (user is typing)
+			const target = event.target as HTMLElement | null
+			if (target) {
+				const tagName = target.tagName.toLowerCase()
+				if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+					return
+				}
+				// Skip if inside a modal or command palette
+				if (target.closest('.modal-container') || target.closest('.prompt')) {
+					return
+				}
+			}
+
 			onKeyDown(event)
+
+			// Refocus the review container after handling keys to ensure
+			// subsequent keypresses are captured properly
+			if (event.defaultPrevented) {
+				root.focus({ preventScroll: true })
+			}
 		}
 		window.addEventListener('keydown', handler, true)
 		return () => {
