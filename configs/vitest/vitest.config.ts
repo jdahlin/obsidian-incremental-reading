@@ -9,7 +9,8 @@ export const config = {
 		passWithNoTests: true,
 		coverage: {
 			provider: 'v8' as const,
-			reporter: ['text', 'html'],
+			reporter: ['json-summary'],
+			reportsDirectory: './coverage',
 			exclude: [
 				'**/node_modules/**',
 				'**/dist/**',
