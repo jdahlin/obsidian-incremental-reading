@@ -1,0 +1,43 @@
+.ir-card-info-modal {
+	padding: 16px;
+}
+
+.ir-card-info-modal h2 {
+	margin-top: 0;
+	margin-bottom: 16px;
+}
+
+.ir-card-info-modal h3 {
+	margin-top: 0;
+	margin-bottom: 8px;
+	font-size: var(--font-ui-medium);
+	color: var(--text-muted);
+}
+
+.ir-card-info-section {
+	margin-bottom: 16px;
+}
+
+.ir-card-info-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 4px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ir-card-info-row:last-child {
+	border-bottom: none;
+}
+
+.ir-card-info-label {
+	color: var(--text-muted);
+}
+
+.ir-card-info-path,
+.ir-card-info-id {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	word-break: break-all;
+	max-width: 60%;
+	text-align: right;
+}

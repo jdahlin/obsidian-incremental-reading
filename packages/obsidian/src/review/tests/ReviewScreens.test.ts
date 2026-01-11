@@ -1,7 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ReviewAnswerScreen } from '../ReviewAnswerScreen'
 import { ReviewFinishedScreen } from '../ReviewFinishedScreen'
 import { ReviewQuestionScreen } from '../ReviewQuestionScreen'
+
+// Mock the ReviewMoreMenu component to avoid hooks in test environment
+vi.mock('../ReviewMoreMenu', () => ({
+	ReviewMoreMenu: () => null,
+}))
 
 type ComponentFn = (props: Record<string, unknown>) => unknown
 
@@ -84,6 +89,16 @@ const mockDebugInfo = {
 	lapses: 0,
 }
 
+const mockMenuActions = {
+	onEdit: () => undefined,
+	onSkip: () => undefined,
+	onUndo: () => undefined,
+	onSuspend: () => undefined,
+	onCardInfo: () => undefined,
+	onDelete: () => undefined,
+	canUndo: false,
+}
+
 describe('review screens', () => {
 	it('renders finished screen with session summary', () => {
 		const vnode = ReviewFinishedScreen({
@@ -104,6 +119,7 @@ describe('review screens', () => {
 			clozeIndex: null,
 			debugInfo: mockDebugInfo,
 			onShowAnswer: () => undefined,
+			...mockMenuActions,
 		})
 
 		const text = collectTextNormalized(vnode)
@@ -115,6 +131,7 @@ describe('review screens', () => {
 			content: '<p>Test</p>',
 			debugInfo: mockDebugInfo,
 			onGrade: () => undefined,
+			...mockMenuActions,
 		})
 
 		const text = collectTextNormalized(vnode)
@@ -132,6 +149,7 @@ describe('review screens', () => {
 			clozeIndex: 1,
 			debugInfo: mockDebugInfo,
 			onShowAnswer: () => undefined,
+			...mockMenuActions,
 		})
 
 		const htmlContent = getHtmlContent(vnode)

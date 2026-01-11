@@ -35,7 +35,14 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 					content={state.content}
 					clozeIndex={state.clozeIndex}
 					debugInfo={state.debugInfo}
+					canUndo={state.canUndo}
 					onShowAnswer={actions.onShowAnswer}
+					onEdit={actions.onEdit}
+					onSkip={actions.onSkip}
+					onUndo={actions.onUndo}
+					onSuspend={actions.onSuspend}
+					onCardInfo={actions.onCardInfo}
+					onDelete={actions.onDelete}
 				/>
 			)
 		case 'answer':
@@ -43,7 +50,14 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 				<ReviewAnswerScreen
 					content={state.content}
 					debugInfo={state.debugInfo}
+					canUndo={state.canUndo}
 					onGrade={actions.onGrade}
+					onEdit={actions.onEdit}
+					onSkip={actions.onSkip}
+					onUndo={actions.onUndo}
+					onSuspend={actions.onSuspend}
+					onCardInfo={actions.onCardInfo}
+					onDelete={actions.onDelete}
 				/>
 			)
 		case 'finished':
