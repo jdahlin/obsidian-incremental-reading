@@ -1,0 +1,41 @@
+{
+	"name": "@anthropic/anki-importer",
+	"version": "0.1.0",
+	"description": "Import Anki database to Obsidian markdown files",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"better-sqlite3": "^11.7.0",
+		"yaml": "^2.7.0"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.12",
+		"@types/node": "^22.10.5",
+		"typescript": "^5.7.2",
+		"vitest": "^2.1.8"
+	},
+	"files": [
+		"dist",
+		"docs"
+	],
+	"keywords": [
+		"anki",
+		"obsidian",
+		"spaced-repetition",
+		"flashcards"
+	],
+	"license": "MIT"
+}
