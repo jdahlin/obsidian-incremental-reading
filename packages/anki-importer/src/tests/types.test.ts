@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-	CardQueue,
-	CardType,
 	cardId,
 	cardOrd,
+	CardQueue,
+	CardType,
+	DECK_SEPARATOR,
 	deckId,
 	decodeLeft,
-	DECK_SEPARATOR,
 	EaseButton,
-	fieldOrd,
 	FIELD_SEPARATOR,
+	fieldOrd,
 	isCardQueue,
 	isCardType,
 	isEaseButton,
@@ -26,7 +26,7 @@ import {
 	templateOrd,
 } from '../types.js'
 
-describe('Branded Types', () => {
+describe('branded Types', () => {
 	describe('modelId', () => {
 		it('accepts valid positive integers', () => {
 			expect(modelId(123456789)).toBe(123456789)
@@ -112,8 +112,8 @@ describe('Branded Types', () => {
 	})
 })
 
-describe('Enums', () => {
-	describe('CardQueue', () => {
+describe('enums', () => {
+	describe('cardQueue', () => {
 		it('has correct values', () => {
 			expect(CardQueue.UserBuried).toBe(-3)
 			expect(CardQueue.SchedBuried).toBe(-2)
@@ -126,7 +126,7 @@ describe('Enums', () => {
 		})
 	})
 
-	describe('CardType', () => {
+	describe('cardType', () => {
 		it('has correct values', () => {
 			expect(CardType.New).toBe(0)
 			expect(CardType.Learn).toBe(1)
@@ -135,14 +135,14 @@ describe('Enums', () => {
 		})
 	})
 
-	describe('NotetypeKind', () => {
+	describe('notetypeKind', () => {
 		it('has correct values', () => {
 			expect(NotetypeKind.Normal).toBe(0)
 			expect(NotetypeKind.Cloze).toBe(1)
 		})
 	})
 
-	describe('RevlogKind', () => {
+	describe('revlogKind', () => {
 		it('has correct values', () => {
 			expect(RevlogKind.Learning).toBe(0)
 			expect(RevlogKind.Review).toBe(1)
@@ -153,7 +153,7 @@ describe('Enums', () => {
 		})
 	})
 
-	describe('EaseButton', () => {
+	describe('easeButton', () => {
 		it('has correct values', () => {
 			expect(EaseButton.Manual).toBe(0)
 			expect(EaseButton.Again).toBe(1)
@@ -164,7 +164,7 @@ describe('Enums', () => {
 	})
 })
 
-describe('Type Guards', () => {
+describe('type Guards', () => {
 	describe('isCardQueue', () => {
 		it('returns true for valid queue values', () => {
 			expect(isCardQueue(-3)).toBe(true)
@@ -227,7 +227,7 @@ describe('Type Guards', () => {
 	})
 })
 
-describe('Validation Helpers', () => {
+describe('validation Helpers', () => {
 	describe('isValidQueueTypeCombo', () => {
 		it('validates New queue with New type', () => {
 			expect(isValidQueueTypeCombo(CardQueue.New, CardType.New)).toBe(true)
@@ -259,11 +259,11 @@ describe('Validation Helpers', () => {
 	})
 })
 
-describe('Parsing Helpers', () => {
+describe('parsing Helpers', () => {
 	describe('parseFieldValues', () => {
 		it('splits by field separator', () => {
-			expect(parseFieldValues('front\x1fback')).toEqual(['front', 'back'])
-			expect(parseFieldValues('a\x1fb\x1fc')).toEqual(['a', 'b', 'c'])
+			expect(parseFieldValues('front\x1Fback')).toEqual(['front', 'back'])
+			expect(parseFieldValues('a\x1Fb\x1Fc')).toEqual(['a', 'b', 'c'])
 		})
 
 		it('handles single field', () => {
@@ -271,11 +271,11 @@ describe('Parsing Helpers', () => {
 		})
 
 		it('handles empty fields', () => {
-			expect(parseFieldValues('\x1f\x1f')).toEqual(['', '', ''])
+			expect(parseFieldValues('\x1F\x1F')).toEqual(['', '', ''])
 		})
 
 		it('preserves HTML in fields', () => {
-			expect(parseFieldValues('<b>bold</b>\x1f<i>italic</i>')).toEqual([
+			expect(parseFieldValues('<b>bold</b>\x1F<i>italic</i>')).toEqual([
 				'<b>bold</b>',
 				'<i>italic</i>',
 			])
@@ -333,13 +333,13 @@ describe('Parsing Helpers', () => {
 	})
 })
 
-describe('Constants', () => {
-	it('FIELD_SEPARATOR is correct', () => {
-		expect(FIELD_SEPARATOR).toBe('\x1f')
+describe('constants', () => {
+	it('fIELD_SEPARATOR is correct', () => {
+		expect(FIELD_SEPARATOR).toBe('\x1F')
 		expect(FIELD_SEPARATOR.charCodeAt(0)).toBe(31) // U+001F
 	})
 
-	it('DECK_SEPARATOR is correct', () => {
+	it('dECK_SEPARATOR is correct', () => {
 		expect(DECK_SEPARATOR).toBe('::')
 	})
 })

@@ -60,13 +60,13 @@ function createTemplateConfig(qfmt: string, afmt: string): Uint8Array {
 	const parts: number[] = []
 
 	// Field 1: qfmt (tag = 0x0A = field 1, wire type 2)
-	parts.push(0x0a)
+	parts.push(0x0A)
 	if (qfmtBytes.length < 128) {
 		parts.push(qfmtBytes.length)
 	} else {
 		let len = qfmtBytes.length
 		while (len >= 128) {
-			parts.push((len & 0x7f) | 0x80)
+			parts.push((len & 0x7F) | 0x80)
 			len >>>= 7
 		}
 		parts.push(len)
@@ -80,7 +80,7 @@ function createTemplateConfig(qfmt: string, afmt: string): Uint8Array {
 	} else {
 		let len = afmtBytes.length
 		while (len >= 128) {
-			parts.push((len & 0x7f) | 0x80)
+			parts.push((len & 0x7F) | 0x80)
 			len >>>= 7
 		}
 		parts.push(len)
