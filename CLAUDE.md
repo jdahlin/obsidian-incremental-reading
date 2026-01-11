@@ -75,11 +75,11 @@ Always use try/catch for file creation:
 
 ```typescript
 try {
-	await app.vault.create(path, content);
+	await app.vault.create(path, content)
 } catch {
-	const file = app.vault.getAbstractFileByPath(path);
+	const file = app.vault.getAbstractFileByPath(path)
 	if (file instanceof TFile) {
-		await app.vault.append(file, content);
+		await app.vault.append(file, content)
 	}
 }
 ```
@@ -125,7 +125,7 @@ open -a Obsidian --args --remote-debugging-port=9222
 Use Chrome DevTools MCP to inspect the review view:
 
 ```javascript
-document.querySelector('.ir-review-view');
+document.querySelector('.ir-review-view')
 ```
 
 ## Documentation

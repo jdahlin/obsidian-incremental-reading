@@ -1,17 +1,17 @@
-import { App } from 'obsidian';
-import { describe, expect, it } from 'vitest';
-import { ensureBasesFolder } from '..';
+import { App } from 'obsidian'
+import { describe, expect, it } from 'vitest'
+import { ensureBasesFolder } from '..'
 
-const baseFiles = ['IR/All Items.base', 'IR/Due Today.base', 'IR/Struggling.base'];
+const baseFiles = ['IR/All Items.base', 'IR/Due Today.base', 'IR/Struggling.base']
 
 describe('bases', () => {
 	it('creates base files when missing', async () => {
-		const app = new App();
-		await ensureBasesFolder(app);
+		const app = new App()
+		await ensureBasesFolder(app)
 
 		for (const path of baseFiles) {
-			const content = await app.vault.adapter.read(path);
-			expect(content).toContain('filters:');
+			const content = await app.vault.adapter.read(path)
+			expect(content).toContain('filters:')
 		}
-	});
-});
+	})
+})

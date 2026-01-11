@@ -1,13 +1,13 @@
-import type { FunctionalComponent } from 'preact';
-import type { ReviewScreenActions, ReviewScreenState } from './review-screen-state';
-import { ReviewAnswerScreen } from './ReviewAnswerScreen';
-import { ReviewFinishedScreen } from './ReviewFinishedScreen';
-import { ReviewFolderScreen } from './ReviewFolderScreen';
-import { ReviewQuestionScreen } from './ReviewQuestionScreen';
+import type { FunctionalComponent } from 'preact'
+import type { ReviewScreenActions, ReviewScreenState } from './review-screen-state'
+import { ReviewAnswerScreen } from './ReviewAnswerScreen'
+import { ReviewFinishedScreen } from './ReviewFinishedScreen'
+import { ReviewFolderScreen } from './ReviewFolderScreen'
+import { ReviewQuestionScreen } from './ReviewQuestionScreen'
 
 export interface ReviewScreenRouterProps {
-	state: ReviewScreenState;
-	actions: ReviewScreenActions;
+	state: ReviewScreenState
+	actions: ReviewScreenActions
 }
 
 export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = ({
@@ -28,7 +28,7 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 					onStudy={actions.onStudy}
 					onStats={actions.onStats}
 				/>
-			);
+			)
 		case 'question':
 			return (
 				<ReviewQuestionScreen
@@ -37,7 +37,7 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 					debugInfo={state.debugInfo}
 					onShowAnswer={actions.onShowAnswer}
 				/>
-			);
+			)
 		case 'answer':
 			return (
 				<ReviewAnswerScreen
@@ -45,12 +45,12 @@ export const ReviewScreenRouter: FunctionalComponent<ReviewScreenRouterProps> = 
 					debugInfo={state.debugInfo}
 					onGrade={actions.onGrade}
 				/>
-			);
+			)
 		case 'finished':
 			return (
 				<ReviewFinishedScreen sessionStats={state.sessionStats} onBack={actions.onBack} />
-			);
+			)
 		default:
-			return null;
+			return null
 	}
-};
+}

@@ -1,12 +1,12 @@
-import type { SessionConfig, SessionItem } from '../types';
+import type { SessionConfig, SessionItem } from '../types'
 
 export interface SessionStrategy {
-	rank: (items: SessionItem[], config: SessionConfig, context: StrategyContext) => SessionItem[];
+	rank: (items: SessionItem[], config: SessionConfig, context: StrategyContext) => SessionItem[]
 }
 
 export interface StrategyContext {
-	lastNoteId?: string | null;
-	linkedNoteIds: Set<string>;
-	now: Date;
-	seed: number;
+	lastNoteId?: string | null
+	linkedNoteIds: Set<string>
+	now: Date
+	seed: number
 }

@@ -1,9 +1,9 @@
-import type { FunctionalComponent } from 'preact';
-import './DeckSummaryHeader.css';
+import type { FunctionalComponent } from 'preact'
+import './DeckSummaryHeader.css'
 
 export interface DeckSummaryHeaderProps {
-	onStats: () => void;
-	onStudy: () => void;
+	onStats: () => void
+	onStudy: () => void
 }
 
 export const DeckSummaryHeader: FunctionalComponent<DeckSummaryHeaderProps> = ({
@@ -22,5 +22,5 @@ export const DeckSummaryHeader: FunctionalComponent<DeckSummaryHeaderProps> = ({
 				</button>
 			</div>
 		</div>
-	);
-};
+	)
+}

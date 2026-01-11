@@ -210,31 +210,31 @@ The engine is designed for independence from Obsidian, enabling CLI usage and co
 ```typescript
 // SessionManager: orchestrates review sessions
 class SessionManager {
-	constructor(dataStore: DataStore, notePlatform: NotePlatform, config: SessionConfig);
-	loadPool(now: Date): Promise<void>;
-	getNext(now: Date): Promise<SessionItem | null>;
-	recordReview(itemId: string, rating: Rating, now: Date): Promise<void>;
+	constructor(dataStore: DataStore, notePlatform: NotePlatform, config: SessionConfig)
+	loadPool(now: Date): Promise<void>
+	getNext(now: Date): Promise<SessionItem | null>
+	recordReview(itemId: string, rating: Rating, now: Date): Promise<void>
 }
 
 // DataStore: persistence interface
 interface DataStore {
-	listItems(): Promise<ReviewItem[]>;
-	getState(itemId: string): Promise<ReviewState | null>;
-	setState(itemId: string, state: ReviewState): Promise<void>;
-	appendReview(record: ReviewRecord): Promise<void>;
+	listItems(): Promise<ReviewItem[]>
+	getState(itemId: string): Promise<ReviewState | null>
+	setState(itemId: string, state: ReviewState): Promise<void>
+	appendReview(record: ReviewRecord): Promise<void>
 }
 
 // NotePlatform: content access
 interface NotePlatform {
-	getNote(noteId: string): Promise<string | null>;
-	setNote(noteId: string, content: string): Promise<void>;
-	getLinks(noteId: string): Promise<string[]>;
+	getNote(noteId: string): Promise<string | null>
+	setNote(noteId: string, content: string): Promise<void>
+	getLinks(noteId: string): Promise<string[]>
 }
 
 // Scheduler: memory math
 interface Scheduler {
-	grade(state: ReviewState, rating: Rating, now: Date): ReviewState;
-	isDue(state: ReviewState, now: Date): boolean;
+	grade(state: ReviewState, rating: Rating, now: Date): ReviewState
+	isDue(state: ReviewState, now: Date): boolean
 }
 ```
 
@@ -476,11 +476,11 @@ All file operations use try/catch for concurrent access:
 
 ```typescript
 try {
-	await app.vault.create(path, content);
+	await app.vault.create(path, content)
 } catch {
-	const file = app.vault.getAbstractFileByPath(path);
+	const file = app.vault.getAbstractFileByPath(path)
 	if (file instanceof TFile) {
-		await app.vault.append(file, content);
+		await app.vault.append(file, content)
 	}
 }
 ```
