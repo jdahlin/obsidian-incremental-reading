@@ -28,11 +28,13 @@ export type ReviewScreenState =
 			content: string
 			clozeIndex: number | null
 			debugInfo: DebugInfo
+			canUndo: boolean
 	  }
 	| {
 			type: 'answer'
 			content: string
 			debugInfo: DebugInfo
+			canUndo: boolean
 	  }
 	| {
 			type: 'finished'
@@ -46,4 +48,10 @@ export interface ReviewScreenActions {
 	onBack: () => void
 	onShowAnswer: () => void
 	onGrade: (grade: number) => void | Promise<void>
+	onEdit: () => void
+	onSkip: () => void
+	onUndo: () => void
+	onSuspend: () => void
+	onCardInfo: () => void
+	onDelete: () => void
 }
