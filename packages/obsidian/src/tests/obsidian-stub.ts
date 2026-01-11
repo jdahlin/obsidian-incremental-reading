@@ -109,15 +109,15 @@ export interface EventRef {
 }
 
 export class Events {
-	on(_name: string, _callback: (...data: any[]) => any, _ctx?: any): EventRef {
+	on(_name: string, _callback: (...data: unknown[]) => unknown, _ctx?: unknown): EventRef {
 		return {}
 	}
 
-	off(_name: string, _callback: (...data: any[]) => any): void {}
+	off(_name: string, _callback: (...data: unknown[]) => unknown): void {}
 
 	offref(_ref: EventRef): void {}
 
-	trigger(_name: string, ..._data: any[]): void {}
+	trigger(_name: string, ..._data: unknown[]): void {}
 }
 
 export class Vault extends Events {
