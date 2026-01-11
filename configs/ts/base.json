@@ -12,6 +12,7 @@
 		"declarationMap": true,
 		"sourceMap": true,
 		"isolatedModules": true,
+		"incremental": true,
 		"noUncheckedIndexedAccess": true,
 		"resolveJsonModule": true,
 		"forceConsistentCasingInFileNames": true

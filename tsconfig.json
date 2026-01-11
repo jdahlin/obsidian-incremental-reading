@@ -15,7 +15,8 @@
 	"references": [
 		{ "path": "packages/core" },
 		{ "path": "packages/obsidian" },
-		{ "path": "packages/cli" }
+		{ "path": "packages/cli" },
+		{ "path": "packages/anki-importer" }
 	],
 	"include": [],
 	"exclude": ["node_modules"]

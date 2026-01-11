@@ -37,7 +37,7 @@ export function hydrateNote(row: NoteRow): Note {
  * @param db - Database connection
  * @param models - Models to validate against (optional)
  */
-export function importNotes(db: Database.Database, models?: readonly Model[]): Note[] {
+export function importNotes(db: Database.Database, _models?: readonly Model[]): Note[] {
 	const rows = readNotes(db)
 	const notes = rows.map(hydrateNote)
 
