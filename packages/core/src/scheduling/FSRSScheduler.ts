@@ -1,9 +1,9 @@
-import type { Card, RecordLog } from 'ts-fsrs';
-import type { Rating, ReviewState, Scheduler, SchedulingParams } from '../types';
-import { FSRS, Rating as FSRSRating, State as FSRSState, generatorParameters } from 'ts-fsrs';
+import type { Card, RecordLog } from 'ts-fsrs'
+import type { Rating, ReviewState, Scheduler, SchedulingParams } from '../types'
+import { FSRS, Rating as FSRSRating, State as FSRSState, generatorParameters } from 'ts-fsrs'
 
 export class FSRSScheduler implements Scheduler {
-	private fsrs: FSRS;
+	private fsrs: FSRS
 
 	constructor(params?: SchedulingParams) {
 		this.fsrs = new FSRS(
@@ -13,45 +13,45 @@ export class FSRSScheduler implements Scheduler {
 				request_retention: params?.requestRetention ?? 0.9,
 				w: params?.weights,
 			}),
-		);
+		)
 	}
 
 	grade(state: ReviewState, rating: Rating, now: Date): ReviewState {
-		const card = this.toCard(state);
-		const fsrsRating = this.toFSRSRating(rating);
-		const schedulingCards = this.fsrs.repeat(card, now) as RecordLog;
-		const recordLog = schedulingCards[fsrsRating as keyof RecordLog];
-		return this.fromCard(recordLog.card);
+		const card = this.toCard(state)
+		const fsrsRating = this.toFSRSRating(rating)
+		const schedulingCards = this.fsrs.repeat(card, now) as RecordLog
+		const recordLog = schedulingCards[fsrsRating as keyof RecordLog]
+		return this.fromCard(recordLog.card)
 	}
 
 	isDue(state: ReviewState, now: Date): boolean {
-		if (!state.due) return true;
-		return state.due <= now;
+		if (!state.due) return true
+		return state.due <= now
 	}
 
 	applyExamAdjustment(state: ReviewState, examDate: Date, now: Date): ReviewState {
-		const targetReviews = 6;
-		const minIntervalDays = 1;
-		const maxIntervalDays = 60;
-		const oneDay = 86400000;
+		const targetReviews = 6
+		const minIntervalDays = 1
+		const maxIntervalDays = 60
+		const oneDay = 86400000
 
-		const daysToExam = Math.max(0, Math.floor((examDate.getTime() - now.getTime()) / oneDay));
+		const daysToExam = Math.max(0, Math.floor((examDate.getTime() - now.getTime()) / oneDay))
 		const targetInterval = Math.min(
 			Math.max(Math.floor(daysToExam / targetReviews), minIntervalDays),
 			maxIntervalDays,
-		);
+		)
 
-		const schedulerDue = state.due ?? now;
-		const adjustedDue = new Date(now.getTime() + targetInterval * oneDay);
+		const schedulerDue = state.due ?? now
+		const adjustedDue = new Date(now.getTime() + targetInterval * oneDay)
 
 		if (schedulerDue > adjustedDue) {
 			return {
 				...state,
 				due: adjustedDue,
-			};
+			}
 		}
 
-		return state;
+		return state
 	}
 
 	private toCard(state: ReviewState): Card {
@@ -65,7 +65,7 @@ export class FSRSScheduler implements Scheduler {
 			lapses: state.lapses,
 			state: this.toFSRSState(state.status),
 			last_review: state.lastReview ?? undefined,
-		} as Card;
+		} as Card
 	}
 
 	private fromCard(card: Card): ReviewState {
@@ -77,47 +77,47 @@ export class FSRSScheduler implements Scheduler {
 			reps: card.reps,
 			lapses: card.lapses,
 			lastReview: card.last_review ?? null,
-		};
+		}
 	}
 
 	private toFSRSRating(rating: Rating): FSRSRating {
 		switch (rating) {
 			case 1:
-				return FSRSRating.Again;
+				return FSRSRating.Again
 			case 2:
-				return FSRSRating.Hard;
+				return FSRSRating.Hard
 			case 3:
-				return FSRSRating.Good;
+				return FSRSRating.Good
 			case 4:
-				return FSRSRating.Easy;
+				return FSRSRating.Easy
 			default:
-				return FSRSRating.Good;
+				return FSRSRating.Good
 		}
 	}
 
 	private toFSRSState(status: ReviewState['status']): FSRSState {
 		switch (status) {
 			case 'new':
-				return FSRSState.New;
+				return FSRSState.New
 			case 'learning':
-				return FSRSState.Learning;
+				return FSRSState.Learning
 			case 'review':
-				return FSRSState.Review;
+				return FSRSState.Review
 			case 'relearning':
-				return FSRSState.Relearning;
+				return FSRSState.Relearning
 		}
 	}
 
 	private fromFSRSState(state: FSRSState): ReviewState['status'] {
 		switch (state) {
 			case FSRSState.New:
-				return 'new';
+				return 'new'
 			case FSRSState.Learning:
-				return 'learning';
+				return 'learning'
 			case FSRSState.Review:
-				return 'review';
+				return 'review'
 			case FSRSState.Relearning:
-				return 'relearning';
+				return 'relearning'
 		}
 	}
 }

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
-import { getDefaultAnkiPath, importAnkiDatabase } from '@repo/core/anki';
-import { render } from 'ink';
-import meow from 'meow';
-import React from 'react';
-import { App } from './App.js';
-import { runBatch } from './batch.js';
+import { getDefaultAnkiPath, importAnkiDatabase } from '@repo/core/anki'
+import { render } from 'ink'
+import meow from 'meow'
+import React from 'react'
+import { App } from './App.js'
+import { runBatch } from './batch.js'
 
 // Enter alternate screen buffer (like vim/less)
-const enterAltScreen = '\x1B[?1049h';
-const exitAltScreen = '\x1B[?1049l';
-const hideCursor = '\x1B[?25l';
-const showCursor = '\x1B[?25h';
+const enterAltScreen = '\x1B[?1049h'
+const exitAltScreen = '\x1B[?1049l'
+const hideCursor = '\x1B[?25l'
+const showCursor = '\x1B[?25h'
 
 const cli = meow(
 	`
@@ -89,7 +89,7 @@ const cli = meow(
 			},
 		},
 	},
-);
+)
 
 const {
 	vault,
@@ -102,20 +102,20 @@ const {
 	import: doImport,
 	importPath,
 	deckFilter,
-} = cli.flags;
+} = cli.flags
 
 // --snapshot: render once with colors and exit (for debugging)
 if (snapshot) {
-	process.env.FORCE_COLOR = '1';
+	process.env.FORCE_COLOR = '1'
 }
 
 // Check if --review or -r was passed (even without a value)
-const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r');
-const reviewFilter = review !== undefined && review !== '' ? review : undefined;
+const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r')
+const reviewFilter = review !== undefined && review !== '' ? review : undefined
 
 // Import mode - import from Anki and exit
 if (doImport) {
-	const ankiProfilePath = importPath ?? getDefaultAnkiPath();
+	const ankiProfilePath = importPath ?? getDefaultAnkiPath()
 
 	void importAnkiDatabase({
 		ankiProfilePath,
@@ -123,52 +123,52 @@ if (doImport) {
 		deckFilter,
 	})
 		.then((result) => {
-			console.log('\nImport Summary:');
-			console.log(`  Notes imported: ${result.notesImported}`);
-			console.log(`  Media files copied: ${result.mediaFilesCopied}`);
+			console.log('\nImport Summary:')
+			console.log(`  Notes imported: ${result.notesImported}`)
+			console.log(`  Media files copied: ${result.mediaFilesCopied}`)
 			if (result.mediaMissing.length > 0) {
-				console.log(`  Media files missing: ${result.mediaMissing.length}`);
+				console.log(`  Media files missing: ${result.mediaMissing.length}`)
 			}
-			process.exit(0);
+			process.exit(0)
 		})
 		.catch((err: Error) => {
-			console.error('Import failed:', err.message);
-			process.exit(1);
-		});
+			console.error('Import failed:', err.message)
+			process.exit(1)
+		})
 } else if (batch) {
 	// Batch mode - read from stdin, output to stdout
-	let input = '';
-	process.stdin.setEncoding('utf8');
+	let input = ''
+	process.stdin.setEncoding('utf8')
 	process.stdin.on('data', (chunk: string) => {
-		input += chunk;
-	});
+		input += chunk
+	})
 	process.stdin.on('end', () => {
 		void runBatch(vault, input, strategy as 'Anki' | 'JD1').then((output) => {
-			process.stdout.write(output);
-		});
-	});
+			process.stdout.write(output)
+		})
+	})
 } else {
 	// Interactive mode
 	// Enter full screen mode (unless snapshot)
 	if (!snapshot) {
-		process.stdout.write(enterAltScreen + hideCursor);
+		process.stdout.write(enterAltScreen + hideCursor)
 	}
 
 	// Cleanup on exit
 	const cleanup = () => {
 		if (!snapshot) {
-			process.stdout.write(showCursor + exitAltScreen);
+			process.stdout.write(showCursor + exitAltScreen)
 		}
-	};
-	process.on('exit', cleanup);
+	}
+	process.on('exit', cleanup)
 	process.on('SIGINT', () => {
-		cleanup();
-		process.exit(0);
-	});
+		cleanup()
+		process.exit(0)
+	})
 	process.on('SIGTERM', () => {
-		cleanup();
-		process.exit(0);
-	});
+		cleanup()
+		process.exit(0)
+	})
 
 	void render(
 		<App
@@ -184,6 +184,6 @@ if (doImport) {
 	)
 		.waitUntilExit()
 		.then(() => {
-			cleanup();
-		});
+			cleanup()
+		})
 }

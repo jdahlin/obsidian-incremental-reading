@@ -1,18 +1,18 @@
-import type { ReviewPhase } from '@repo/core/core/content';
-import type { ReviewItem } from '@repo/core/core/types';
-import type { App } from 'obsidian';
-import { hasImageOcclusionSyntax, parseImageOcclusionRects } from '@repo/core/anki/html';
-import { parseClozeIndices } from '@repo/core/core/cloze';
-import { extractSection, formatReviewContent } from '@repo/core/core/content';
-import { MarkdownRenderer, TFile } from 'obsidian';
-import { syncNoteToSidecar } from '../data/sync';
+import type { ReviewPhase } from '@repo/core/core/content'
+import type { ReviewItem } from '@repo/core/core/types'
+import type { App } from 'obsidian'
+import { hasImageOcclusionSyntax, parseImageOcclusionRects } from '@repo/core/anki/html'
+import { parseClozeIndices } from '@repo/core/core/cloze'
+import { extractSection, formatReviewContent } from '@repo/core/core/content'
+import { MarkdownRenderer, TFile } from 'obsidian'
+import { syncNoteToSidecar } from '../data/sync'
 
-export type { ReviewPhase } from '@repo/core/core/content';
+export type { ReviewPhase } from '@repo/core/core/content'
 
 export interface ContentLoaderDeps {
-	app: App;
-	view: unknown;
-	extractTag: string;
+	app: App
+	view: unknown
+	extractTag: string
 }
 
 /**
@@ -29,35 +29,35 @@ export async function loadReviewItemHtml(
 	item: ReviewItem | null,
 	phase: ReviewPhase,
 ): Promise<string> {
-	if (!item) return '';
+	if (!item) return ''
 
-	const file = item.noteFile ?? deps.app.vault.getAbstractFileByPath(item.notePath);
-	if (!(file instanceof TFile)) return '';
+	const file = item.noteFile ?? deps.app.vault.getAbstractFileByPath(item.notePath)
+	if (!(file instanceof TFile)) return ''
 
 	try {
-		const rawContent = await deps.app.vault.read(file);
+		const rawContent = await deps.app.vault.read(file)
 
 		// Cloze: check if index exists, re-sync if missing
 		if (item.type === 'item' && typeof item.clozeIndex === 'number' && item.clozeIndex !== 0) {
-			const indices = parseClozeIndices(rawContent);
+			const indices = parseClozeIndices(rawContent)
 			if (!indices.includes(item.clozeIndex)) {
-				await syncNoteToSidecar(deps.app, file, deps.extractTag);
+				await syncNoteToSidecar(deps.app, file, deps.extractTag)
 			}
 		}
 
 		// Image occlusion needs special HTML overlay handling
 		if (item.type === 'image_occlusion') {
-			const clozeIndex = typeof item.clozeIndex === 'number' ? item.clozeIndex : 1;
-			const formatted = formatImageOcclusion(rawContent, phase, clozeIndex);
-			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
+			const clozeIndex = typeof item.clozeIndex === 'number' ? item.clozeIndex : 1
+			const formatted = formatImageOcclusion(rawContent, phase, clozeIndex)
+			return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view)
 		}
 
 		// Cloze, basic, and topic cards use shared formatter
-		const formatted = formatReviewContent(rawContent, item.type, phase, item.clozeIndex);
-		return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view);
+		const formatted = formatReviewContent(rawContent, item.type, phase, item.clozeIndex)
+		return await renderMarkdownToHtml(deps.app, formatted, item.notePath, deps.view)
 	} catch (error) {
-		console.error('IR: failed to load item content', error);
-		return '<p>Failed to load content</p>';
+		console.error('IR: failed to load item content', error)
+		return '<p>Failed to load content</p>'
 	}
 }
 
@@ -73,62 +73,62 @@ export async function loadReviewItemHtml(
 function formatImageOcclusion(content: string, phase: ReviewPhase, clozeIndex: number): string {
 	// Check for native Anki Image Occlusion format (coordinate-based)
 	if (hasImageOcclusionSyntax(content)) {
-		return formatNativeImageOcclusion(content, phase, clozeIndex);
+		return formatNativeImageOcclusion(content, phase, clozeIndex)
 	}
 
 	// Try Enhanced format with separate sections
-	const header = extractSection(content, 'Header');
-	const image = extractSection(content, 'Image');
-	const questionMask = extractSection(content, 'Question Mask');
-	const answerMask = extractSection(content, 'Answer Mask');
-	const footer = extractSection(content, 'Footer');
-	const remarks = extractSection(content, 'Remarks');
+	const header = extractSection(content, 'Header')
+	const image = extractSection(content, 'Image')
+	const questionMask = extractSection(content, 'Question Mask')
+	const answerMask = extractSection(content, 'Answer Mask')
+	const footer = extractSection(content, 'Footer')
+	const remarks = extractSection(content, 'Remarks')
 
 	// Check if we have Image Occlusion structure
 	if (image === null) {
 		// No Image section found - might be different format, show full content
-		return content;
+		return content
 	}
 
 	// Extract image path from markdown: ![](path) or ![alt](path)
-	const imageMatch = image.match(/!\[[^\]]*\]\(([^)]+)\)/);
-	const imagePath = imageMatch?.[1];
+	const imageMatch = image.match(/!\[[^\]]*\]\(([^)]+)\)/)
+	const imagePath = imageMatch?.[1]
 
 	// Extract mask path if available
-	const qMaskMatch = questionMask?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-	const qMaskPath = qMaskMatch?.[1];
-	const aMaskMatch = answerMask?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-	const aMaskPath = aMaskMatch?.[1];
+	const qMaskMatch = questionMask?.match(/!\[[^\]]*\]\(([^)]+)\)/)
+	const qMaskPath = qMaskMatch?.[1]
+	const aMaskMatch = answerMask?.match(/!\[[^\]]*\]\(([^)]+)\)/)
+	const aMaskPath = aMaskMatch?.[1]
 
 	if (phase === 'question' && imagePath !== undefined && qMaskPath !== undefined) {
 		// Question phase: overlay question mask on image
-		const parts: string[] = [];
-		if (header !== null) parts.push(header);
-		parts.push(createImageOcclusionHtml(imagePath, qMaskPath));
-		if (footer !== null) parts.push(`*${footer}*`);
-		return parts.join('\n\n');
+		const parts: string[] = []
+		if (header !== null) parts.push(header)
+		parts.push(createImageOcclusionHtml(imagePath, qMaskPath))
+		if (footer !== null) parts.push(`*${footer}*`)
+		return parts.join('\n\n')
 	}
 
 	if (phase === 'answer') {
 		// Answer phase: show image without mask (or with answer mask for context)
-		const parts: string[] = [];
-		if (header !== null) parts.push(`## ${header}`);
+		const parts: string[] = []
+		if (header !== null) parts.push(`## ${header}`)
 		if (imagePath !== undefined && aMaskPath !== undefined) {
-			parts.push(createImageOcclusionHtml(imagePath, aMaskPath));
+			parts.push(createImageOcclusionHtml(imagePath, aMaskPath))
 		} else {
-			parts.push(image);
+			parts.push(image)
 		}
-		if (footer !== null) parts.push(footer);
-		if (remarks !== null) parts.push(`**Remarks:** ${remarks}`);
-		return parts.join('\n\n');
+		if (footer !== null) parts.push(footer)
+		if (remarks !== null) parts.push(`**Remarks:** ${remarks}`)
+		return parts.join('\n\n')
 	}
 
 	// Fallback: just show the image section
-	const parts: string[] = [];
-	if (header !== null) parts.push(header);
-	parts.push(image);
-	if (footer !== null) parts.push(`*${footer}*`);
-	return parts.join('\n\n');
+	const parts: string[] = []
+	if (header !== null) parts.push(header)
+	parts.push(image)
+	if (footer !== null) parts.push(`*${footer}*`)
+	return parts.join('\n\n')
 }
 
 /**
@@ -140,38 +140,38 @@ function formatNativeImageOcclusion(
 	phase: ReviewPhase,
 	clozeIndex: number,
 ): string {
-	const rects = parseImageOcclusionRects(content);
+	const rects = parseImageOcclusionRects(content)
 	if (rects.length === 0) {
-		return content;
+		return content
 	}
 
 	// Extract sections for native format
-	const header = extractSection(content, 'Header');
-	const image = extractSection(content, 'Image');
-	const backExtra = extractSection(content, 'Back Extra');
-	const comments = extractSection(content, 'Comments');
+	const header = extractSection(content, 'Header')
+	const image = extractSection(content, 'Image')
+	const backExtra = extractSection(content, 'Back Extra')
+	const comments = extractSection(content, 'Comments')
 
 	// Extract image path
-	const imageMatch = image?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-	const imagePath = imageMatch?.[1];
+	const imageMatch = image?.match(/!\[[^\]]*\]\(([^)]+)\)/)
+	const imagePath = imageMatch?.[1]
 
 	if (imagePath === undefined) {
-		return content;
+		return content
 	}
 
 	// Generate overlay divs for occlusion rectangles
-	const overlayHtml = createNativeOcclusionHtml(imagePath, rects, phase, clozeIndex);
+	const overlayHtml = createNativeOcclusionHtml(imagePath, rects, phase, clozeIndex)
 
-	const parts: string[] = [];
-	if (header !== null) parts.push(header);
-	parts.push(overlayHtml);
+	const parts: string[] = []
+	if (header !== null) parts.push(header)
+	parts.push(overlayHtml)
 
 	if (phase === 'answer') {
-		if (backExtra !== null) parts.push(backExtra);
-		if (comments !== null) parts.push(`**Comments:** ${comments}`);
+		if (backExtra !== null) parts.push(backExtra)
+		if (comments !== null) parts.push(`**Comments:** ${comments}`)
 	}
 
-	return parts.join('\n\n');
+	return parts.join('\n\n')
 }
 
 /**
@@ -188,27 +188,27 @@ function createNativeOcclusionHtml(
 	// Question: show ALL occlusion boxes
 	// Answer: show all EXCEPT the current cloze (revealing the answer)
 	const visibleRects =
-		phase === 'question' ? rects : rects.filter((r) => r.clozeIndex !== currentClozeIndex);
+		phase === 'question' ? rects : rects.filter((r) => r.clozeIndex !== currentClozeIndex)
 
 	// Generate overlay div for each visible rectangle
 	const overlayDivs = visibleRects
 		.map((rect) => {
-			const left = (rect.left * 100).toFixed(2);
-			const top = (rect.top * 100).toFixed(2);
-			const width = (rect.width * 100).toFixed(2);
-			const height = (rect.height * 100).toFixed(2);
-			const isCurrentCard = rect.clozeIndex === currentClozeIndex;
+			const left = (rect.left * 100).toFixed(2)
+			const top = (rect.top * 100).toFixed(2)
+			const width = (rect.width * 100).toFixed(2)
+			const height = (rect.height * 100).toFixed(2)
+			const isCurrentCard = rect.clozeIndex === currentClozeIndex
 			// Current card's occlusion is highlighted (red), others are neutral (gray)
-			const bgColor = isCurrentCard ? '#ff6b6b' : '#808080';
+			const bgColor = isCurrentCard ? '#ff6b6b' : '#808080'
 
-			return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; opacity: 0.8; pointer-events: none;"></div>`;
+			return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; opacity: 0.8; pointer-events: none;"></div>`
 		})
-		.join('\n');
+		.join('\n')
 
 	return `<div class="io-wrapper" style="position: relative; display: inline-block;">
 <img src="${imagePath}" style="display: block; max-width: 100%;">
 ${overlayDivs}
-</div>`;
+</div>`
 }
 
 /**
@@ -220,7 +220,7 @@ function createImageOcclusionHtml(imagePath: string, maskPath: string): string {
 	return `<div class="io-wrapper" style="position: relative; display: inline-block;">
 <img src="${imagePath}" style="display: block; max-width: 100%;">
 <img src="${maskPath}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-</div>`;
+</div>`
 }
 
 async function renderMarkdownToHtml(
@@ -229,8 +229,8 @@ async function renderMarkdownToHtml(
 	sourcePath: string,
 	view: unknown,
 ): Promise<string> {
-	const container = document.createElement('div');
-	await MarkdownRenderer.render(app, markdown, container, sourcePath, view as never);
-	const html = container.innerHTML;
-	return html || container.textContent || '';
+	const container = document.createElement('div')
+	await MarkdownRenderer.render(app, markdown, container, sourcePath, view as never)
+	const html = container.innerHTML
+	return html || container.textContent || ''
 }

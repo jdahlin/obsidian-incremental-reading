@@ -1,14 +1,14 @@
-import type { DeckInfo } from '@repo/core/core/types';
-import type { FunctionalComponent } from 'preact';
-import type { DeckCountsValue } from './deck-summary-types';
-import { DeckRow } from './DeckRow';
-import './DeckList.css';
+import type { DeckInfo } from '@repo/core/core/types'
+import type { FunctionalComponent } from 'preact'
+import type { DeckCountsValue } from './deck-summary-types'
+import { DeckRow } from './DeckRow'
+import './DeckList.css'
 
 export interface DeckListProps {
-	rows: DeckInfo[];
-	selectedPath: string | null;
-	allCounts: DeckCountsValue;
-	onSelect: (path: string | null) => void;
+	rows: DeckInfo[]
+	selectedPath: string | null
+	allCounts: DeckCountsValue
+	onSelect: (path: string | null) => void
 }
 
 export const DeckList: FunctionalComponent<DeckListProps> = ({
@@ -38,5 +38,5 @@ export const DeckList: FunctionalComponent<DeckListProps> = ({
 				/>
 			))}
 		</div>
-	);
-};
+	)
+}

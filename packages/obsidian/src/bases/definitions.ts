@@ -36,7 +36,7 @@ views:
       - difficulty
       - reps
       - lapses
-`;
+`
 
 export const DUE_TODAY_YAML = `filters:
   and:
@@ -63,7 +63,7 @@ views:
       - cloze
       - priority
       - due
-`;
+`
 
 export const STRUGGLING_YAML = `filters:
   and:
@@ -92,4 +92,4 @@ views:
       - lapses
       - difficulty
       - stability
-`;
+`

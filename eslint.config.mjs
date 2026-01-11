@@ -1,3 +1,3 @@
-import config, { allBoundaries, jsConfigOverride } from '@repo/eslint-config';
+import config, { allBoundaries, jsConfigOverride } from '@repo/eslint-config'
 
-export default [...(await config), ...allBoundaries, jsConfigOverride];
+export default [...(await config), ...allBoundaries, jsConfigOverride]

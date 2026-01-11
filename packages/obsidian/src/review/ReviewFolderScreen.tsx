@@ -1,18 +1,18 @@
-import type { DeckInfo, StreakInfo, TodayStats } from '@repo/core/core/types';
-import type { FunctionalComponent } from 'preact';
-import type { DeckCountsValue } from './deck-summary-types';
-import { DeckSummary } from './DeckSummary';
+import type { DeckInfo, StreakInfo, TodayStats } from '@repo/core/core/types'
+import type { FunctionalComponent } from 'preact'
+import type { DeckCountsValue } from './deck-summary-types'
+import { DeckSummary } from './DeckSummary'
 
 export interface ReviewFolderScreenProps {
-	decks: DeckInfo[];
-	selectedPath: string | null;
-	allCounts: DeckCountsValue;
-	todayStats: TodayStats;
-	streak: StreakInfo;
-	showStreak: boolean;
-	onSelect: (path: string | null) => void;
-	onStudy: () => void;
-	onStats: () => void;
+	decks: DeckInfo[]
+	selectedPath: string | null
+	allCounts: DeckCountsValue
+	todayStats: TodayStats
+	streak: StreakInfo
+	showStreak: boolean
+	onSelect: (path: string | null) => void
+	onStudy: () => void
+	onStats: () => void
 }
 
 export const ReviewFolderScreen: FunctionalComponent<ReviewFolderScreenProps> = ({
@@ -38,5 +38,5 @@ export const ReviewFolderScreen: FunctionalComponent<ReviewFolderScreenProps> = 
 			onStudy={onStudy}
 			onStats={onStats}
 		/>
-	);
-};
+	)
+}

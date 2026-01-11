@@ -1,17 +1,17 @@
-import { Box, Text } from 'ink';
-import Image, { TerminalInfoContext } from 'ink-picture';
-import React from 'react';
+import { Box, Text } from 'ink'
+import Image, { TerminalInfoContext } from 'ink-picture'
+import React from 'react'
 
 interface ImageDisplayProps {
-	imagePaths: string[];
-	maxWidth: number;
+	imagePaths: string[]
+	maxWidth: number
 }
 
 export function ImageDisplay({ imagePaths, maxWidth }: ImageDisplayProps) {
-	const terminalInfo = React.useContext(TerminalInfoContext);
+	const terminalInfo = React.useContext(TerminalInfoContext)
 
 	if (imagePaths.length === 0) {
-		return null;
+		return null
 	}
 
 	// If no terminal info (snapshot mode), show placeholder text
@@ -23,12 +23,12 @@ export function ImageDisplay({ imagePaths, maxWidth }: ImageDisplayProps) {
 					{imagePaths.length > 1 ? 's' : ''}]
 				</Text>
 			</Box>
-		);
+		)
 	}
 
 	// Use 80% of available width, responsive to terminal size
-	const imageWidth = Math.floor(maxWidth * 0.8);
-	const imageHeight = 24; // Height in terminal rows
+	const imageWidth = Math.floor(maxWidth * 0.8)
+	const imageHeight = 24 // Height in terminal rows
 
 	return (
 		<Box
@@ -58,5 +58,5 @@ export function ImageDisplay({ imagePaths, maxWidth }: ImageDisplayProps) {
 				</Box>
 			)}
 		</Box>
-	);
+	)
 }

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config'
 
 export const config = {
 	test: {
@@ -22,6 +22,6 @@ export const config = {
 			all: true,
 		},
 	},
-};
+}
 
-export default defineConfig(config);
+export default defineConfig(config)

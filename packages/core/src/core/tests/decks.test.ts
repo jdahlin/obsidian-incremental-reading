@@ -1,8 +1,8 @@
-import type { ReviewItem } from '../types';
-import { describe, expect, it } from 'vitest';
-import { buildDeckTree, getCountsForFolder, getFolderPath } from '../decks';
+import type { ReviewItem } from '../types'
+import { describe, expect, it } from 'vitest'
+import { buildDeckTree, getCountsForFolder, getFolderPath } from '../decks'
 
-const now = new Date('2024-01-02T10:00:00');
+const now = new Date('2024-01-02T10:00:00')
 
 function makeItem(partial: Partial<ReviewItem>): ReviewItem {
 	return {
@@ -22,14 +22,14 @@ function makeItem(partial: Partial<ReviewItem>): ReviewItem {
 		},
 		priority: partial.priority ?? 50,
 		created: partial.created ?? new Date('2024-01-01T00:00:00'),
-	};
+	}
 }
 
 describe('deck helpers', () => {
 	it('returns folder path for notes', () => {
-		expect(getFolderPath('A/B/Note.md')).toBe('A/B');
-		expect(getFolderPath('Note.md')).toBe('');
-	});
+		expect(getFolderPath('A/B/Note.md')).toBe('A/B')
+		expect(getFolderPath('Note.md')).toBe('')
+	})
 
 	it('computes counts for a folder', () => {
 		const items = [
@@ -81,11 +81,11 @@ describe('deck helpers', () => {
 					last_review: null,
 				},
 			}),
-		];
+		]
 
-		const counts = getCountsForFolder(items, 'A', now);
-		expect(counts).toEqual({ new: 1, learning: 1, due: 1 });
-	});
+		const counts = getCountsForFolder(items, 'A', now)
+		expect(counts).toEqual({ new: 1, learning: 1, due: 1 })
+	})
 
 	it('builds a deck tree for nested folders', () => {
 		const items = [
@@ -125,13 +125,13 @@ describe('deck helpers', () => {
 					last_review: null,
 				},
 			}),
-		];
+		]
 
-		const tree = buildDeckTree(items, now);
-		const rootPaths = tree.map((node) => node.path).sort();
-		expect(rootPaths).toEqual(['A', 'C']);
+		const tree = buildDeckTree(items, now)
+		const rootPaths = tree.map((node) => node.path).sort()
+		expect(rootPaths).toEqual(['A', 'C'])
 
-		const aNode = tree.find((node) => node.path === 'A');
-		expect(aNode?.children.map((child) => child.path)).toEqual(['A/B']);
-	});
-});
+		const aNode = tree.find((node) => node.path === 'A')
+		expect(aNode?.children.map((child) => child.path)).toEqual(['A/B'])
+	})
+})

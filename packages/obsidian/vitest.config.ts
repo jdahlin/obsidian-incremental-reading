@@ -1,6 +1,6 @@
-import { resolve } from 'node:path';
-import { defineConfig, mergeConfig } from 'vitest/config';
-import { config } from '@repo/vitest-config';
+import { resolve } from 'node:path'
+import { defineConfig, mergeConfig } from 'vitest/config'
+import { config } from '@repo/vitest-config'
 
 export default mergeConfig(
 	defineConfig(config),
@@ -14,4 +14,4 @@ export default mergeConfig(
 			},
 		},
 	}),
-);
+)
