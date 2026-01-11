@@ -19,13 +19,13 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"better-sqlite3": "^11.7.0",
-		"yaml": "^2.7.0"
+		"better-sqlite3": "catalog:",
+		"yaml": "catalog:"
 	},
 	"devDependencies": {
-		"@types/better-sqlite3": "^7.6.12",
-		"@types/node": "^22.10.5",
-		"typescript": "^5.7.2",
+		"@types/better-sqlite3": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:",
 		"vitest": "catalog:"
 	},
 	"files": [
