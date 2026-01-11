@@ -1,9 +1,9 @@
 import type { ReviewPhase } from '@repo/core/core/content'
 import type { ReviewItem } from '@repo/core/core/types'
 import type { App } from 'obsidian'
-import { hasImageOcclusionSyntax, parseImageOcclusionRects } from '@repo/core/anki/html'
 import { parseClozeIndices } from '@repo/core/core/cloze'
 import { extractSection, formatReviewContent } from '@repo/core/core/content'
+import { hasImageOcclusionSyntax, parseImageOcclusionRects } from '@repo/core/core/image-occlusion'
 import { MarkdownRenderer, TFile } from 'obsidian'
 import { syncNoteToSidecar } from '../data/sync'
 
@@ -201,7 +201,7 @@ function createNativeOcclusionHtml(
 			// Current card's occlusion is highlighted (red), others are neutral (gray)
 			const bgColor = isCurrentCard ? '#ff6b6b' : '#808080'
 
-			return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; opacity: 0.8; pointer-events: none;"></div>`
+			return `<div class="io-rect" style="position: absolute; left: ${left}%; top: ${top}%; width: ${width}%; height: ${height}%; background: ${bgColor}; border: 2px solid black; pointer-events: none;"></div>`
 		})
 		.join('\n')
 
