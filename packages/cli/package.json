@@ -15,7 +15,7 @@
 	"dependencies": {
 		"@anthropic/anki-importer": "workspace:*",
 		"@repo/core": "workspace:*",
-		"better-sqlite3": "^11.0.0",
+		"better-sqlite3": "catalog:",
 		"ink": "^5.2.1",
 		"ink-picture": "^1.3.3",
 		"meow": "^13.2.0",
@@ -25,10 +25,10 @@
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tsconfig": "workspace:*",
-		"@types/better-sqlite3": "^7.6.0",
-		"@types/node": "^22.0.0",
+		"@types/better-sqlite3": "catalog:",
+		"@types/node": "catalog:",
 		"@types/react": "^18.3.27",
-		"tsx": "^4.21.0",
-		"typescript": "^5.9.3"
+		"tsx": "catalog:",
+		"typescript": "catalog:"
 	}
 }
