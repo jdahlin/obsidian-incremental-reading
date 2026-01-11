@@ -58,6 +58,7 @@ const baseConfig = antfu({
 		'**/*.cjs',
 		'**/manifest.json',
 		'**/versions.json',
+		'scripts/**',
 	],
 })
 
