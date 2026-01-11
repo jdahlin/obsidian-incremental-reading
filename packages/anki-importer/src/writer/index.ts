@@ -6,11 +6,11 @@
  */
 
 import type { AnkiImportResult } from '../importer/index.js'
-import type {IRNoteId} from '../ir-types.js';
+import type { IRNoteId } from '../ir-types.js'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { generateIRNoteId  } from '../ir-types.js'
+import { generateIRNoteId } from '../ir-types.js'
 import { writeCards } from './cards.js'
 import { writeDecks } from './decks.js'
 import { writeModels } from './models.js'
@@ -28,8 +28,6 @@ export interface OutputPaths {
 	readonly root: string
 	/** Models directory: /Anki/_Models */
 	readonly models: string
-	/** Cards/scheduling directory: /Anki/_Cards */
-	readonly cards: string
 	/** Review log directory: /Anki/_RevLog */
 	readonly revlog: string
 	/** Media directory: /Anki/_Media */
@@ -43,7 +41,6 @@ export function createOutputPaths(root: string): OutputPaths {
 	return {
 		root,
 		models: join(root, '_Models'),
-		cards: join(root, '_Cards'),
 		revlog: join(root, '_RevLog'),
 		media: join(root, '_Media'),
 	}
@@ -52,12 +49,12 @@ export function createOutputPaths(root: string): OutputPaths {
 /**
  * Ensure all output directories exist
  */
-export async function ensureDirectories(paths: OutputPaths): Promise<void> {
+export async function ensureDirectories(paths: OutputPaths, sidecarDir: string): Promise<void> {
 	await Promise.all([
 		mkdir(paths.models, { recursive: true }),
-		mkdir(paths.cards, { recursive: true }),
 		mkdir(paths.revlog, { recursive: true }),
 		mkdir(paths.media, { recursive: true }),
+		mkdir(sidecarDir, { recursive: true }),
 	])
 }
 
@@ -95,8 +92,12 @@ export interface WriteError {
  * Write options
  */
 export interface WriteOptions {
-	/** Root output directory */
+	/** Root output directory for Anki notes (e.g., /path/to/vault/Anki) */
 	readonly outputDir: string
+	/** Sidecar directory for scheduling state (e.g., /path/to/vault/IR/Review Items) */
+	readonly sidecarDir: string
+	/** Vault-relative prefix for note paths (e.g., "Anki") */
+	readonly vaultRelativePrefix: string
 	/** Anki media directory (collection.media) */
 	readonly mediaDir?: string
 	/** Skip suspended cards */
@@ -107,13 +108,17 @@ export interface WriteOptions {
 
 /**
  * Write all imported data to markdown files
+ *
+ * Notes are written to outputDir/{DeckPath}/{note_id}.md
+ * Sidecars are written to sidecarDir/{ir_note_id}.md
+ * Each sidecar contains note_path pointing to its note file
  */
 export async function writeAnkiData(
 	data: AnkiImportResult,
 	options: WriteOptions,
 ): Promise<WriteResult> {
 	const paths = createOutputPaths(options.outputDir)
-	await ensureDirectories(paths)
+	await ensureDirectories(paths, options.sidecarDir)
 
 	const errors: WriteError[] = []
 
@@ -121,14 +126,17 @@ export async function writeAnkiData(
 	const modelsWritten = await writeModels(data.models, paths.models, errors)
 
 	// Build lookup maps for notes
-	const modelMap = new Map(data.models.map(m => [m.id as number, m]))
-	const deckMap = new Map(data.decks.map(d => [d.id as number, d]))
+	const modelMap = new Map(data.models.map((m) => [m.id as number, m]))
+	const deckMap = new Map(data.decks.map((d) => [d.id as number, d]))
 
 	// Generate ir_note_id for each note ONCE, shared by notes and cards writers
 	const irNoteIdMap = new Map<number, IRNoteId>()
 	for (const note of data.notes) {
 		irNoteIdMap.set(note.id as number, generateIRNoteId())
 	}
+
+	// Map note IDs to vault-relative paths (populated by writeNotes, used by writeCards)
+	const notePathMap = new Map<number, string>()
 
 	// Write notes (organized by deck path)
 	const notesWritten = await writeNotes(
@@ -137,17 +145,20 @@ export async function writeAnkiData(
 		modelMap,
 		deckMap,
 		irNoteIdMap,
+		notePathMap,
 		paths.root,
+		options.vaultRelativePrefix,
 		errors,
 	)
 
-	// Write cards (scheduling sidecars)
+	// Write cards (scheduling sidecars) to IR/Review Items/
 	const cardsWritten = await writeCards(
 		data.notes,
 		data.cards,
 		modelMap,
 		irNoteIdMap,
-		paths.cards,
+		notePathMap,
+		options.sidecarDir,
 		options.collectionCreatedAt ?? Math.floor(Date.now() / 1000),
 		errors,
 	)

@@ -4,7 +4,7 @@
  * Writes notes to markdown files organized by deck path.
  */
 
-import type {IRNoteId} from '../ir-types.js';
+import type { IRNoteId } from '../ir-types.js'
 import type { Card, Deck, Model, Note } from '../types.js'
 import type { WriteError } from './index.js'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -25,7 +25,7 @@ type NoteType = 'basic' | 'cloze' | 'image_occlusion' | 'standard'
  */
 function getNoteType(model: Model): NoteType {
 	// Check for Image Occlusion by field names
-	const fieldNames = model.fields.map(f => f.name.toLowerCase())
+	const fieldNames = model.fields.map((f) => f.name.toLowerCase())
 	if (fieldNames.includes('occlusion') && fieldNames.includes('image')) {
 		return 'image_occlusion'
 	}
@@ -66,40 +66,39 @@ interface NoteFrontmatter {
  * Simple conversion for common patterns
  */
 function htmlToMarkdown(html: string): string {
-	return html
-		// Convert line breaks
-		.replace(/<br\s*\/?>/gi, '\n')
-		.replace(/<\/div>/gi, '\n')
-		.replace(/<div[^>]*>/gi, '')
-		// Convert bold
-		.replace(/<b>|<strong>/gi, '**')
-		.replace(/<\/b>|<\/strong>/gi, '**')
-		// Convert italic
-		.replace(/<i>|<em>/gi, '*')
-		.replace(/<\/i>|<\/em>/gi, '*')
-		// Convert images
-		.replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, '![]($1)')
-		// Convert audio (Anki format)
-		.replace(/\[sound:([^\]]+)\]/g, '![]($1)')
-		// Remove other HTML tags but keep content
-		.replace(/<[^>]+>/g, '')
-		// Clean up whitespace
-		.replace(/\n{3,}/g, '\n\n')
-		.trim()
+	return (
+		html
+			// Convert line breaks
+			.replace(/<br\s*\/?>/gi, '\n')
+			.replace(/<\/div>/gi, '\n')
+			.replace(/<div[^>]*>/gi, '')
+			// Convert bold
+			.replace(/<b>|<strong>/gi, '**')
+			.replace(/<\/b>|<\/strong>/gi, '**')
+			// Convert italic
+			.replace(/<i>|<em>/gi, '*')
+			.replace(/<\/i>|<\/em>/gi, '*')
+			// Convert images
+			.replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, '![]($1)')
+			// Convert audio (Anki format)
+			.replace(/\[sound:([^\]]+)\]/g, '![]($1)')
+			// Remove other HTML tags but keep content
+			.replace(/<[^>]+>/g, '')
+			// Clean up whitespace
+			.replace(/\n{3,}/g, '\n\n')
+			.trim()
+	)
 }
 
 /**
  * Convert Note to markdown content
  */
-export function noteToMarkdown(
-	note: Note,
-	model: Model,
-	irNoteId: string,
-): string {
+export function noteToMarkdown(note: Note, model: Model, irNoteId: string): string {
 	const noteType = getNoteType(model)
-	const clozeIndices = (noteType === 'cloze' || noteType === 'image_occlusion')
-		? extractClozeIndices(note.fieldValues)
-		: []
+	const clozeIndices =
+		noteType === 'cloze' || noteType === 'image_occlusion'
+			? extractClozeIndices(note.fieldValues)
+			: []
 
 	const frontmatter: NoteFrontmatter = {
 		ir_note_id: irNoteId,
@@ -110,7 +109,7 @@ export function noteToMarkdown(
 		type: noteType,
 		priority: 50,
 		...(clozeIndices.length > 0 && {
-			cloze: clozeIndices.map(i => `c${i}`),
+			cloze: clozeIndices.map((i) => `c${i}`),
 		}),
 	}
 
@@ -120,11 +119,13 @@ export function noteToMarkdown(
 	})
 
 	// Build field sections
-	const fieldSections = model.fields.map((field, i) => {
-		const value = note.fieldValues[i] ?? ''
-		const content = htmlToMarkdown(value)
-		return `## ${field.name}\n\n${content}`
-	}).join('\n\n')
+	const fieldSections = model.fields
+		.map((field, i) => {
+			const value = note.fieldValues[i] ?? ''
+			const content = htmlToMarkdown(value)
+			return `## ${field.name}\n\n${content}`
+		})
+		.join('\n\n')
 
 	return `---\n${yaml}---\n\n${fieldSections}\n`
 }
@@ -142,6 +143,9 @@ export function getNoteFilename(note: Note): string {
 
 /**
  * Write all notes to markdown files
+ *
+ * @param notePathMap - Populated with vault-relative paths for each note (keyed by note ID)
+ * @param vaultRelativePrefix - Prefix for vault-relative paths (e.g., "Anki")
  */
 export async function writeNotes(
 	notes: readonly Note[],
@@ -149,7 +153,9 @@ export async function writeNotes(
 	modelMap: Map<number, Model>,
 	deckMap: Map<number, Deck>,
 	irNoteIdMap: Map<number, IRNoteId>,
+	notePathMap: Map<number, string>,
 	outputRoot: string,
+	vaultRelativePrefix: string,
 	errors: WriteError[],
 ): Promise<number> {
 	let count = 0
@@ -201,6 +207,11 @@ export async function writeNotes(
 		const filename = getNoteFilename(note)
 		const filePath = join(dirPath, filename)
 
+		// Compute vault-relative path for sidecar reference
+		const vaultRelativePath = [vaultRelativePrefix, deckPath, filename]
+			.filter(Boolean)
+			.join('/')
+
 		// Ensure directory exists
 		if (!createdDirs.has(dirPath)) {
 			try {
@@ -214,6 +225,8 @@ export async function writeNotes(
 		try {
 			const content = noteToMarkdown(note, model, irNoteId)
 			await writeFile(filePath, content, 'utf-8')
+			// Store vault-relative path for sidecar generation
+			notePathMap.set(note.id as number, vaultRelativePath)
 			count++
 		} catch (err) {
 			errors.push({
