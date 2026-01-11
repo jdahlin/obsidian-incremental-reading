@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is an Obsidian plugin that implements SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
+This is a monorepo for an Obsidian plugin that implements SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition. It includes a CLI for terminal-based review.
 
 **Key Documentation:**
 
@@ -15,7 +15,7 @@ This is an Obsidian plugin that implements SuperMemo-inspired incremental readin
 
 ### Incremental Reading Workflow
 
-1. **Extract** - Select text → create new note linked from source
+1. **Extract** - Select text -> create new note linked from source
 2. **Cloze** - Wrap text in `{{c1::answer}}` for active recall
 3. **Review** - Study due items with spaced repetition scheduling
 
@@ -34,67 +34,81 @@ This is an Obsidian plugin that implements SuperMemo-inspired incremental readin
 - FSRS algorithm for spaced repetition
 - Race condition handling for concurrent file operations
 
-## Source Structure
+## Monorepo Structure
 
 ```
-src/
-├── core/           # Pure functions (testable, no Obsidian deps)
-│   ├── types.ts    # Type definitions
-│   ├── cloze.ts    # Cloze parsing and formatting
-│   ├── queue.ts    # Queue building and ordering
-│   ├── scheduling.ts # FSRS calculations
-│   └── frontmatter.ts # Frontmatter parsing
+packages/
+├── core/           # @repo/core - Pure business logic (no Obsidian deps)
+│   └── src/
+│       ├── anki/       # Anki import/export, deck parsing
+│       ├── core/       # Core types, cloze parsing, frontmatter
+│       ├── data/       # Data access abstractions
+│       ├── rv/         # Random variable utilities
+│       ├── scheduling/ # FSRS calculations
+│       ├── stats/      # Statistics calculations
+│       ├── strategies/ # Card selection strategies
+│       └── SessionManager.ts  # Review session orchestration
 │
-├── data/           # Data access layer
-│   ├── revlog.ts   # JSONL append/read
-│   ├── review-items.ts # Sidecar file read/write
-│   ├── sync.ts     # Note ↔ sidecar synchronization
-│   └── ids.ts      # NanoID generation
+├── obsidian/       # @repo/obsidian - Obsidian plugin
+│   └── src/
+│       ├── adapters/   # Platform adapters (file system, etc.)
+│       ├── bases/      # Base classes for views
+│       ├── commands/   # Obsidian commands (extract, cloze)
+│       ├── data/       # File-based data access (sync, review-items)
+│       ├── editor/     # CodeMirror extensions
+│       ├── review/     # Review UI components (Preact)
+│       ├── stats/      # Statistics modal
+│       ├── settings.ts # Plugin settings
+│       └── main.ts     # Plugin entry point
 │
-├── commands/       # Obsidian commands
-│   ├── extract.ts  # Extract to topic note
-│   └── cloze.ts    # Cloze creation
+├── cli/            # @repo/cli - Terminal review client
+│   └── src/
+│       ├── screens/    # Terminal UI screens
+│       ├── components/ # Reusable Ink components
+│       └── App.tsx     # Main CLI application (React/Ink)
 │
-├── views/          # UI components (Preact)
-│   ├── review/
-│   │   ├── ReviewItemView.tsx  # Main view controller
-│   │   ├── ReviewScreen.tsx    # Review UI
-│   │   └── DeckSummary.tsx     # Deck list UI
-│   └── stats/
-│       └── StatsModal.tsx
-│
-├── settings.ts     # Plugin settings
-├── styles.css      # CSS styles
-└── main.ts         # Plugin entry point
+configs/            # Shared configurations
+├── eslint/         # @repo/eslint-config
+├── ts/             # @repo/tsconfig
+└── vitest/         # @repo/vitest-config
 ```
 
 ## Environment & Tooling
 
-- **Node.js**: 20+ recommended
-- **Package manager**: npm
-- **Bundler**: esbuild
-- **UI framework**: Preact (JSX)
+- **Node.js**: 25+ required
+- **Package manager**: pnpm 10+
+- **Build orchestration**: Turborepo
+- **Bundler**: esbuild (for Obsidian plugin)
+- **UI framework**: Preact (Obsidian), React/Ink (CLI)
 - **Scheduling**: ts-fsrs
 
 ### Commands
 
 ```bash
-npm install      # Install dependencies
-npm run dev      # Development build (watch mode)
-npm run build    # Production build
-npm run lint     # Run ESLint
-npm test         # Run tests
+pnpm install                       # Install dependencies
+pnpm run dev                       # Development build (watch mode, all packages)
+pnpm run build                     # Production build
+pnpm run lint                      # Run ESLint
+pnpm test                          # Run tests
+pnpm run typecheck                 # TypeScript type checking
+pnpm run format                    # Format with Prettier
+
+# Per-package commands
+pnpm --filter @repo/core test      # Run tests for core only
+pnpm --filter @repo/obsidian dev   # Dev mode for obsidian plugin
+pnpm run cli                       # Run CLI directly
 ```
 
 ## Key Files to Understand
 
-| File                                  | Purpose                                                          |
-| ------------------------------------- | ---------------------------------------------------------------- |
-| `src/views/review/ReviewItemView.tsx` | Main review controller - handles queue, grading, content loading |
-| `src/core/cloze.ts`                   | `formatClozeQuestion()` and `formatClozeAnswer()` for display    |
-| `src/core/scheduling.ts`              | FSRS grading logic                                               |
-| `src/data/sync.ts`                    | Syncs note content to sidecar files                              |
-| `src/data/review-items.ts`            | Reads/writes sidecar scheduling state                            |
+| File                                            | Purpose                                           |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `packages/core/src/SessionManager.ts`           | Review session orchestration and queue management |
+| `packages/core/src/core/cloze.ts`               | `formatClozeQuestion()` and `formatClozeAnswer()` |
+| `packages/core/src/scheduling/fsrs.ts`          | FSRS grading logic                                |
+| `packages/obsidian/src/data/sync.ts`            | Syncs note content to sidecar files               |
+| `packages/obsidian/src/data/review-items.ts`    | Reads/writes sidecar scheduling state             |
+| `packages/obsidian/src/review/ReviewScreen.tsx` | Main review UI component                          |
 
 ## Patterns Used
 
@@ -132,15 +146,29 @@ const formatted =
 await MarkdownRenderer.render(app, formatted, container, notePath, this);
 ```
 
+### Test Directory Convention
+
+Use `tests/` for test directories, not `__tests__/`:
+
+```
+packages/core/src/anki/
+├── converter.ts
+├── html.ts
+└── tests/
+    ├── converter.test.ts
+    └── html.test.ts
+```
+
 ## Agent Guidelines
 
 ### Do
 
 - Read `docs/ARCHITECTURE.md` for design decisions and data model
 - Check `docs/IMPLEMENTATION_SPEC.md` for implementation status
-- Use pure functions in `src/core/` for testable logic
+- Use pure functions in `packages/core/` for testable logic
 - Handle file race conditions with try/catch pattern
-- Keep UI components in Preact (not React)
+- Use Preact in Obsidian plugin, React/Ink in CLI
+- Run `pnpm --filter <package> test` for package-specific testing
 
 ### Don't
 
@@ -148,18 +176,28 @@ await MarkdownRenderer.render(app, formatted, container, notePath, this);
 - Open separate editor tabs during review (use single-pane design)
 - Wrap clozes in HTML (use plain `{{c1::text}}` syntax)
 - Commit `main.js`, `styles.css`, or `node_modules/`
+- Use React in the Obsidian plugin (use Preact)
+- Use `__tests__/` directories (use `tests/`)
 
 ## Testing
 
-Manual install for testing:
+### Running Tests
 
 ```bash
-npm run build
+pnpm test                          # All tests
+pnpm --filter @repo/core test      # Core package only
+pnpm --filter @repo/obsidian test  # Obsidian package only
+```
+
+### Manual Plugin Testing
+
+```bash
+pnpm run build
 # Copy main.js, manifest.json, styles.css to:
 # <Vault>/.obsidian/plugins/obsidian-incremental-reading/
 ```
 
-Reload Obsidian and enable in **Settings → Community plugins**.
+Reload Obsidian and enable in **Settings -> Community plugins**.
 
 ## Manifest Rules
 
@@ -170,7 +208,7 @@ Reload Obsidian and enable in **Settings → Community plugins**.
 ## Releases
 
 1. Bump version in `manifest.json`
-2. Update `versions.json` to map plugin version → min app version
+2. Update `versions.json` to map plugin version -> min app version
 3. Create GitHub release with tag matching version (no `v` prefix)
 4. Attach `main.js`, `manifest.json`, `styles.css`
 
@@ -180,3 +218,4 @@ Reload Obsidian and enable in **Settings → Community plugins**.
 - FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki
 - SuperMemo IR: https://supermemo.guru/wiki/Incremental_reading
 - Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
+- Turborepo: https://turbo.build/repo/docs
