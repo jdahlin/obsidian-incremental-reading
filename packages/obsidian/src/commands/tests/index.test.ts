@@ -19,7 +19,7 @@ interface TestCommand {
 }
 
 function isTestCommand(value: unknown): value is TestCommand {
-	if (!value || typeof value !== 'object') return false
+	if (value === null || value === undefined || typeof value !== 'object') return false
 	const record = value as { id?: unknown; name?: unknown }
 	return typeof record.id === 'string' && typeof record.name === 'string'
 }
@@ -66,7 +66,6 @@ describe('registerCommands', () => {
 			'export-review-history',
 			'extract-to-incremental-note',
 			'open-review-view',
-			'open-statistics',
 			'set-priority',
 		])
 	})

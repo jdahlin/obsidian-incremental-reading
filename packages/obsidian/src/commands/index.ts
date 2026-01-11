@@ -4,7 +4,6 @@ import { normalizeNumber } from '@repo/core/core/frontmatter'
 import { Notice } from 'obsidian'
 import { exportReviewHistory } from '../data/export'
 import { PriorityModal } from '../PriorityModal'
-import { StatsModal } from '../stats/StatsModal'
 import { clozeSelectionNextIndex, clozeSelectionSameIndex } from './cloze'
 import { extractToIncrementalNote } from './extract'
 
@@ -45,7 +44,7 @@ export function registerCommands(plugin: CommandPlugin): void {
 							fm.priority = newPriority
 						},
 					)
-					new Notice(`Priority set to ${newPriority}.`)
+					void new Notice(`Priority set to ${newPriority}.`)
 				})()
 			}).open()
 			return true
@@ -58,16 +57,8 @@ export function registerCommands(plugin: CommandPlugin): void {
 		callback: () => {
 			void (async () => {
 				const file = await exportReviewHistory(plugin.app)
-				new Notice(`Exported review history to ${file.path}.`)
+				void new Notice(`Exported review history to ${file.path}.`)
 			})()
-		},
-	})
-
-	plugin.addCommand({
-		id: 'open-statistics',
-		name: 'Open statistics',
-		callback: () => {
-			new StatsModal(plugin.app, plugin.settings.extractTag).open()
 		},
 	})
 
