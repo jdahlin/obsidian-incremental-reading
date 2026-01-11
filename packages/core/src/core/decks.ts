@@ -1,6 +1,6 @@
-import type { DeckInfo, ReviewItem } from './types'
+import type { DeckInfo, ItemWithState } from './types'
 
-export function buildDeckTree(items: ReviewItem[], now: Date): DeckInfo[] {
+export function buildDeckTree(items: ItemWithState[], now: Date): DeckInfo[] {
 	const paths = new Set<string>()
 	for (const item of items) {
 		let folder = getFolderPath(item.notePath)
@@ -57,7 +57,7 @@ export function buildDeckTree(items: ReviewItem[], now: Date): DeckInfo[] {
 }
 
 export function getCountsForFolder(
-	items: ReviewItem[],
+	items: ItemWithState[],
 	folderPath: string,
 	now: Date,
 ): { new: number; learning: number; due: number } {
@@ -82,7 +82,7 @@ function getParentPath(path: string): string {
 	return segments.slice(0, -1).join('/')
 }
 
-function filterByFolder(items: ReviewItem[], folderPath: string): ReviewItem[] {
+function filterByFolder(items: ItemWithState[], folderPath: string): ItemWithState[] {
 	if (!folderPath || folderPath === '') {
 		return items
 	}
@@ -96,17 +96,17 @@ function filterByFolder(items: ReviewItem[], folderPath: string): ReviewItem[] {
 }
 
 interface CategorizedItems {
-	learning: ReviewItem[]
-	due: ReviewItem[]
-	new: ReviewItem[]
-	upcoming: ReviewItem[]
+	learning: ItemWithState[]
+	due: ItemWithState[]
+	new: ItemWithState[]
+	upcoming: ItemWithState[]
 }
 
-function categorizeItems(items: ReviewItem[], now: Date): CategorizedItems {
-	const learning: ReviewItem[] = []
-	const due: ReviewItem[] = []
-	const newItems: ReviewItem[] = []
-	const upcoming: ReviewItem[] = []
+function categorizeItems(items: ItemWithState[], now: Date): CategorizedItems {
+	const learning: ItemWithState[] = []
+	const due: ItemWithState[] = []
+	const newItems: ItemWithState[] = []
+	const upcoming: ItemWithState[] = []
 
 	for (const item of items) {
 		const status = item.state.status

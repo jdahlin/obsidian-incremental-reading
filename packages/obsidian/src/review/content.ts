@@ -1,5 +1,5 @@
 import type { ReviewPhase } from '@repo/core/core/content'
-import type { ReviewItem } from '@repo/core/core/types'
+import type { ItemWithState } from '@repo/core/core/types'
 import type { App } from 'obsidian'
 import { parseClozeIndices } from '@repo/core/core/cloze'
 import { extractSection, formatReviewContent } from '@repo/core/core/content'
@@ -26,7 +26,7 @@ export interface ContentLoaderDeps {
  */
 export async function loadReviewItemHtml(
 	deps: ContentLoaderDeps,
-	item: ReviewItem | null,
+	item: ItemWithState | null,
 	phase: ReviewPhase,
 ): Promise<string> {
 	if (!item) return ''

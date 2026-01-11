@@ -1,18 +1,16 @@
-export type Status = 'new' | 'learning' | 'review' | 'relearning'
+// Re-export shared types from canonical source
+import type { DeckInfo, ItemState, Rating, Status } from '../types'
+export type { DeckInfo, ItemState, Rating, Status } from '../types'
+
+// CardType differs from ItemType: uses 'item' (legacy) instead of 'cloze'
 export type CardType = 'topic' | 'item' | 'basic' | 'image_occlusion'
-export type Rating = 1 | 2 | 3 | 4
 
-export interface ItemState {
-	status: Status
-	due: Date | null
-	stability: number
-	difficulty: number
-	reps: number
-	lapses: number
-	last_review: Date | null
-}
-
-export interface ReviewItem {
+/**
+ * Review item with embedded scheduling state.
+ * Used for UI rendering and statistics where item + state are needed together.
+ * Distinct from types.ts ReviewItem which separates item metadata from state.
+ */
+export interface ItemWithState {
 	id: string
 	noteId: string
 	notePath: string
@@ -28,7 +26,7 @@ export interface ReviewPlatformAdapter {
 	getTodayStats: (now: Date) => Promise<TodayStats>
 	getStreakInfo: (now: Date) => Promise<StreakInfo>
 	renderItem: (
-		item: ReviewItem,
+		item: ItemWithState,
 		phase: 'question' | 'answer',
 		extractTag: string,
 	) => Promise<string>
@@ -67,17 +65,4 @@ export interface TodayStats {
 export interface StreakInfo {
 	current: number
 	longest: number
-}
-
-export interface DeckInfo {
-	path: string
-	name: string
-	depth: number
-	counts: {
-		new: number
-		learning: number
-		due: number
-	}
-	children: DeckInfo[]
-	collapsed: boolean
 }

@@ -1,10 +1,10 @@
-import type { ReviewItem } from '../types'
+import type { ItemWithState } from '../types'
 import { describe, expect, it } from 'vitest'
 import { buildDeckTree, getCountsForFolder, getFolderPath } from '../decks'
 
 const now = new Date('2024-01-02T10:00:00')
 
-function makeItem(partial: Partial<ReviewItem>): ReviewItem {
+function makeItem(partial: Partial<ItemWithState>): ItemWithState {
 	return {
 		id: partial.id ?? 'id',
 		noteId: partial.noteId ?? 'note',
