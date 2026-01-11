@@ -1,5 +1,5 @@
 import type {
-	ReviewItem as CoreReviewItem,
+	ItemWithState as CoreReviewItem,
 	DeckInfo,
 	ItemState,
 	ReviewPlatformAdapter,

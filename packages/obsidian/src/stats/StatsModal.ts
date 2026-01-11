@@ -1,4 +1,4 @@
-import type { ReviewItem } from '@repo/core/core/types'
+import type { ItemWithState } from '@repo/core/core/types'
 import type { App } from 'obsidian'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 import {
@@ -72,13 +72,13 @@ export class StatsModal extends Modal {
 		this.contentEl.empty()
 	}
 
-	private async loadItems(): Promise<ReviewItem[]> {
+	private async loadItems(): Promise<ItemWithState[]> {
 		const vault = new ObsidianVault(this.app)
 		const notePlatform = new ObsidianNotePlatform(this.app)
 		const dataStore = new MarkdownDataStore(vault, notePlatform)
 
 		const engineItems = await dataStore.listItems()
-		const items: ReviewItem[] = []
+		const items: ItemWithState[] = []
 
 		for (const engineItem of engineItems) {
 			const state = await dataStore.getState(engineItem.id)

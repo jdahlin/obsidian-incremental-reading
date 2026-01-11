@@ -1,4 +1,4 @@
-import type { ReviewItem, ReviewRecord, StreakInfo } from '../core/types'
+import type { ItemWithState, ReviewRecord, StreakInfo } from '../core/types'
 import { addDays, startOfDay } from '../core/dates'
 
 export interface AnswerDistribution {
@@ -119,7 +119,7 @@ export function buildHeatmapData(
 }
 
 export function buildForecastData(
-	items: ReviewItem[],
+	items: ItemWithState[],
 	days: number,
 	now: Date = new Date(),
 ): ForecastData[] {

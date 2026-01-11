@@ -1,4 +1,4 @@
-import type { ReviewItem, ReviewRecord } from '../../core/types'
+import type { ItemWithState, ReviewRecord } from '../../core/types'
 import { describe, expect, it } from 'vitest'
 import {
 	buildForecastData,
@@ -61,7 +61,7 @@ describe('stats aggregations', () => {
 	})
 
 	it('builds forecast data', () => {
-		const items: ReviewItem[] = [
+		const items: ItemWithState[] = [
 			{
 				id: 'a',
 				noteId: 'a',
