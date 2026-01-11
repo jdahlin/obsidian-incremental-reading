@@ -1,16 +1,16 @@
 name: Update Documentation
 
-# Note: Scheduled runs require ANTHROPIC_API_KEY secret.
-# Manual runs (workflow_dispatch) can use GitHub App OAuth.
+# Requires either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret
 on:
     schedule:
-        # Run daily at 6:00 AM UTC (requires ANTHROPIC_API_KEY)
+        # Run daily at 6:00 AM UTC
         - cron: '0 6 * * *'
-    workflow_dispatch: # Manual trigger - uses GitHub App OAuth
+    workflow_dispatch: # Manual trigger
 
 permissions:
     contents: write
     pull-requests: write
+    id-token: write
 
 jobs:
     update-docs:
@@ -25,7 +25,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: '25'
+                  node-version: '22'
                   cache: 'pnpm'
 
             - name: Install dependencies
@@ -35,10 +35,9 @@ jobs:
               id: claude
               uses: anthropics/claude-code-action@beta
               with:
-                  # Use API key for scheduled runs, OAuth for manual triggers
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  use_oauth: ${{ github.event_name == 'workflow_dispatch' && secrets.ANTHROPIC_API_KEY == '' }}
-                  prompt: |
+                  claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+                  direct_prompt: |
                       Analyze this codebase and update any documentation that is out of date.
 
                       Documentation files to check:
