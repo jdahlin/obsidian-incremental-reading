@@ -14,6 +14,7 @@ import type {
 	SessionConfig,
 	SessionItem,
 } from '@repo/core/types';
+import type { SessionStateData } from '../data/session';
 import type { ReviewPhase } from '../review/content';
 import type { DeckCountsValue } from '../review/deck-summary-types';
 import type {
@@ -22,8 +23,15 @@ import type {
 	ReviewScreenState,
 } from '../review/review-screen-state';
 import type { SessionStats as UISessionStats } from '../review/review-screen-types';
+import { formatReviewContent } from '@repo/core/core/content';
 import { buildDeckTree, getCountsForFolder } from '@repo/core/core/decks';
 import { SessionManager } from '@repo/core/SessionManager';
+import { buildSessionState } from '../data/session';
+
+/** Extended platform adapter with optional session state support */
+interface ExtendedPlatformAdapter extends ReviewPlatformAdapter {
+	updateSessionState?: (data: SessionStateData) => Promise<void>;
+}
 
 export interface EngineReviewSettings {
 	newCardsPerDay: number;
@@ -38,7 +46,7 @@ export interface EngineReviewSettings {
 }
 
 export interface EngineReviewControllerDeps {
-	platform: ReviewPlatformAdapter;
+	platform: ExtendedPlatformAdapter;
 	settings: EngineReviewSettings;
 	dataStore: DataStore;
 	notePlatform: NotePlatform;
@@ -188,7 +196,7 @@ export class EngineReviewController {
 				id: engineItem.id,
 				noteId: engineItem.noteId,
 				notePath: engineItem.notePath,
-				type: engineItem.type === 'topic' ? 'topic' : 'item',
+				type: this.mapItemType(engineItem.type),
 				clozeIndex: engineItem.clozeIndex,
 				state: state
 					? {
@@ -283,6 +291,7 @@ export class EngineReviewController {
 		}));
 
 		await this.loadItemContent(currentSessionItem, phase);
+		await this.updateSessionFile();
 	}
 
 	async gradeCurrentItem(grade: number): Promise<void> {
@@ -316,7 +325,13 @@ export class EngineReviewController {
 
 	private determinePhase(si: SessionItem | null): ReviewPhase {
 		if (!si) return 'question';
-		return si.item.type === 'cloze' && si.item.clozeIndex != null ? 'question' : 'answer';
+		// Cloze and basic cards start with question phase
+		// Topic cards go directly to answer (show full content)
+		const type = si.item.type;
+		if (type === 'cloze' || type === 'basic' || type === 'image_occlusion') {
+			return 'question';
+		}
+		return 'answer';
 	}
 
 	private async loadItemContent(si: SessionItem | null, phase: ReviewPhase): Promise<void> {
@@ -344,9 +359,12 @@ export class EngineReviewController {
 
 	private showAnswer(): void {
 		const si = this.model.currentSessionItem;
-		if (si?.item.type === 'cloze' && this.model.phase === 'question') {
+		if (!si || this.model.phase !== 'question') return;
+
+		const type = si.item.type;
+		if (type === 'cloze' || type === 'basic' || type === 'image_occlusion') {
 			this.setModel((prev) => ({ ...prev, phase: 'answer' }));
-			void this.loadItemContent(si, 'answer');
+			void this.loadItemContent(si, 'answer').then(async () => this.updateSessionFile());
 		}
 	}
 
@@ -366,6 +384,7 @@ export class EngineReviewController {
 		}));
 
 		await this.loadItemContent(nextItem, phase);
+		await this.updateSessionFile();
 	}
 
 	private emit(): void {
@@ -434,12 +453,23 @@ export class EngineReviewController {
 			id: si.item.id,
 			noteId: si.item.noteId,
 			notePath: si.item.notePath,
-			type: si.item.type === 'topic' ? 'topic' : 'item',
+			type: this.mapItemType(si.item.type),
 			clozeIndex: si.item.clozeIndex,
 			state: this.reviewStateToItemState(si.state),
 			priority: si.item.priority,
 			created: si.item.created,
 		};
+	}
+
+	/** Map ItemType to CardType, preserving basic and image_occlusion */
+	private mapItemType(type: string): CoreReviewItem['type'] {
+		const typeMap: Record<string, CoreReviewItem['type']> = {
+			topic: 'topic',
+			cloze: 'item',
+			basic: 'basic',
+			image_occlusion: 'image_occlusion',
+		};
+		return typeMap[type] ?? 'item';
 	}
 
 	private reviewStateToItemState(state: ReviewState): ItemState {
@@ -451,6 +481,75 @@ export class EngineReviewController {
 			reps: state.reps,
 			lapses: state.lapses,
 			last_review: state.lastReview,
+		};
+	}
+
+	private async updateSessionFile(): Promise<void> {
+		if (!this.deps.platform.updateSessionState) return;
+
+		const now = new Date();
+		const queueCounts = this.sessionManager
+			? await this.getQueueCounts(now)
+			: { new: 0, learning: 0, due: 0, total: 0 };
+
+		// Get raw and formatted markdown for debugging
+		let rawMarkdown: string | null = null;
+		let formattedMarkdown: string | null = null;
+
+		const si = this.model.currentSessionItem;
+		if (si) {
+			rawMarkdown = await this.deps.notePlatform.getNote(si.item.noteId);
+			if (rawMarkdown !== null) {
+				formattedMarkdown = formatReviewContent(
+					rawMarkdown,
+					si.item.type,
+					this.model.phase,
+					si.item.clozeIndex,
+				);
+			}
+		}
+
+		const data = buildSessionState({
+			deck: this.model.selectedPath,
+			currentItem: this.model.currentSessionItem,
+			phase: this.model.phase,
+			queueCounts,
+			sessionStats: this.model.sessionStats,
+			startedAt: this.model.currentStartedAt,
+			rawMarkdown,
+			formattedMarkdown,
+		});
+
+		await this.deps.platform.updateSessionState(data);
+	}
+
+	private async getQueueCounts(
+		now: Date,
+	): Promise<{ new: number; learning: number; due: number; total: number }> {
+		if (!this.sessionManager) {
+			return { new: 0, learning: 0, due: 0, total: 0 };
+		}
+
+		const items = await this.sessionManager.getNextN(10000);
+		let newCount = 0;
+		let learningCount = 0;
+		let dueCount = 0;
+
+		for (const item of items) {
+			if (item.state.status === 'new') {
+				newCount++;
+			} else if (item.state.status === 'learning' || item.state.status === 'relearning') {
+				learningCount++;
+			} else if (item.state.due && item.state.due <= now) {
+				dueCount++;
+			}
+		}
+
+		return {
+			new: newCount,
+			learning: learningCount,
+			due: dueCount,
+			total: items.length,
 		};
 	}
 

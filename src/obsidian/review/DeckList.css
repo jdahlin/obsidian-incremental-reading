@@ -1,7 +1,0 @@
-.ir-deck-list {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	overflow: auto;
-	padding-right: 6px;
-}

@@ -18,13 +18,15 @@ export interface ImportOptions {
 	tag?: string;
 }
 
+export type ImportedNoteType = 'topic' | 'item' | 'basic' | 'image_occlusion';
+
 export interface ImportedNote {
 	id: string; // generated ir_note_id
 	ankiNoteId: number; // original Anki note id
 	deckPath: string; // Deck::Subdeck → Deck/Subdeck
 	filename: string; // sanitized from first field
 	content: string; // markdown with frontmatter
-	type: 'topic' | 'item'; // topic for basic, item for cloze
+	type: ImportedNoteType;
 	cards: ImportedCard[]; // one per Anki card
 	mediaRefs: string[]; // all media files referenced
 }
@@ -45,6 +47,8 @@ export interface ImportResult {
 		total: number;
 		cloze: number;
 		basic: number;
+		imageOcclusion: number;
+		topic: number;
 		skipped: number;
 	};
 }
@@ -84,6 +88,8 @@ export function convertAnkiToIR(data: AnkiData, options: ImportOptions = {}): Im
 	const cardIdMap = new Map<number, string>(); // Anki card ID → IR item ID
 	let clozeCount = 0;
 	let basicCount = 0;
+	let imageOcclusionCount = 0;
+	let topicCount = 0;
 	let skippedCount = 0;
 
 	for (const note of data.notes) {
@@ -118,14 +124,27 @@ export function convertAnkiToIR(data: AnkiData, options: ImportOptions = {}): Im
 			allMediaRefs.add(ref);
 		}
 
-		// Determine note type
+		// Determine note type based on model
+		let noteType: ImportedNoteType;
 		const isCloze = model.type === ANKI_MODEL_TYPE.CLOZE;
-		const noteType = isCloze ? 'item' : 'topic';
 
-		if (isCloze) {
-			clozeCount++;
-		} else {
-			basicCount++;
+		switch (model.type) {
+			case ANKI_MODEL_TYPE.CLOZE:
+				noteType = 'item';
+				clozeCount++;
+				break;
+			case ANKI_MODEL_TYPE.BASIC:
+				noteType = 'basic';
+				basicCount++;
+				break;
+			case ANKI_MODEL_TYPE.IMAGE_OCCLUSION:
+				noteType = 'image_occlusion';
+				imageOcclusionCount++;
+				break;
+			default:
+				noteType = 'topic';
+				topicCount++;
+				break;
 		}
 
 		// Generate ID and use Anki note ID as filename for uniqueness
@@ -182,6 +201,8 @@ export function convertAnkiToIR(data: AnkiData, options: ImportOptions = {}): Im
 			total: notes.length,
 			cloze: clozeCount,
 			basic: basicCount,
+			imageOcclusion: imageOcclusionCount,
+			topic: topicCount,
 			skipped: skippedCount,
 		},
 	};
@@ -302,7 +323,7 @@ function sanitizeFilename(name: string): string {
 interface NoteContentOptions {
 	noteId: string;
 	markdown: string;
-	type: 'topic' | 'item';
+	type: ImportedNoteType;
 	tag: string;
 	priority: number;
 	clozeIndices: number[];

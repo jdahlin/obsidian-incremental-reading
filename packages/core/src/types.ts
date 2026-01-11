@@ -1,4 +1,4 @@
-export type ItemType = 'topic' | 'cloze';
+export type ItemType = 'topic' | 'cloze' | 'basic' | 'image_occlusion';
 export type ReviewMode = 'review' | 'exam';
 export type SessionStrategyId = 'JD1' | 'Anki';
 export type SchedulerId = 'fsrs' | 'sm2';

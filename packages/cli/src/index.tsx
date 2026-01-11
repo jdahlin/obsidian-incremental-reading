@@ -16,29 +16,30 @@ const showCursor = '\x1B[?25h';
 const cli = meow(
 	`
   Usage
-    $ npx tsx src/engine/cli/index.tsx --vault <path>
+    $ pnpm cli [options]
 
   Options
-    --vault, -v     Path to vault (contains IR/ folder)
+    --vault, -v     Path to vault (default: ./vault)
     --review, -r    Go directly to review mode (optional folder substring filter)
     --deck, -d      Start with specific deck path (exact match)
     --strategy, -s  Review strategy: Anki | JD1 (default: Anki)
     --limit, -l     Max new cards per session
     --batch, -b     Run in batch mode (read commands from stdin)
-    --import, -i    Import from Anki (path to profile or 'default')
-    --deck-filter   Filter decks to import (e.g., "ANATOMI*")
+    --import, -i    Import from Anki
+    --import-path   Custom Anki profile path (default: auto-detect)
+    --deck-filter   Filter decks to import (e.g., "AH del 2*")
 
   Batch mode commands:
     inspect-next [--limit N]   Show next N cards to review
     status                     Show card counts
 
   Examples
-    $ npx tsx src/engine/cli/index.tsx --vault ~/Documents/MyVault
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --review           # Review all
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --review Gabriel   # Review folders matching "Gabriel"
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default   # Import from default Anki profile
-    $ npx tsx src/engine/cli/index.tsx -v ./Vault --import default --deck-filter "ANATOMI*"
-    $ echo "inspect-next --limit 5" | npx tsx src/engine/cli/index.tsx -v ./Vault --batch
+    $ pnpm cli                                       # Interactive mode
+    $ pnpm cli --review                              # Review all
+    $ pnpm cli --review Gabriel                      # Review folders matching "Gabriel"
+    $ pnpm cli --import                              # Import all from Anki
+    $ pnpm cli --import --deck-filter "AH del 2*"   # Import matching decks
+    $ echo "status" | pnpm cli --batch
 `,
 	{
 		importMeta: import.meta,
@@ -46,7 +47,7 @@ const cli = meow(
 			vault: {
 				type: 'string',
 				shortFlag: 'v',
-				isRequired: true,
+				default: './vault',
 			},
 			review: {
 				type: 'string',
@@ -75,8 +76,13 @@ const cli = meow(
 				default: false,
 			},
 			import: {
-				type: 'string',
+				type: 'boolean',
 				shortFlag: 'i',
+				default: false,
+			},
+			importPath: {
+				type: 'string',
+				description: 'Custom Anki profile path (defaults to standard location)',
 			},
 			deckFilter: {
 				type: 'string',
@@ -93,7 +99,8 @@ const {
 	batch,
 	review,
 	snapshot,
-	import: importPath,
+	import: doImport,
+	importPath,
 	deckFilter,
 } = cli.flags;
 
@@ -107,8 +114,8 @@ const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r'
 const reviewFilter = review !== undefined && review !== '' ? review : undefined;
 
 // Import mode - import from Anki and exit
-if (importPath !== undefined && importPath !== '') {
-	const ankiProfilePath = importPath === 'default' ? getDefaultAnkiPath() : importPath;
+if (doImport) {
+	const ankiProfilePath = importPath ?? getDefaultAnkiPath();
 
 	void importAnkiDatabase({
 		ankiProfilePath,
