@@ -40,6 +40,24 @@ function getClozeIndex(item: ReviewItem): number | null {
 /** Extended platform adapter with optional session state support */
 interface ExtendedPlatformAdapter extends ReviewPlatformAdapter {
 	updateSessionState?: (data: SessionStateData) => Promise<void>
+	openNote?: (notePath: string) => Promise<void>
+	deleteItem?: (noteId: string, clozeKey?: string) => Promise<void>
+	showCardInfo?: (info: CardInfo) => void
+}
+
+export interface CardInfo {
+	id: string
+	noteId: string
+	notePath: string
+	type: string
+	status: string
+	due: Date | null
+	stability: number
+	difficulty: number
+	reps: number
+	lapses: number
+	lastReview: Date | null
+	priority: number
 }
 
 export interface EngineReviewSettings {
@@ -61,6 +79,11 @@ export interface EngineReviewControllerDeps {
 	notePlatform: NotePlatform
 }
 
+interface UndoState {
+	item: SessionItem
+	previousState: ReviewState
+}
+
 interface EngineReviewModel {
 	screen: 'folder' | 'review'
 	items: CoreReviewItem[]
@@ -74,6 +97,7 @@ interface EngineReviewModel {
 	sessionStats: UISessionStats
 	currentStartedAt: Date | null
 	currentContent: string
+	undoState: UndoState | null
 }
 
 type Listener = (state: ReviewScreenState) => void
@@ -109,6 +133,7 @@ export class EngineReviewController {
 		sessionStats: createSessionStats(),
 		currentStartedAt: null,
 		currentContent: '',
+		undoState: null,
 	}
 
 	private state: ReviewScreenState = this.buildScreenState()
@@ -162,6 +187,12 @@ export class EngineReviewController {
 			onBack: this.onBack,
 			onShowAnswer: this.onShowAnswer,
 			onGrade: this.onGrade,
+			onEdit: this.onEdit,
+			onSkip: this.onSkip,
+			onUndo: this.onUndo,
+			onSuspend: this.onSuspend,
+			onCardInfo: this.onCardInfo,
+			onDelete: this.onDelete,
 		}
 	}
 
@@ -189,6 +220,30 @@ export class EngineReviewController {
 		if (['1', '2', '3', '4'].includes(event.key)) {
 			event.preventDefault()
 			return this.onGrade(Number(event.key))
+		}
+
+		// More menu keyboard shortcuts
+		if (event.key === 'e') {
+			event.preventDefault()
+			this.onEdit()
+			return
+		}
+
+		if (event.key === 's') {
+			event.preventDefault()
+			this.onSkip()
+			return
+		}
+
+		if (event.key === 'z' || (event.ctrlKey && event.key === 'z')) {
+			event.preventDefault()
+			this.onUndo()
+			return
+		}
+
+		if (event.key === 'i') {
+			event.preventDefault()
+			this.onCardInfo()
 		}
 	}
 
@@ -312,6 +367,12 @@ export class EngineReviewController {
 			return
 		}
 
+		// Save undo state before grading
+		const undoState: UndoState = {
+			item: si,
+			previousState: { ...si.state },
+		}
+
 		const now = new Date()
 		const rating = grade as Rating
 
@@ -327,7 +388,7 @@ export class EngineReviewController {
 			good: engineStats.good,
 			easy: engineStats.easy,
 		}
-		this.setModel((prev) => ({ ...prev, sessionStats }))
+		this.setModel((prev) => ({ ...prev, sessionStats, undoState }))
 
 		await this.advanceQueue()
 	}
@@ -439,16 +500,19 @@ export class EngineReviewController {
 			lapses: si.state.lapses,
 		}
 
+		const canUndo = this.model.undoState !== null
+
 		if (this.model.phase === 'question') {
 			return {
 				type: 'question',
 				content: this.model.currentContent,
 				clozeIndex: si.item.type === 'cloze' ? (si.item.clozeIndex ?? null) : null,
 				debugInfo,
+				canUndo,
 			}
 		}
 
-		return { type: 'answer', content: this.model.currentContent, debugInfo }
+		return { type: 'answer', content: this.model.currentContent, debugInfo, canUndo }
 	}
 
 	private getQueueName(status: string): string {
@@ -584,5 +648,103 @@ export class EngineReviewController {
 
 	private readonly onGrade = async (grade: number): Promise<void> => {
 		await this.gradeCurrentItem(grade)
+	}
+
+	private readonly onEdit = (): void => {
+		const si = this.model.currentSessionItem
+		if (!si) return
+		if (this.deps.platform.openNote) {
+			void this.deps.platform.openNote(si.item.notePath)
+		}
+	}
+
+	private readonly onSkip = (): void => {
+		// Skip without grading - just advance to next card
+		void this.advanceQueue()
+	}
+
+	private readonly onUndo = (): void => {
+		const undo = this.model.undoState
+		if (!undo) return
+
+		// Restore the previous state
+		void this.deps.dataStore.setState(undo.item.item.id, undo.previousState).then(() => {
+			// Set current item back to the undone card
+			const restoredItem: SessionItem = {
+				...undo.item,
+				state: undo.previousState,
+			}
+			const phase = this.determinePhase(restoredItem)
+
+			// Decrement session stats
+			const stats = { ...this.model.sessionStats }
+			if (stats.reviewed > 0) stats.reviewed--
+
+			this.setModel((prev) => ({
+				...prev,
+				currentSessionItem: restoredItem,
+				phase,
+				undoState: null,
+				sessionStats: stats,
+				currentStartedAt: new Date(),
+				currentContent: '',
+			}))
+
+			void this.loadItemContent(restoredItem, phase)
+			void this.updateSessionFile()
+		})
+	}
+
+	private readonly onSuspend = (): void => {
+		const si = this.model.currentSessionItem
+		if (!si) return
+
+		// Set a far-future due date to effectively suspend the card
+		const suspendedState: ReviewState = {
+			...si.state,
+			due: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // 100 years from now
+		}
+
+		void this.deps.dataStore.setState(si.item.id, suspendedState).then(() => {
+			void this.advanceQueue()
+		})
+	}
+
+	private readonly onCardInfo = (): void => {
+		const si = this.model.currentSessionItem
+		if (!si || !this.deps.platform.showCardInfo) return
+
+		const info: CardInfo = {
+			id: si.item.id,
+			noteId: si.item.noteId,
+			notePath: si.item.notePath,
+			type: si.item.type,
+			status: si.state.status,
+			due: si.state.due,
+			stability: si.state.stability,
+			difficulty: si.state.difficulty,
+			reps: si.state.reps,
+			lapses: si.state.lapses,
+			lastReview: si.state.lastReview,
+			priority: si.item.priority,
+		}
+
+		this.deps.platform.showCardInfo(info)
+	}
+
+	private readonly onDelete = (): void => {
+		const si = this.model.currentSessionItem
+		if (!si) return
+
+		if (this.deps.platform.deleteItem) {
+			// Parse the item ID to get noteId and optional clozeKey
+			const parts = si.item.id.split('::')
+			const noteId = parts[0] ?? ''
+			const clozeKey = parts[1]
+
+			void this.deps.platform.deleteItem(noteId, clozeKey).then(() => {
+				void this.advanceQueue()
+			})
+		}
 	}
 }
