@@ -3,8 +3,16 @@
  * Writes current review state to IR/.session.json
  */
 
-import type { SessionItem } from '@repo/core/types'
+import type { ReviewItem, SessionItem } from '@repo/core/types'
 import type { App, TFile } from 'obsidian'
+
+/** Get clozeIndex from a ReviewItem, or null if not applicable */
+function getClozeIndex(item: ReviewItem): number | null {
+	if (item.type === 'cloze' || item.type === 'image_occlusion') {
+		return item.clozeIndex
+	}
+	return null
+}
 
 export interface SessionStateData {
 	deck: string | null
@@ -91,7 +99,7 @@ export function buildSessionState(params: {
 					noteId: params.currentItem.item.noteId,
 					notePath: params.currentItem.item.notePath,
 					type: params.currentItem.item.type,
-					clozeIndex: params.currentItem.item.clozeIndex ?? null,
+					clozeIndex: getClozeIndex(params.currentItem.item),
 					phase: params.phase,
 					rawMarkdown: params.rawMarkdown ?? null,
 					formattedMarkdown: params.formattedMarkdown ?? null,

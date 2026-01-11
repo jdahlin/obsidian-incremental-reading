@@ -28,15 +28,42 @@ export interface DeckInfo {
 	collapsed: boolean
 }
 
-export interface ReviewItem {
+// Base properties shared by all review item types
+interface BaseReviewItem {
 	id: string
 	noteId: string
 	notePath: string
-	type: ItemType
-	clozeIndex?: number | null
 	priority: number
 	created?: Date | null
 }
+
+interface TopicItem extends BaseReviewItem {
+	type: 'topic'
+}
+
+interface BasicItem extends BaseReviewItem {
+	type: 'basic'
+}
+
+interface ClozeItem extends BaseReviewItem {
+	type: 'cloze'
+	clozeIndex: number
+}
+
+interface ImageOcclusionItem extends BaseReviewItem {
+	type: 'image_occlusion'
+	clozeIndex: number
+}
+
+/**
+ * Discriminated union of all review item types.
+ * Use the `type` field to narrow to a specific variant:
+ * - 'topic': Full note for reading
+ * - 'basic': Q&A flashcard
+ * - 'cloze': Cloze deletion card (has clozeIndex)
+ * - 'image_occlusion': Image occlusion card (has clozeIndex)
+ */
+export type ReviewItem = TopicItem | BasicItem | ClozeItem | ImageOcclusionItem
 
 export interface ReviewState {
 	status: Status
