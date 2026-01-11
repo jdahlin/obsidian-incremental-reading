@@ -1,4 +1,11 @@
-import type { DataStore, Rating, ReviewItem, ReviewRecord, ReviewState } from '../types'
+import type {
+	DataStore,
+	Rating,
+	ReviewItem,
+	ReviewRecord,
+	ReviewState,
+	SchedulerId,
+} from '../types'
 import type { EngineSnapshot, EngineStore } from './types'
 import { getScheduler } from '../scheduling'
 
@@ -59,7 +66,7 @@ interface EngineState {
 	due: Record<string, string>
 	clock: string | null
 	session: SessionConfig
-	scheduler: string
+	scheduler: SchedulerId
 	nextItem: string | null
 	nextItems: string[]
 	// New field for persistent review logs (DataStore.appendReview)
@@ -205,7 +212,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		}
 	}
 
-	setScheduler(id: string): void {
+	setScheduler(id: SchedulerId): void {
 		this.state.scheduler = id
 	}
 

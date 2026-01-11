@@ -9,6 +9,7 @@ import type {
 	SessionItem,
 	SessionStats,
 } from './types'
+import { assertNever } from './core/assert'
 import { getScheduler, TopicScheduler } from './scheduling'
 import { AnkiStrategy } from './strategies/AnkiStrategy'
 import { JD1Strategy } from './strategies/JD1Strategy'
@@ -213,8 +214,9 @@ export class SessionManager {
 			case 'Anki':
 				return new AnkiStrategy()
 			case 'JD1':
-			default:
 				return new JD1Strategy()
+			default:
+				return assertNever(this.config.strategy)
 		}
 	}
 

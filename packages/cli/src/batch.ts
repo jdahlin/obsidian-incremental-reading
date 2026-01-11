@@ -65,7 +65,7 @@ export async function runBatch(
 							`${si.item.id} | ${si.item.type} | ${statusStr} | due: ${dueStr}`,
 						)
 						outputs.push(`  path: ${si.item.notePath}`)
-						if (si.item.clozeIndex != null) {
+						if (si.item.type === 'cloze' || si.item.type === 'image_occlusion') {
 							outputs.push(`  cloze: ${si.item.clozeIndex}`)
 						}
 					}

@@ -1,7 +1,7 @@
 import type { FileSystem } from '../data/FileSystem'
 import type { MarkdownDataStore } from '../data/MarkdownDataStore'
 import type { EngineSnapshot, EngineStore } from '../memory/types'
-import type { ReviewState } from '../types'
+import type { ReviewState, SchedulerId } from '../types'
 import { load as parse, dump as stringify } from 'js-yaml'
 
 interface SidecarClozeEntry {
@@ -29,7 +29,7 @@ export class MarkdownEngineStore implements EngineStore {
 			string,
 			unknown
 		>,
-		scheduler: 'fsrs',
+		scheduler: 'fsrs' as SchedulerId,
 		nextItem: null as string | null,
 		nextItems: [] as string[],
 		dismissed: [] as string[],
@@ -204,7 +204,7 @@ extract:${sourceId}:${start}-${end}`,
 		this.runtime.session = { ...this.runtime.session, ...config }
 	}
 
-	setScheduler(id: string): void {
+	setScheduler(id: SchedulerId): void {
 		this.runtime.scheduler = id
 	}
 

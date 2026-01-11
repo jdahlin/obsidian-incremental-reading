@@ -1,9 +1,15 @@
 import type { EngineSnapshot, EngineStore } from '../memory/types'
-import type { NotePlatform, Rating, SessionConfig, SessionStrategyId } from '../types'
+import type { NotePlatform, Rating, SchedulerId, SessionConfig, SessionStrategyId } from '../types'
 import type { RvCommand } from './types'
 import { MemoryDataStore } from '../memory/MemoryDataStore'
 import { SessionManager } from '../SessionManager'
 import { InMemoryNotePlatform } from '../tests/InMemoryNotePlatform'
+
+const VALID_SCHEDULER_IDS: SchedulerId[] = ['fsrs', 'sm2']
+
+function isSchedulerId(value: string | undefined): value is SchedulerId {
+	return VALID_SCHEDULER_IDS.includes(value as SchedulerId)
+}
 
 export interface RvRunResult {
 	outputs: string[]
@@ -272,7 +278,8 @@ async function applyCommand(
 		}
 		case 'scheduler': {
 			const { positional } = parseArgs(command.args)
-			store.setScheduler(positional[0] ?? 'fsrs')
+			const schedulerId = positional[0]
+			store.setScheduler(isSchedulerId(schedulerId) ? schedulerId : 'fsrs')
 			break
 		}
 		case 'clock': {

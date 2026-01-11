@@ -1,6 +1,6 @@
 import type {
 	DeckInfo,
-	ReviewItem,
+	ItemWithState,
 	ReviewPlatformAdapter,
 	StreakInfo,
 	TodayStats,
@@ -27,7 +27,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 	}
 
 	async renderItem(
-		item: ReviewItem,
+		item: ItemWithState,
 		phase: 'question' | 'answer',
 		extractTag: string,
 	): Promise<string> {

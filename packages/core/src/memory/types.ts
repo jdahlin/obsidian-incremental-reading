@@ -1,3 +1,5 @@
+import type { SchedulerId } from '../types'
+
 export interface EngineSnapshot {
 	notes: Record<string, unknown>
 	clozes: Record<string, unknown>
@@ -13,7 +15,7 @@ export interface EngineSnapshot {
 	due: Record<string, string>
 	clock: string | null
 	session: Record<string, unknown>
-	scheduler: string
+	scheduler: SchedulerId
 	stats: Record<string, unknown>
 	queue: string[]
 }
@@ -35,7 +37,7 @@ export interface EngineStore {
 	setNextItem: (itemId: string | null) => void
 	setNextItems: (itemIds: string[]) => void
 	setSession: (config: Record<string, unknown>) => void
-	setScheduler: (id: string) => void
+	setScheduler: (id: SchedulerId) => void
 	setClock: (value: string) => void
 	getClock: () => string | null
 	snapshot: () => Promise<EngineSnapshot>
