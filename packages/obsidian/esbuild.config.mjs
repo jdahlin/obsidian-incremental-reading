@@ -47,6 +47,9 @@ const baseOptions = {
 		react: 'preact/compat',
 		'react-dom': 'preact/compat',
 		'react/jsx-runtime': 'preact/jsx-runtime',
+		// Use asm.js version of sql.js (no WASM needed)
+		'sql.js/dist/sql-asm.js': 'sql.js/dist/sql-asm.js',
+		'sql.js': 'sql.js/dist/sql-asm.js',
 	},
 	jsx: 'automatic',
 	jsxImportSource: 'preact',
