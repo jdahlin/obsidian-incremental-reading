@@ -4,7 +4,7 @@
 		"packages/obsidian": {
 			"project": ["src/**/*.{ts,tsx}"],
 			"entry": ["src/main.ts", "src/**/tests/*.test.ts"],
-			"ignoreDependencies": ["obsidian"]
+			"ignoreDependencies": ["obsidian", "sql.js"]
 		},
 		"packages/cli": {
 			"project": ["src/**/*.{ts,tsx}"]
