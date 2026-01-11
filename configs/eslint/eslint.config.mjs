@@ -90,7 +90,7 @@ const testOverride = {
 		'@typescript-eslint/no-unsafe-return': 'off',
 		'@typescript-eslint/no-non-null-assertion': 'off',
 		'@typescript-eslint/strict-boolean-expressions': 'off',
-		'@typescript-eslint/no-explicit-any': 'off',
+		// Note: no-explicit-any is NOT disabled for tests - use unknown instead
 	},
 }
 
