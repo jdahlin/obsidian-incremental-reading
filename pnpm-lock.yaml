@@ -15,6 +15,9 @@ catalogs:
     '@types/node':
       specifier: ^22.0.0
       version: 22.19.5
+    '@types/sql.js':
+      specifier: ^1.4.9
+      version: 1.4.9
     '@vitest/coverage-v8':
       specifier: ^4.0.16
       version: 4.0.16
@@ -27,6 +30,9 @@ catalogs:
     js-yaml:
       specifier: ^4.1.1
       version: 4.1.1
+    sql.js:
+      specifier: ^1.13.0
+      version: 1.13.0
     tsx:
       specifier: ^4.21.0
       version: 4.21.0
@@ -179,7 +185,7 @@ importers:
         specifier: 'catalog:'
         version: 4.1.1
       sql.js:
-        specifier: ^1.13.0
+        specifier: 'catalog:'
         version: 1.13.0
       ts-fsrs:
         specifier: ^5.2.3
@@ -201,7 +207,7 @@ importers:
         specifier: 'catalog:'
         version: 22.19.5
       '@types/sql.js':
-        specifier: ^1.4.9
+        specifier: 'catalog:'
         version: 1.4.9
       typescript:
         specifier: 'catalog:'
@@ -227,6 +233,9 @@ importers:
       preact:
         specifier: ^10.26.9
         version: 10.28.2
+      sql.js:
+        specifier: 'catalog:'
+        version: 1.13.0
     devDependencies:
       '@codemirror/state':
         specifier: 6.5.0

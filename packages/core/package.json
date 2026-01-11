@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"js-yaml": "catalog:",
-		"sql.js": "^1.13.0",
+		"sql.js": "catalog:",
 		"ts-fsrs": "^5.2.3"
 	},
 	"devDependencies": {
@@ -28,7 +28,7 @@
 		"@repo/vitest-config": "workspace:*",
 		"@types/js-yaml": "catalog:",
 		"@types/node": "catalog:",
-		"@types/sql.js": "^1.4.9",
+		"@types/sql.js": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}

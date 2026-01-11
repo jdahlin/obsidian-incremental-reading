@@ -18,7 +18,8 @@
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",
 		"obsidian": "latest",
-		"preact": "^10.26.9"
+		"preact": "^10.26.9",
+		"sql.js": "catalog:"
 	},
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",
