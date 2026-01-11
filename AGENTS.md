@@ -105,10 +105,10 @@ pnpm run cli                       # Run CLI directly
 | ----------------------------------------------- | ------------------------------------------------- |
 | `packages/core/src/SessionManager.ts`           | Review session orchestration and queue management |
 | `packages/core/src/core/cloze.ts`               | `formatClozeQuestion()` and `formatClozeAnswer()` |
-| `packages/core/src/scheduling/fsrs.ts`          | FSRS grading logic                                |
+| `packages/core/src/scheduling/FSRSScheduler.ts` | FSRS grading logic                                |
 | `packages/obsidian/src/data/sync.ts`            | Syncs note content to sidecar files               |
 | `packages/obsidian/src/data/review-items.ts`    | Reads/writes sidecar scheduling state             |
-| `packages/obsidian/src/review/ReviewScreen.tsx` | Main review UI component                          |
+| `packages/obsidian/src/review/ReviewRoot.tsx`   | Main review UI component                          |
 
 ## Patterns Used
 

@@ -33,10 +33,10 @@ Pure Functions (testable)     Boundaries (mocked in tests)
 
 ### 4. Engine Independence
 
-The core review engine (`src/engine/`) has no Obsidian dependencies. It can run:
+The core review engine (`packages/core/`) has no Obsidian dependencies. It can run:
 
-- In Obsidian (via adapters)
-- In a CLI (via `src/engine/cli/`)
+- In Obsidian (via adapters in `packages/obsidian/`)
+- In a CLI (`packages/cli/`)
 - In tests (via in-memory stores)
 
 ---
@@ -115,88 +115,137 @@ Biochemistry/                    # Course
 ## Module Structure
 
 ```
-src/
-├── core/                    # Pure utilities (no Obsidian deps)
-│   ├── types.ts             # Core type definitions
-│   ├── cloze.ts             # Cloze parsing/formatting
-│   ├── dates.ts             # Date utilities
-│   ├── decks.ts             # Deck hierarchy utilities
-│   └── frontmatter.ts       # YAML parsing/serialization
+packages/
+├── core/                    # @repo/core - Pure business logic (no Obsidian deps)
+│   └── src/
+│       ├── SessionManager.ts    # Review session orchestration
+│       ├── types.ts             # Core type definitions
+│       ├── index.ts             # Package exports
+│       │
+│       ├── core/                # Core utilities
+│       │   ├── types.ts         # Core type definitions
+│       │   ├── cloze.ts         # Cloze parsing/formatting
+│       │   ├── content.ts       # Content processing
+│       │   ├── dates.ts         # Date utilities
+│       │   ├── decks.ts         # Deck hierarchy utilities
+│       │   ├── frontmatter.ts   # YAML parsing/serialization
+│       │   └── tests/           # Unit tests
+│       │
+│       ├── strategies/          # Queue ordering strategies
+│       │   ├── JD1Strategy.ts   # Priority-urgency (default)
+│       │   ├── AnkiStrategy.ts  # Simple due-date ordering
+│       │   └── types.ts
+│       │
+│       ├── scheduling/          # Spaced repetition algorithms
+│       │   ├── FSRSScheduler.ts # FSRS algorithm (primary)
+│       │   ├── SM2Scheduler.ts  # SuperMemo-2 (stub)
+│       │   ├── TopicScheduler.ts # Simpler intervals for topics
+│       │   └── index.ts
+│       │
+│       ├── data/                # Data store implementations
+│       │   ├── FileSystem.ts    # File system interface
+│       │   └── MarkdownDataStore.ts # Sidecar file storage
+│       │
+│       ├── memory/              # In-memory store (testing)
+│       │   ├── MemoryDataStore.ts
+│       │   └── types.ts
+│       │
+│       ├── rv/                  # .rv script DSL (testing)
+│       │   ├── parser.ts
+│       │   ├── runner.ts
+│       │   ├── types.ts
+│       │   └── index.ts
+│       │
+│       ├── anki/                # Anki import/export
+│       │   ├── converter.ts
+│       │   ├── reader.ts
+│       │   ├── html.ts
+│       │   ├── media.ts
+│       │   ├── schema.ts
+│       │   ├── index.ts
+│       │   └── tests/
+│       │
+│       ├── stats/               # Statistics calculations
+│       │   ├── aggregations.ts
+│       │   └── tests/
+│       │
+│       └── tests/               # Test utilities
+│           ├── InMemoryNotePlatform.ts
+│           ├── MarkdownEngineStore.ts
+│           ├── MockFileSystem.ts
+│           └── *.test.ts
 │
-├── engine/                  # Review engine (platform-agnostic)
-│   ├── types.ts             # Engine interfaces
-│   ├── SessionManager.ts    # Core session logic
-│   │
-│   ├── strategies/          # Queue ordering strategies
-│   │   ├── JD1Strategy.ts   # Priority-urgency (default)
-│   │   ├── AnkiStrategy.ts  # Simple due-date ordering
-│   │   └── types.ts
-│   │
-│   ├── scheduling/          # Spaced repetition algorithms
-│   │   ├── FSRSScheduler.ts # FSRS algorithm (primary)
-│   │   ├── SM2Scheduler.ts  # SuperMemo-2 (stub)
-│   │   └── TopicScheduler.ts # Simpler intervals for topics
-│   │
-│   ├── data/                # Data store implementations
-│   │   ├── FileSystem.ts    # File system interface
-│   │   └── MarkdownDataStore.ts # Sidecar file storage
-│   │
-│   ├── memory/              # In-memory store (testing)
-│   │   └── MemoryDataStore.ts
-│   │
-│   ├── adapters/            # Platform adapters
-│   │   ├── ObsidianVault.ts
-│   │   ├── ObsidianNotePlatform.ts
-│   │   └── EngineReviewController.ts
-│   │
-│   ├── rv/                  # .rv script DSL (testing)
-│   │   ├── parser.ts
-│   │   └── runner.ts
-│   │
-│   ├── anki/                # Anki import/export
-│   │   ├── converter.ts
-│   │   ├── reader.ts
-│   │   └── html.ts
-│   │
-│   └── cli/                 # Standalone CLI
-│       ├── index.tsx
-│       └── screens/
+├── obsidian/                # @repo/obsidian - Obsidian plugin
+│   └── src/
+│       ├── main.ts              # Plugin entry point
+│       ├── settings.ts          # Plugin settings
+│       ├── PriorityModal.ts     # Priority editing UI
+│       │
+│       ├── adapters/            # Platform adapters
+│       │   ├── ObsidianVault.ts
+│       │   ├── ObsidianNotePlatform.ts
+│       │   ├── EngineReviewController.ts
+│       │   └── index.ts
+│       │
+│       ├── data/                # Obsidian data layer
+│       │   ├── review-items.ts  # Sidecar read/write
+│       │   ├── revlog.ts        # JSONL review log
+│       │   ├── sync.ts          # Note ↔ sidecar sync
+│       │   ├── ids.ts           # NanoID generation
+│       │   ├── export.ts        # Data export
+│       │   ├── review-stats.ts  # Statistics data access
+│       │   ├── session.ts       # Session data
+│       │   └── tests/
+│       │
+│       ├── commands/            # Obsidian commands
+│       │   ├── extract.ts       # Extract selection to new note
+│       │   ├── cloze.ts         # Create cloze deletion
+│       │   ├── index.ts         # Command registration
+│       │   └── tests/
+│       │
+│       ├── editor/              # Editor extensions
+│       │   ├── cloze-hider.ts   # Hide cloze answers during review
+│       │   ├── cloze-hider.css  # CSS for hiding clozes
+│       │   └── tests/
+│       │
+│       ├── review/              # Preact UI components for review
+│       │   ├── ReviewRoot.tsx
+│       │   ├── DeckSummary.tsx
+│       │   ├── ReviewQuestionScreen.tsx
+│       │   ├── ReviewAnswerScreen.tsx
+│       │   ├── ReviewItemView.tsx
+│       │   ├── DeckList.tsx
+│       │   ├── DeckRow.tsx
+│       │   ├── [many more components]
+│       │   └── tests/
+│       │
+│       ├── stats/               # Statistics modal
+│       │   ├── StatsModal.ts
+│       │   ├── StatsModal.css
+│       │   └── tests/
+│       │
+│       ├── bases/               # Obsidian Bases integration
+│       │   ├── definitions.ts
+│       │   ├── index.ts
+│       │   └── tests/
+│       │
+│       └── styles.css           # Global plugin styles
 │
-├── data/                    # Obsidian data layer
-│   ├── review-items.ts      # Sidecar read/write
-│   ├── revlog.ts            # JSONL review log
-│   ├── sync.ts              # Note ↔ sidecar sync
-│   ├── ids.ts               # NanoID generation
-│   └── export.ts            # Data export
-│
-├── commands/                # Obsidian commands
-│   ├── extract.ts           # Extract selection to new note
-│   ├── cloze.ts             # Create cloze deletion
-│   └── index.ts             # Command registration
-│
-├── editor/                  # Editor extensions
-│   └── cloze-hider.ts       # Hide cloze answers during review
-│
-├── ui/                      # Preact UI components
-│   ├── review/              # Review view
-│   │   ├── ReviewItemView.tsx
-│   │   ├── ReviewRoot.tsx
-│   │   ├── DeckSummary.tsx
-│   │   ├── ReviewQuestionScreen.tsx
-│   │   ├── ReviewAnswerScreen.tsx
-│   │   └── ...
-│   ├── stats/               # Statistics modal
-│   │   └── StatsModal.ts
-│   └── PriorityModal.ts
-│
-├── stats/                   # Statistics (pure functions)
-│   └── aggregations.ts
-│
-├── bases/                   # Obsidian Bases integration
-│   └── index.ts
-│
-├── settings.ts              # Plugin settings
-└── main.ts                  # Plugin entry point
+└── cli/                     # @repo/cli - Terminal review client
+    └── src/
+        ├── index.tsx            # CLI entry point
+        ├── App.tsx              # Main CLI application (React/Ink)
+        ├── batch.ts
+        ├── fs.ts
+        ├── terminal-image.ts
+        │
+        ├── screens/             # Terminal UI screens
+        │   ├── DeckSelect.tsx
+        │   ├── Review.tsx
+        │   └── Stats.tsx
+        │
+        └── components/          # Reusable Ink components
+            └── ImageDisplay.tsx
 ```
 
 ---

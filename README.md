@@ -26,19 +26,22 @@ This plugin implements the core incremental reading workflow, allowing you to bu
 
 ### Commands
 
-| Command               | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| Extract to topic note | Creates a new note from selection, replaces with link |
-| Cloze selection       | Wraps selection in `{{c1::...}}` cloze syntax         |
-| Open review           | Opens the review panel                                |
-| Sync all notes        | Re-syncs all tagged notes to sidecar files            |
+| Command                      | Description                                           |
+| ---------------------------- | ----------------------------------------------------- |
+| Extract to topic note        | Creates a new note from selection, replaces with link |
+| Cloze selection              | Wraps selection in `{{c1::...}}` cloze syntax         |
+| Cloze selection (same index) | Wraps selection with same cloze index as previous     |
+| Open review                  | Opens the review panel                                |
+| Set priority                 | Change priority of current note                       |
+| Open statistics              | Show statistics modal                                 |
+| Export review history        | Export revlog to CSV                                  |
 
 ## How It Works
 
 ### Workflow
 
 1. **Import** - Add articles or content to your vault
-2. **Tag** - Add the extract tag (default: `#extract`) to notes you want to process
+2. **Tag** - Add the extract tag (default: `#topic`) to notes you want to process
 3. **Extract** - Select important passages and use "Extract to topic note"
 4. **Cloze** - Create cloze deletions from key facts: `{{c1::answer}}`
 5. **Review** - Open the review panel to study due items
@@ -105,33 +108,33 @@ BRAT will automatically keep the plugin updated when new releases are published.
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Development build (watch mode)
-npm run dev
+pnpm run dev
 
 # Production build
-npm run build
+pnpm run build
 
 # Run tests
-npm test
+pnpm test
 
 # Lint
-npm run lint
+pnpm run lint
 ```
 
 ## Configuration
 
 Settings available in the plugin options:
 
-| Setting           | Default   | Description                                    |
-| ----------------- | --------- | ---------------------------------------------- |
-| Extract tag       | `extract` | Tag that marks notes for incremental reading   |
-| Title words       | 5         | Words from selection used for extract filename |
-| New cards per day | 20        | Maximum new items introduced daily             |
-| Maximum interval  | 365       | Maximum days between reviews                   |
-| Request retention | 0.9       | Target retention rate (0.0-1.0)                |
-| Show streak       | true      | Display streak in review summary               |
+| Setting           | Default | Description                                    |
+| ----------------- | ------- | ---------------------------------------------- |
+| Extract tag       | `topic` | Tag that marks notes for incremental reading   |
+| Title words       | 5       | Words from selection used for extract filename |
+| New cards per day | 20      | Maximum new items introduced daily             |
+| Maximum interval  | 365     | Maximum days between reviews                   |
+| Request retention | 0.9     | Target retention rate (0.0-1.0)                |
+| Show streak       | true    | Display streak in review summary               |
 
 ## Credits
 
