@@ -6,6 +6,7 @@ import { registerCommands } from './commands'
 import { clozeHiderExtension } from './editor/cloze-hider'
 import { ReviewItemView, VIEW_TYPE_REVIEW } from './review/ReviewItemView'
 import { DEFAULT_SETTINGS, IncrementalReadingSettingTab } from './settings'
+import { StatsView, VIEW_TYPE_STATS } from './stats/StatsView'
 
 export default class IncrementalReadingPlugin extends Plugin {
 	settings: IncrementalReadingSettings = DEFAULT_SETTINGS
@@ -19,6 +20,25 @@ export default class IncrementalReadingPlugin extends Plugin {
 			VIEW_TYPE_REVIEW,
 			(leaf: WorkspaceLeaf) => new ReviewItemView(leaf, this.app, this),
 		)
+		this.registerView(
+			VIEW_TYPE_STATS,
+			(leaf: WorkspaceLeaf) => new StatsView(leaf, this.app, this),
+		)
+
+		// Add ribbon icon for stats
+		this.addRibbonIcon('bar-chart-2', 'Open Statistics', () => {
+			void this.activateStatsView()
+		})
+
+		// Add command to open stats
+		this.addCommand({
+			id: 'open-stats',
+			name: 'Open Statistics',
+			callback: () => {
+				void this.activateStatsView()
+			},
+		})
+
 		void ensureBasesFolder(this.app).catch((error) => {
 			console.error('IR: failed to ensure bases folder', error)
 		})
@@ -33,6 +53,20 @@ export default class IncrementalReadingPlugin extends Plugin {
 			if (!mostRecent) return
 			leaf = mostRecent
 			await leaf.setViewState({ type: VIEW_TYPE_REVIEW, active: true })
+		}
+		await workspace.revealLeaf(leaf)
+		workspace.setActiveLeaf(leaf, { focus: true })
+	}
+
+	/** Open (or reveal) the Stats view in the workspace. */
+	async activateStatsView(): Promise<void> {
+		const { workspace } = this.app
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
+		if (!leaf) {
+			const mostRecent = workspace.getMostRecentLeaf()
+			if (!mostRecent) return
+			leaf = mostRecent
+			await leaf.setViewState({ type: VIEW_TYPE_STATS, active: true })
 		}
 		await workspace.revealLeaf(leaf)
 		workspace.setActiveLeaf(leaf, { focus: true })

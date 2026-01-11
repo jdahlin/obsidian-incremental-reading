@@ -114,7 +114,7 @@ void (async () => {
 	if (doImport) {
 		// Lazy load the anki-importer to avoid loading it when not needed
 		const { importAnkiDatabase, writeAnkiData, getCollectionCreationTime, openAnkiDatabase } =
-			await import('@anthropic/anki-importer')
+			await import('@repo/anki-importer')
 		const path = await import('node:path')
 		const os = await import('node:os')
 

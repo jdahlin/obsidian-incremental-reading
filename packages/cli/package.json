@@ -13,7 +13,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@anthropic/anki-importer": "workspace:*",
+		"@repo/anki-importer": "workspace:*",
 		"@repo/core": "workspace:*",
 		"better-sqlite3": "catalog:",
 		"ink": "^5.2.1",

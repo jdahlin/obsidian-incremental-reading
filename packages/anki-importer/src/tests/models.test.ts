@@ -1,6 +1,5 @@
+import type { FieldRow, Model, NotetypeRow, TemplateRow } from '../types.js'
 import { describe, expect, it } from 'vitest'
-import type { Model, FieldRow, TemplateRow, NotetypeRow } from '../types.js'
-import { fieldOrd, modelId, NotetypeKind, templateOrd, parseTemplateConfig } from '../types.js'
 import {
 	detectNotetypeKind,
 	exportModelsToMarkdown,
@@ -11,6 +10,7 @@ import {
 	isImageOcclusionNotetype,
 	modelToMarkdown,
 } from '../models.js'
+import { fieldOrd, modelId, NotetypeKind, parseTemplateConfig, templateOrd } from '../types.js'
 
 /**
  * Create a template config protobuf for testing
@@ -25,7 +25,7 @@ function createTemplateConfig(qfmt: string, afmt: string): Uint8Array {
 	const parts: number[] = []
 
 	// Field 1: qfmt (tag = 0x0A = field 1, wire type 2)
-	parts.push(0x0a)
+	parts.push(0x0A)
 	// Length as varint (simple case: < 128 bytes)
 	if (qfmtBytes.length < 128) {
 		parts.push(qfmtBytes.length)
@@ -33,7 +33,7 @@ function createTemplateConfig(qfmt: string, afmt: string): Uint8Array {
 		// Multi-byte varint
 		let len = qfmtBytes.length
 		while (len >= 128) {
-			parts.push((len & 0x7f) | 0x80)
+			parts.push((len & 0x7F) | 0x80)
 			len >>>= 7
 		}
 		parts.push(len)
@@ -47,7 +47,7 @@ function createTemplateConfig(qfmt: string, afmt: string): Uint8Array {
 	} else {
 		let len = afmtBytes.length
 		while (len >= 128) {
-			parts.push((len & 0x7f) | 0x80)
+			parts.push((len & 0x7F) | 0x80)
 			len >>>= 7
 		}
 		parts.push(len)
@@ -81,7 +81,7 @@ describe('parseTemplateConfig', () => {
 	})
 })
 
-describe('Notetype Kind Detection', () => {
+describe('notetype Kind Detection', () => {
 	const baseNotetype: NotetypeRow = {
 		id: 1234567890123,
 		name: 'Test',
@@ -184,7 +184,7 @@ describe('Notetype Kind Detection', () => {
 	})
 })
 
-describe('Model Hydration', () => {
+describe('model Hydration', () => {
 	describe('hydrateField', () => {
 		it('converts FieldRow to Field', () => {
 			const row: FieldRow = {
@@ -254,7 +254,7 @@ describe('Model Hydration', () => {
 	})
 })
 
-describe('Markdown Generation', () => {
+describe('markdown Generation', () => {
 	const basicModel: Model = {
 		id: modelId(1234567890123),
 		name: 'Basic',
@@ -263,12 +263,14 @@ describe('Markdown Generation', () => {
 			{ name: 'Front', ord: fieldOrd(0) },
 			{ name: 'Back', ord: fieldOrd(1) },
 		],
-		templates: [{
-			name: 'Card 1',
-			ord: templateOrd(0),
-			qfmt: '{{Front}}',
-			afmt: '{{FrontSide}}<hr id=answer>{{Back}}',
-		}],
+		templates: [
+			{
+				name: 'Card 1',
+				ord: templateOrd(0),
+				qfmt: '{{Front}}',
+				afmt: '{{FrontSide}}<hr id=answer>{{Back}}',
+			},
+		],
 	}
 
 	const clozeModel: Model = {
@@ -279,12 +281,14 @@ describe('Markdown Generation', () => {
 			{ name: 'Text', ord: fieldOrd(0) },
 			{ name: 'Back Extra', ord: fieldOrd(1) },
 		],
-		templates: [{
-			name: 'Cloze',
-			ord: templateOrd(0),
-			qfmt: '{{cloze:Text}}',
-			afmt: '{{cloze:Text}}<br>{{Back Extra}}',
-		}],
+		templates: [
+			{
+				name: 'Cloze',
+				ord: templateOrd(0),
+				qfmt: '{{cloze:Text}}',
+				afmt: '{{cloze:Text}}<br>{{Back Extra}}',
+			},
+		],
 	}
 
 	describe('modelToMarkdown', () => {
