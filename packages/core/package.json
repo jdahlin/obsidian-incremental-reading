@@ -18,18 +18,17 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"better-sqlite3": "catalog:",
 		"js-yaml": "catalog:",
-		"ts-fsrs": "^5.2.3",
-		"yaml": "catalog:"
+		"sql.js": "^1.13.0",
+		"ts-fsrs": "^5.2.3"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tsconfig": "workspace:*",
 		"@repo/vitest-config": "workspace:*",
-		"@types/better-sqlite3": "catalog:",
 		"@types/js-yaml": "catalog:",
 		"@types/node": "catalog:",
+		"@types/sql.js": "^1.4.9",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}

@@ -1,5 +1,5 @@
 {
-	"name": "@anthropic/anki-importer",
+	"name": "@repo/anki-importer",
 	"version": "0.1.0",
 	"description": "Import Anki database to Obsidian markdown files",
 	"type": "module",
@@ -13,6 +13,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
+		"lint": "eslint .",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest",
@@ -23,6 +24,7 @@
 		"yaml": "catalog:"
 	},
 	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
 		"@repo/vitest-config": "workspace:*",
 		"@types/better-sqlite3": "catalog:",
 		"@types/node": "catalog:",
