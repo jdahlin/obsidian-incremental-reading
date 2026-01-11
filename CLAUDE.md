@@ -1,33 +1,61 @@
 # Obsidian Incremental Reading Plugin
 
-An Obsidian plugin implementing SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
+A monorepo implementing SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
 
 ## Quick Reference
 
 ```bash
-npm run dev          # Development build (watch mode)
-npm run build        # Production build (includes typecheck)
-npm run typecheck    # TypeScript type checking
-npm run lint         # ESLint
-npm test             # Run all tests with coverage
-npm run format       # Format code with Prettier
+pnpm install         # Install dependencies
+pnpm run dev         # Development build (watch mode, all packages)
+pnpm run build       # Production build (all packages)
+pnpm run typecheck   # TypeScript type checking
+pnpm run lint        # ESLint
+pnpm test            # Run all tests with coverage
+pnpm run format      # Format code with Prettier
 ```
 
-### Targeted Testing
-
-Run tests for a specific module with focused coverage:
+### Per-Package Commands
 
 ```bash
-npm run test -- src/engine --coverage.include src/engine
+pnpm --filter @repo/core test      # Run tests for core only
+pnpm --filter @repo/obsidian dev   # Dev mode for obsidian plugin only
+pnpm run cli                       # Run CLI directly
 ```
 
-## Architecture
+## Monorepo Structure
 
-- **src/core/** - Pure, testable business logic (no Obsidian dependencies)
-- **src/data/** - Data access layer (sidecar files, revlog)
-- **src/ui/** - Preact UI components (use Preact, NOT React)
-- **src/engine/** - Review scheduling engine
-- **src/commands/** - Obsidian commands (extract, cloze)
+```
+packages/
+├── core/           # @repo/core - Pure business logic (no Obsidian deps)
+│   └── src/
+│       ├── anki/       # Anki import/export
+│       ├── core/       # Core types and utilities
+│       ├── data/       # Data access abstractions
+│       ├── rv/         # Random variable utilities
+│       ├── scheduling/ # FSRS scheduling
+│       ├── stats/      # Statistics calculations
+│       └── strategies/ # Card selection strategies
+│
+├── obsidian/       # @repo/obsidian - Obsidian plugin
+│   └── src/
+│       ├── adapters/   # Platform adapters
+│       ├── commands/   # Obsidian commands (extract, cloze)
+│       ├── data/       # File-based data access
+│       ├── editor/     # CodeMirror extensions
+│       ├── review/     # Review UI (Preact)
+│       ├── stats/      # Stats UI
+│       └── main.ts     # Plugin entry point
+│
+├── cli/            # @repo/cli - Terminal review client
+│   └── src/
+│       ├── screens/    # Terminal UI screens (React/Ink)
+│       └── components/ # Reusable components
+│
+configs/            # Shared configurations
+├── eslint/         # @repo/eslint-config
+├── ts/             # @repo/tsconfig
+└── vitest/         # @repo/vitest-config
+```
 
 ## Key Patterns
 
@@ -65,7 +93,7 @@ Use plain Anki-style syntax: `{{c1::answer}}` - no HTML wrappers.
 Use `tests/` for test directories, not `__tests__/`:
 
 ```
-src/engine/anki/
+packages/core/src/anki/
 ├── converter.ts
 ├── html.ts
 └── tests/
@@ -73,10 +101,15 @@ src/engine/anki/
     └── html.test.ts
 ```
 
+### UI Frameworks
+
+- **Obsidian plugin**: Use Preact (NOT React)
+- **CLI**: Use React with Ink
+
 ## Don't
 
 - Store scheduling data in note frontmatter
-- Use React (use Preact instead)
+- Use React in Obsidian (use Preact instead)
 - Wrap clozes in HTML
 - Commit `main.js`, `styles.css`, or `node_modules/`
 - Open separate editor tabs during review (single-pane design)
