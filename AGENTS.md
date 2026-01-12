@@ -7,7 +7,6 @@ This is a monorepo for an Obsidian plugin that implements SuperMemo-inspired inc
 **Key Documentation:**
 
 - `docs/ARCHITECTURE.md` - Technical design, data model, and implementation status
-- `docs/IMPLEMENTATION_SPEC.md` - Step-by-step implementation guide
 - `docs/USER_GUIDE.md` - User-facing documentation
 - `README.md` - Project overview, features, and installation
 
@@ -40,9 +39,9 @@ This is a monorepo for an Obsidian plugin that implements SuperMemo-inspired inc
 packages/
 ├── core/           # @repo/core - Pure business logic (no Obsidian deps)
 │   └── src/
-│       ├── anki/       # Anki import/export, deck parsing
 │       ├── core/       # Core types, cloze parsing, frontmatter
 │       ├── data/       # Data access abstractions
+│       ├── memory/     # In-memory data stores
 │       ├── rv/         # Random variable utilities
 │       ├── scheduling/ # FSRS calculations
 │       ├── stats/      # Statistics calculations
@@ -66,6 +65,12 @@ packages/
 │       ├── screens/    # Terminal UI screens
 │       ├── components/ # Reusable Ink components
 │       └── App.tsx     # Main CLI application (React/Ink)
+│
+├── anki-importer/  # @repo/anki-importer - Anki database import
+│   └── src/
+│       ├── importer/   # Database reading
+│       ├── writer/     # IR format output
+│       └── tests/      # Integration tests
 │
 configs/            # Shared configurations
 ├── eslint/         # @repo/eslint-config
@@ -164,7 +169,7 @@ packages/core/src/anki/
 ### Do
 
 - Read `docs/ARCHITECTURE.md` for design decisions and data model
-- Check `docs/IMPLEMENTATION_SPEC.md` for implementation status
+- Check `docs/USER_GUIDE.md` for user-facing features and workflows
 - Use pure functions in `packages/core/` for testable logic
 - Handle file race conditions with try/catch pattern
 - Use Preact in Obsidian plugin, React/Ink in CLI

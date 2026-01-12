@@ -105,19 +105,19 @@ BRAT will automatically keep the plugin updated when new releases are published.
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Development build (watch mode)
-npm run dev
+pnpm run dev
 
 # Production build
-npm run build
+pnpm run build
 
 # Run tests
-npm test
+pnpm test
 
 # Lint
-npm run lint
+pnpm run lint
 ```
 
 ## Configuration

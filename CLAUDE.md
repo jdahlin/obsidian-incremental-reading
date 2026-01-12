@@ -28,13 +28,14 @@ pnpm run cli                       # Run CLI directly
 packages/
 ├── core/           # @repo/core - Pure business logic (no Obsidian deps)
 │   └── src/
-│       ├── anki/       # Anki import/export
 │       ├── core/       # Core types and utilities
 │       ├── data/       # Data access abstractions
+│       ├── memory/     # In-memory data stores
 │       ├── rv/         # Random variable utilities
 │       ├── scheduling/ # FSRS scheduling
 │       ├── stats/      # Statistics calculations
-│       └── strategies/ # Card selection strategies
+│       ├── strategies/ # Card selection strategies
+│       └── SessionManager.ts  # Review session orchestration
 │
 ├── obsidian/       # @repo/obsidian - Obsidian plugin
 │   └── src/
@@ -50,6 +51,12 @@ packages/
 │   └── src/
 │       ├── screens/    # Terminal UI screens (React/Ink)
 │       └── components/ # Reusable components
+│
+├── anki-importer/  # @repo/anki-importer - Anki database import
+│   └── src/
+│       ├── importer/   # Database reading
+│       ├── writer/     # IR format output
+│       └── tests/      # Integration tests
 │
 configs/            # Shared configurations
 ├── eslint/         # @repo/eslint-config
@@ -131,5 +138,5 @@ document.querySelector('.ir-review-view')
 ## Documentation
 
 - `docs/ARCHITECTURE.md` - Technical design and data model
-- `docs/IMPLEMENTATION_SPEC.md` - Implementation guide
+- `docs/USER_GUIDE.md` - User documentation
 - `AGENTS.md` - Detailed agent guidelines
