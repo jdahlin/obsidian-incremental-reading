@@ -33,3 +33,11 @@ css-tmp/
 Vault
 packages/test-vault/
 anki-vault/
+
+# Build output
+dist/
+
+# Playwright
+playwright-report/
+test-results/
+e2e-debug-screenshot.png
