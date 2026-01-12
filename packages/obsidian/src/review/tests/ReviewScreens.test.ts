@@ -1,3 +1,4 @@
+import type { DebugInfo } from '../review-screen-state'
 import { describe, expect, it, vi } from 'vitest'
 import { ReviewAnswerScreen } from '../ReviewAnswerScreen'
 import { ReviewFinishedScreen } from '../ReviewFinishedScreen'
@@ -78,7 +79,7 @@ function getHtmlContent(node: unknown): string {
 	return html
 }
 
-const mockDebugInfo = {
+const mockDebugInfo: DebugInfo = {
 	queue: 'new',
 	status: 'new',
 	priority: 50,

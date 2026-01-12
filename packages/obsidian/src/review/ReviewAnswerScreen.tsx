@@ -10,7 +10,7 @@ interface ReviewAnswerScreenProps {
 	content: string
 	debugInfo: DebugInfo
 	canUndo: boolean
-	onGrade: (grade: number) => void | Promise<void>
+	onGrade: (grade: 1 | 2 | 3 | 4) => void | Promise<void>
 	onEdit: () => void
 	onSkip: () => void
 	onUndo: () => void

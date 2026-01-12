@@ -20,6 +20,7 @@ import type { ReviewPhase } from '../review/content'
 import type { DeckCountsValue } from '../review/deck-summary-types'
 import type {
 	DebugInfo,
+	QueueName,
 	ReviewScreenActions,
 	ReviewScreenState,
 	ReviewViewState,
@@ -539,7 +540,7 @@ export class EngineReviewController {
 		return { type: 'answer', content: this.model.currentContent, debugInfo, canUndo }
 	}
 
-	private getQueueName(status: string): string {
+	private getQueueName(status: string): QueueName {
 		if (status === 'new') return 'new'
 		if (status === 'learning' || status === 'relearning') return 'learning'
 		return 'review'
