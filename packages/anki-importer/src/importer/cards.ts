@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3'
+import type { DeepReadonly } from '../readonly.js'
 import type { Card, CardRow } from '../types.js'
 import { getCollectionCreationTime, readCards } from '../database.js'
 import { cardId, cardOrd, CardQueue, CardType, deckId, noteId } from '../types.js'
@@ -16,7 +17,7 @@ import { cardId, cardOrd, CardQueue, CardType, deckId, noteId } from '../types.j
 /**
  * Convert raw card row to hydrated Card
  */
-function hydrateCard(row: CardRow): Card {
+function hydrateCard(row: DeepReadonly<CardRow>): Card {
 	return {
 		id: cardId(row.id),
 		noteId: noteId(row.nid),
@@ -39,7 +40,7 @@ function hydrateCard(row: CardRow): Card {
 /**
  * Import all cards from database
  */
-export function importCards(db: Database.Database): Card[] {
+export function importCards(db: DeepReadonly<Database.Database>): Card[] {
 	const rows = readCards(db)
 	return rows.map(hydrateCard)
 }
@@ -191,7 +192,7 @@ export function cardToFSRSState(
 /**
  * Import cards with FSRS scheduling state
  */
-export function importCardsWithScheduling(db: Database.Database): {
+export function importCardsWithScheduling(db: DeepReadonly<Database.Database>): {
 	cards: Card[]
 	scheduling: Map<number, FSRSSchedulingState>
 	collectionCreatedAt: number

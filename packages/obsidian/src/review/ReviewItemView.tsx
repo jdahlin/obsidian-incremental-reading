@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { App, ViewStateResult, WorkspaceLeaf } from 'obsidian'
 import type { EngineReviewController } from '../adapters'
 import type IncrementalReadingPlugin from '../main'
@@ -11,7 +12,7 @@ export const VIEW_TYPE_REVIEW = 'ir-review'
 
 /** Internal Obsidian leaf history API */
 interface LeafHistory {
-	pushState: (entry: { state: unknown; title: string; icon: string }) => void
+	pushState: (entry: DeepReadonly<{ state: unknown; title: string; icon: string }>) => void
 }
 
 export class ReviewItemView extends ItemView {
@@ -39,8 +40,9 @@ export class ReviewItemView extends ItemView {
 		return this.controller?.getSerializableState() ?? { screen: 'folder' }
 	}
 
-	async setState(state: ReviewViewState, _result: ViewStateResult): Promise<void> {
-		if (this.controller && state) {
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Obsidian types
+	async setState(state: DeepReadonly<ReviewViewState>, _result: ViewStateResult): Promise<void> {
+		if (this.controller !== null && state !== undefined) {
 			await this.controller.restoreState(state)
 		}
 	}
@@ -68,12 +70,13 @@ export class ReviewItemView extends ItemView {
 		this.contentEl.empty()
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Controller is mutable
 	private handleControllerReady = (controller: EngineReviewController): void => {
 		this.controller = controller
 		controller.onHistoryChange = (state) => this.pushHistory(state)
 	}
 
-	private pushHistory(state: ReviewViewState): void {
+	private pushHistory(state: DeepReadonly<ReviewViewState>): void {
 		const history = (this.leaf as unknown as { history?: LeafHistory }).history
 		history?.pushState({
 			state: { type: VIEW_TYPE_REVIEW, state },

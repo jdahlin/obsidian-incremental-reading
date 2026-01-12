@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ItemState } from '@repo/core/core/types'
 import type { App } from 'obsidian'
 import {
@@ -39,8 +40,8 @@ export async function ensureNoteId(app: App, file: TFile): Promise<string> {
 	}
 
 	const noteId = createId()
-	await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
-		fm.ir_note_id = noteId
+	await app.fileManager.processFrontMatter(file, (fm: DeepReadonly<Record<string, unknown>>) => {
+		;(fm as Record<string, unknown>).ir_note_id = noteId
 	})
 	return noteId
 }
@@ -98,7 +99,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export async function writeReviewItemFile(
 	app: App,
 	noteId: string,
-	data: ReviewItemFile,
+	data: DeepReadonly<ReviewItemFile>,
 ): Promise<void> {
 	await ensureReviewItemsFolder(app)
 	const path = getReviewItemPath(noteId)
@@ -209,7 +210,7 @@ function parseFrontmatterBlock(content: string): string | null {
 	return lines.slice(1, endIndex).join('\n')
 }
 
-function parseItemState(raw: Record<string, unknown> | undefined): ItemState | null {
+function parseItemState(raw: DeepReadonly<Record<string, unknown>> | undefined): ItemState | null {
 	if (raw === undefined || typeof raw !== 'object') return null
 	return {
 		status: normalizeStatus(raw.status),
@@ -222,7 +223,9 @@ function parseItemState(raw: Record<string, unknown> | undefined): ItemState | n
 	}
 }
 
-function parseClozes(raw: Record<string, unknown> | undefined): Record<string, ClozeEntry> | null {
+function parseClozes(
+	raw: DeepReadonly<Record<string, unknown>> | undefined,
+): Record<string, ClozeEntry> | null {
 	if (raw === undefined || typeof raw !== 'object') return null
 	const result: Record<string, ClozeEntry> = {}
 	for (const [key, value] of Object.entries(raw)) {
@@ -239,7 +242,7 @@ function parseClozes(raw: Record<string, unknown> | undefined): Record<string, C
 	return result
 }
 
-function serializeItemState(state: ItemState): Record<string, unknown> {
+function serializeItemState(state: DeepReadonly<ItemState>): Record<string, unknown> {
 	const record: Record<string, unknown> = {
 		status: state.status,
 		stability: state.stability,

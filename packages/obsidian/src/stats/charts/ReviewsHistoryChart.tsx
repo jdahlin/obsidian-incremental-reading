@@ -74,9 +74,11 @@ export const ReviewsHistoryChart: FunctionalComponent<ReviewsHistoryChartProps> 
 	const yTicksRight = yScaleRight.ticks(5)
 
 	// Calculate stacked bar positions
+	/* eslint-disable ts/prefer-readonly-parameter-types -- Data type */
 	const getStackedBars = (
 		d: ReviewsHistoryData,
 	): Array<{ key: string; y: number; height: number; color: string }> => {
+		/* eslint-enable ts/prefer-readonly-parameter-types */
 		const bars: Array<{ key: string; y: number; height: number; color: string }> = []
 		let currentY = INNER_HEIGHT
 
@@ -109,8 +111,9 @@ export const ReviewsHistoryChart: FunctionalComponent<ReviewsHistoryChartProps> 
 			? ((report.summary.daysStudied / report.summary.totalDays) * 100).toFixed(2)
 			: '0'
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DOM/data types
 	const handleBarHover = useCallback((e: MouseEvent, d: ReviewsHistoryData) => {
-		if (!svgRef.current) return
+		if (svgRef.current === null) return
 		const svgRect = svgRef.current.getBoundingClientRect()
 		const x = e.clientX - svgRect.left
 		const y = e.clientY - svgRect.top

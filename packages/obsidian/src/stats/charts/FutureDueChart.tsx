@@ -92,8 +92,9 @@ export const FutureDueChart: FunctionalComponent<FutureDueChartProps> = ({ stats
 	const yTicksLeft = yScaleLeft.ticks(5)
 	const yTicksRight = yScaleRight.ticks(5)
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DOM/data types
 	const handleBarHover = useCallback((e: MouseEvent, d: FutureDueData) => {
-		if (!svgRef.current) return
+		if (svgRef.current === null) return
 		const svgRect = svgRef.current.getBoundingClientRect()
 		const x = e.clientX - svgRect.left
 		const y = e.clientY - svgRect.top

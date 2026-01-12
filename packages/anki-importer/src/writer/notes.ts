@@ -5,6 +5,7 @@
  */
 
 import type { IRNoteId } from '../ir-types.js'
+import type { DeepReadonly } from '../readonly.js'
 import type { Card, Deck, Model, Note } from '../types.js'
 import type { WriteError } from './index.js'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -150,14 +151,15 @@ function getNoteFilename(note: Note): string {
 export async function writeNotes(
 	notes: readonly Note[],
 	cards: readonly Card[],
-	modelMap: Map<number, Model>,
-	deckMap: Map<number, Deck>,
-	irNoteIdMap: Map<number, IRNoteId>,
+	modelMap: DeepReadonly<Map<number, Model>>,
+	deckMap: DeepReadonly<Map<number, Deck>>,
+	irNoteIdMap: DeepReadonly<Map<number, IRNoteId>>,
 	notePathMap: Map<number, string>,
 	outputRoot: string,
 	vaultRelativePrefix: string,
-	errors: WriteError[],
+	errors: DeepReadonly<WriteError[]>,
 ): Promise<number> {
+	const errorsArray = errors as WriteError[]
 	let count = 0
 
 	// Group cards by note to determine deck for each note
@@ -175,7 +177,7 @@ export async function writeNotes(
 	for (const note of notes) {
 		const model = modelMap.get(note.modelId as number)
 		if (!model) {
-			errors.push({
+			errorsArray.push({
 				type: 'note',
 				id: String(note.id),
 				path: '',
@@ -187,7 +189,7 @@ export async function writeNotes(
 		// Get ir_note_id from shared map
 		const irNoteId = irNoteIdMap.get(note.id as number)
 		if (!irNoteId) {
-			errors.push({
+			errorsArray.push({
 				type: 'note',
 				id: String(note.id),
 				path: '',
@@ -229,7 +231,7 @@ export async function writeNotes(
 			notePathMap.set(note.id as number, vaultRelativePath)
 			count++
 		} catch (err) {
-			errors.push({
+			errorsArray.push({
 				type: 'note',
 				id: String(note.id),
 				path: filePath,

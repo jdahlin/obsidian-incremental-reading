@@ -12,6 +12,7 @@ type CommandPlugin = Pick<
 	'app' | 'settings' | 'addCommand' | 'activateReviewView'
 >
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Plugin types have methods
 export function registerCommands(plugin: CommandPlugin): void {
 	plugin.addCommand({
 		id: 'open-review-view',
@@ -25,22 +26,25 @@ export function registerCommands(plugin: CommandPlugin): void {
 		id: 'set-priority',
 		name: 'Set priority',
 		checkCallback: (checking: boolean) => {
-			const file = plugin.app.workspace.getActiveFile()
-			if (!file) return false
+			const { app } = plugin
+			const file = app.workspace.getActiveFile()
+			if (file === null) return false
 			if (checking) return true
 
-			const cache = plugin.app.metadataCache.getFileCache(file)
-			const rawFrontmatter = cache?.frontmatter as unknown
+			const cache = app.metadataCache.getFileCache(file)
+			const rawFrontmatter: unknown = cache?.frontmatter
 			const current = normalizeNumber(
 				isRecord(rawFrontmatter) ? rawFrontmatter.priority : undefined,
 				50,
 			)
 
-			new PriorityModal(plugin.app, current, (newPriority) => {
+			new PriorityModal(app, current, (newPriority) => {
 				void (async () => {
-					await plugin.app.fileManager.processFrontMatter(
+					/* eslint-disable ts/prefer-readonly-parameter-types -- Obsidian mutates frontmatter */
+					await app.fileManager.processFrontMatter(
 						file,
 						(fm: Record<string, unknown>) => {
+							/* eslint-enable ts/prefer-readonly-parameter-types */
 							fm.priority = newPriority
 						},
 					)
@@ -65,6 +69,7 @@ export function registerCommands(plugin: CommandPlugin): void {
 	plugin.addCommand({
 		id: 'extract-to-incremental-note',
 		name: 'Extract to topic note',
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Obsidian types
 		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await extractToIncrementalNote(plugin.app, editor, view, {
 				titleWords: plugin.settings.extractTitleWords,
@@ -77,6 +82,7 @@ export function registerCommands(plugin: CommandPlugin): void {
 	plugin.addCommand({
 		id: 'cloze-selection',
 		name: 'Cloze selection',
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Obsidian types
 		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await clozeSelectionNextIndex(plugin.app, editor, view.file, {
 				extractTag: plugin.settings.extractTag,
@@ -87,6 +93,7 @@ export function registerCommands(plugin: CommandPlugin): void {
 	plugin.addCommand({
 		id: 'cloze-selection-same-index',
 		name: 'Cloze selection (same index)',
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Obsidian types
 		editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 			await clozeSelectionSameIndex(plugin.app, editor, view.file, {
 				extractTag: plugin.settings.extractTag,

@@ -61,6 +61,7 @@ export const App = () => {
 				setIsLoading(false)
 
 				// Handle keyboard events
+				// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DOM type
 				const handleKeyDown = (event: KeyboardEvent) => {
 					// Adapt DOM KeyboardEvent to KeyDownEvent interface
 					const target = event.target as HTMLElement | null

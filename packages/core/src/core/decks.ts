@@ -1,6 +1,10 @@
+import type { DeepReadonly } from './readonly'
 import type { DeckInfo, ItemWithState } from './types'
 
-export function buildDeckTree(items: ItemWithState[], now: Date): DeckInfo[] {
+export function buildDeckTree(
+	items: readonly DeepReadonly<ItemWithState>[],
+	now: Date,
+): DeckInfo[] {
 	const paths = new Set<string>()
 	for (const item of items) {
 		let folder = getFolderPath(item.notePath)
@@ -57,7 +61,7 @@ export function buildDeckTree(items: ItemWithState[], now: Date): DeckInfo[] {
 }
 
 export function getCountsForFolder(
-	items: ItemWithState[],
+	items: readonly DeepReadonly<ItemWithState>[],
 	folderPath: string,
 	now: Date,
 ): { new: number; learning: number; due: number } {
@@ -82,7 +86,10 @@ function getParentPath(path: string): string {
 	return segments.slice(0, -1).join('/')
 }
 
-function filterByFolder(items: ItemWithState[], folderPath: string): ItemWithState[] {
+function filterByFolder(
+	items: readonly DeepReadonly<ItemWithState>[],
+	folderPath: string,
+): readonly DeepReadonly<ItemWithState>[] {
 	if (!folderPath || folderPath === '') {
 		return items
 	}
@@ -96,17 +103,20 @@ function filterByFolder(items: ItemWithState[], folderPath: string): ItemWithSta
 }
 
 interface CategorizedItems {
-	learning: ItemWithState[]
-	due: ItemWithState[]
-	new: ItemWithState[]
-	upcoming: ItemWithState[]
+	learning: readonly DeepReadonly<ItemWithState>[]
+	due: readonly DeepReadonly<ItemWithState>[]
+	new: readonly DeepReadonly<ItemWithState>[]
+	upcoming: readonly DeepReadonly<ItemWithState>[]
 }
 
-function categorizeItems(items: ItemWithState[], now: Date): CategorizedItems {
-	const learning: ItemWithState[] = []
-	const due: ItemWithState[] = []
-	const newItems: ItemWithState[] = []
-	const upcoming: ItemWithState[] = []
+function categorizeItems(
+	items: readonly DeepReadonly<ItemWithState>[],
+	now: Date,
+): CategorizedItems {
+	const learning: DeepReadonly<ItemWithState>[] = []
+	const due: DeepReadonly<ItemWithState>[] = []
+	const newItems: DeepReadonly<ItemWithState>[] = []
+	const upcoming: DeepReadonly<ItemWithState>[] = []
 
 	for (const item of items) {
 		const status = item.state.status

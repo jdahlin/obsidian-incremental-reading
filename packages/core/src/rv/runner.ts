@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { EngineSnapshot, EngineStore } from '../memory/types'
 import type { NotePlatform, Rating, SchedulerId, SessionConfig, SessionStrategyId } from '../types'
 import type { RvCommand } from './types'
@@ -16,7 +17,7 @@ export interface RvRunResult {
 }
 
 export async function runRvCommands(
-	commands: RvCommand[],
+	commands: readonly DeepReadonly<RvCommand>[],
 	storeFactory?: () => Promise<{
 		store: EngineStore
 		sessionManager: SessionManager
@@ -78,7 +79,7 @@ export async function runRvCommands(
 				lastNoteId = noteId
 			},
 			updateConfig: (newConfig) => {
-				config = { ...config, ...newConfig }
+				config = { ...config, ...(newConfig as Partial<SessionConfig>) }
 				sessionManager.setConfig(config)
 			},
 		})
@@ -90,15 +91,15 @@ export async function runRvCommands(
 interface CommandContext {
 	getLastNoteId: () => string | null
 	setLastNoteId: (noteId: string) => void
-	updateConfig: (config: Partial<SessionConfig>) => void
+	updateConfig: (config: DeepReadonly<Partial<SessionConfig>>) => void
 }
 
 async function applyCommand(
-	store: EngineStore,
-	platform: NotePlatform,
-	sessionManager: SessionManager,
-	command: RvCommand,
-	ctx: CommandContext,
+	store: DeepReadonly<EngineStore>,
+	platform: DeepReadonly<NotePlatform>,
+	sessionManager: DeepReadonly<SessionManager>,
+	command: DeepReadonly<RvCommand>,
+	ctx: DeepReadonly<CommandContext>,
 ): Promise<void> {
 	switch (command.name) {
 		case 'topic': {
@@ -292,13 +293,16 @@ async function applyCommand(
 	}
 }
 
-function resolveNoteId(value: string | undefined, ctx: CommandContext): string {
+function resolveNoteId(value: string | undefined, ctx: DeepReadonly<CommandContext>): string {
 	if (value === undefined || value === '') return ''
 	if (value === 'LAST') return ctx.getLastNoteId() ?? ''
 	return value
 }
 
-function parseArgs(args: string[]): { positional: string[]; options: Record<string, string> } {
+function parseArgs(args: readonly string[]): {
+	positional: string[]
+	options: Record<string, string>
+} {
 	const positional: string[] = []
 	const options: Record<string, string> = {}
 	let i = 0
@@ -336,7 +340,7 @@ function parseExpectedValue(raw: string): unknown {
 	return trimmed
 }
 
-function readPath(state: EngineSnapshot, path: string): unknown {
+function readPath(state: DeepReadonly<EngineSnapshot>, path: string): unknown {
 	const segments = path
 		.replace(/\[(\d+)\]/g, '.$1')
 		.split('.')

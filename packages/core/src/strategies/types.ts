@@ -1,12 +1,17 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { SessionConfig, SessionItem } from '../types'
 
 export interface SessionStrategy {
-	rank: (items: SessionItem[], config: SessionConfig, context: StrategyContext) => SessionItem[]
+	rank: (
+		items: readonly DeepReadonly<SessionItem>[],
+		config: DeepReadonly<SessionConfig>,
+		context: DeepReadonly<StrategyContext>,
+	) => SessionItem[]
 }
 
 export interface StrategyContext {
 	lastNoteId?: string | null
-	linkedNoteIds: Set<string>
+	linkedNoteIds: ReadonlySet<string>
 	now: Date
 	seed: number
 }

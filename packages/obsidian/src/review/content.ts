@@ -1,4 +1,5 @@
 import type { ReviewPhase } from '@repo/core/core/content'
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ItemWithState } from '@repo/core/core/types'
 import type { App } from 'obsidian'
 import { parseClozeIndices } from '@repo/core/core/cloze'
@@ -24,11 +25,13 @@ export interface ContentLoaderDeps {
  * - Topic items render the full note.
  * - If a cloze index is missing from the sidecar, we try to re-sync first.
  */
+/* eslint-disable ts/prefer-readonly-parameter-types -- deps contains Obsidian types */
 export async function loadReviewItemHtml(
 	deps: ContentLoaderDeps,
-	item: ItemWithState | null,
+	item: DeepReadonly<ItemWithState> | null,
 	phase: ReviewPhase,
 ): Promise<string> {
+	/* eslint-enable ts/prefer-readonly-parameter-types */
 	if (!item) return ''
 
 	const file = item.noteFile ?? deps.app.vault.getAbstractFileByPath(item.notePath)
@@ -180,7 +183,7 @@ function formatNativeImageOcclusion(
  */
 function createNativeOcclusionHtml(
 	imagePath: string,
-	rects: ReturnType<typeof parseImageOcclusionRects>,
+	rects: DeepReadonly<ReturnType<typeof parseImageOcclusionRects>>,
 	phase: ReviewPhase,
 	currentClozeIndex: number,
 ): string {
