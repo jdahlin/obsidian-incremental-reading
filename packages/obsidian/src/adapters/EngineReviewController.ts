@@ -22,6 +22,7 @@ import type {
 	DebugInfo,
 	ReviewScreenActions,
 	ReviewScreenState,
+	ReviewViewState,
 } from '../review/review-screen-state'
 import type { SessionStats as UISessionStats } from '../review/review-screen-types'
 import { formatReviewContent } from '@repo/core/core/content'
@@ -120,6 +121,15 @@ export class EngineReviewController {
 	private refreshTimeout: ReturnType<typeof setTimeout> | null = null
 	private sessionManager: SessionManager | null = null
 	private static readonly SPACE_GRADE: 1 | 2 | 3 | 4 = 3
+
+	/** Callback to trigger Obsidian's navigation history recording, passing the state to record */
+	onHistoryChange: ((stateToRecord: ReviewViewState) => void) | null = null
+
+	/** Track if we're currently restoring state (to avoid re-recording history) */
+	private isRestoring = false
+
+	/** State snapshot before current grade (for re-grading support) */
+	private stateBeforeGrade: ReviewState | null = null
 	private model: EngineReviewModel = {
 		screen: 'folder',
 		items: [],
@@ -326,9 +336,12 @@ export class EngineReviewController {
 	}
 
 	async startReview(): Promise<void> {
-		const now = new Date()
+		// Record folder screen state in history before starting review
+		// This allows navigating back to the folder selection
+		const folderState = this.getSerializableState()
+		this.recordHistory(folderState)
 
-		// Build session config from settings
+		const now = new Date()
 		const config: SessionConfig = {
 			strategy: this.deps.settings.strategy,
 			mode: 'review',
@@ -390,11 +403,17 @@ export class EngineReviewController {
 			return
 		}
 
+		// Capture current state BEFORE grading (for history)
+		const stateToRecord = this.getSerializableState()
+
 		// Capture undo state BEFORE grading - this is the state we'll restore on undo
 		const undoState: UndoState = {
 			item: si,
 			previousState: { ...si.state },
 		}
+
+		// Save state before grading for re-grade support
+		this.stateBeforeGrade = structuredClone(si.state)
 
 		const now = new Date()
 		const rating = grade as Rating
@@ -414,6 +433,9 @@ export class EngineReviewController {
 		this.setModel((prev) => ({ ...prev, sessionStats, undoState }))
 
 		await this.advanceQueue()
+
+		// Record history AFTER advancing (so getState returns new state but we record old state)
+		this.recordHistory(stateToRecord)
 	}
 
 	private determinePhase(si: SessionItem | null): ReviewPhase {
@@ -446,7 +468,9 @@ export class EngineReviewController {
 	}
 
 	private async backToSummary(): Promise<void> {
+		// Don't record history when exiting review - this clears the session
 		this.sessionManager = null
+		this.stateBeforeGrade = null
 		await this.refreshSummary()
 	}
 
@@ -768,6 +792,114 @@ export class EngineReviewController {
 			void this.deps.platform.deleteItem(noteId, clozeKey).then(() => {
 				void this.advanceQueue()
 			})
+		}
+	}
+
+	/**
+	 * Get serializable state for Obsidian's navigation history.
+	 */
+	getSerializableState(): ReviewViewState {
+		if (this.model.screen === 'folder') {
+			return {
+				screen: 'folder',
+				selectedPath: this.model.selectedPath,
+			}
+		}
+
+		const si = this.model.currentSessionItem
+		if (!si) {
+			return { screen: 'folder' }
+		}
+
+		return {
+			screen: 'review',
+			itemId: si.item.id,
+			phase: this.model.phase,
+			content: this.model.currentContent,
+			stateBefore: this.stateBeforeGrade ?? undefined,
+			grade: null,
+		}
+	}
+
+	/**
+	 * Restore state from Obsidian's navigation history.
+	 */
+	async restoreState(state: ReviewViewState): Promise<void> {
+		this.isRestoring = true
+		try {
+			if (state.screen === 'folder') {
+				// Restore to folder screen - need to refresh data
+				this.sessionManager = null
+				this.stateBeforeGrade = null
+				await this.refreshSummary()
+				if (state.selectedPath !== undefined) {
+					this.setModel((prev) => ({ ...prev, selectedPath: state.selectedPath ?? null }))
+				}
+				return
+			}
+
+			// Restoring to a review screen
+			if (state.itemId === undefined || state.itemId === null || state.itemId === '') {
+				return
+			}
+
+			// If we don't have a session, we can't restore review state
+			if (!this.sessionManager) {
+				// Start a new session and try to find the item
+				await this.startReview()
+			}
+
+			// Find the item from the list
+			const allItems = await this.deps.dataStore.listItems()
+			const item = allItems.find((i) => i.id === state.itemId)
+			if (!item) {
+				return
+			}
+
+			const reviewState = await this.deps.dataStore.getState(state.itemId)
+			const sessionItem: SessionItem = {
+				item,
+				state: reviewState ?? {
+					status: 'new',
+					due: null,
+					stability: 0,
+					difficulty: 0,
+					reps: 0,
+					lapses: 0,
+					lastReview: null,
+				},
+				score: 0, // Score is not relevant for restored items
+			}
+
+			// Store the state before for re-grading support
+			this.stateBeforeGrade = state.stateBefore ?? structuredClone(sessionItem.state)
+
+			const phase = state.phase ?? this.determinePhase(sessionItem)
+
+			this.setModel((prev) => ({
+				...prev,
+				screen: 'review',
+				currentSessionItem: sessionItem,
+				phase,
+				currentContent: state.content ?? '',
+			}))
+
+			// If content wasn't stored, reload it
+			if (state.content === undefined || state.content === null || state.content === '') {
+				await this.loadItemContent(sessionItem, phase)
+			}
+		} finally {
+			this.isRestoring = false
+		}
+	}
+
+	/**
+	 * Record a state in navigation history.
+	 * @param stateToRecord The state to record in history (typically the previous state before a transition)
+	 */
+	private recordHistory(stateToRecord: ReviewViewState): void {
+		if (!this.isRestoring && this.onHistoryChange) {
+			this.onHistoryChange(stateToRecord)
 		}
 	}
 }

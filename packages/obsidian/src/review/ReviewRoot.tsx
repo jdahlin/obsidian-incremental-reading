@@ -1,5 +1,6 @@
 import type { App } from 'obsidian'
 import type { FunctionalComponent } from 'preact'
+import type { EngineReviewController } from '../adapters'
 import type { IncrementalReadingSettings } from '../settings'
 import type { UseReviewStateDeps } from './useReviewState'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
@@ -13,9 +14,16 @@ interface ReviewRootProps {
 	app: App
 	view: unknown
 	settings: IncrementalReadingSettings
+	/** Callback when the controller is ready, for Obsidian navigation integration */
+	onControllerReady?: (controller: EngineReviewController) => void
 }
 
-export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, settings }) => {
+export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({
+	app,
+	view,
+	settings,
+	onControllerReady,
+}) => {
 	const platform = useMemo(() => new ObsidianReviewAdapter(app, view), [app, view])
 
 	// Create engine adapters using the unified MarkdownDataStore
@@ -47,7 +55,7 @@ export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, se
 		[platform, settings, dataStore, notePlatform],
 	)
 
-	const { state, actions, onKeyDown } = useReviewState(deps)
+	const { state, actions, onKeyDown, controller } = useReviewState(deps)
 	const rootRef = useRef<HTMLDivElement | null>(null)
 
 	const focusRoot = (): void => {
@@ -73,6 +81,13 @@ export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({ app, view, se
 			})
 		}
 	}, [state.type])
+
+	// Notify parent when controller is ready
+	useEffect(() => {
+		if (onControllerReady) {
+			onControllerReady(controller)
+		}
+	}, [controller, onControllerReady])
 
 	useEffect(() => {
 		const handler = (event: KeyboardEvent): void => {

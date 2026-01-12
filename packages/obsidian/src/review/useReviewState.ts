@@ -9,6 +9,7 @@ export interface UseReviewStateResult {
 	state: ReviewScreenState
 	actions: ReviewScreenActions
 	onKeyDown: (event: KeyboardEvent) => void
+	controller: EngineReviewController
 }
 
 export interface UseReviewStateDeps {
@@ -53,5 +54,6 @@ export function useReviewState(deps: UseReviewStateDeps): UseReviewStateResult {
 		state,
 		actions,
 		onKeyDown,
+		controller,
 	}
 }
