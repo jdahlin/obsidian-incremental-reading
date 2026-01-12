@@ -128,9 +128,11 @@ export class ReviewController {
 		undoState: null,
 	}
 
-	private state: ReviewScreenState = this.buildScreenState()
+	private state!: ReviewScreenState
 
-	constructor(private deps: ReviewControllerDeps) {}
+	constructor(private deps: ReviewControllerDeps) {
+		this.state = this.buildScreenState()
+	}
 
 	/**
 	 * Mount the controller - start listening for data changes.
