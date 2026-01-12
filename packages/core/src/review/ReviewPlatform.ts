@@ -140,4 +140,13 @@ export interface ReviewPlatform {
 	 * Open the stats view.
 	 */
 	readonly openStats?: (extractTag: string) => void
+
+	/**
+	 * Get pre-computed deck info (for API-backed platforms).
+	 * If provided, the controller will use this instead of building deck tree from items.
+	 */
+	readonly getDeckInfo?: () => Promise<{
+		decks: DeckInfo[]
+		allCounts: { new: number; learning: number; due: number }
+	}>
 }
