@@ -1,5 +1,10 @@
 import type { CardType, NoteFrontmatter, Status } from './types'
 
+/**
+ * Normalizes tags from various YAML formats to a clean string array.
+ * Accepts: array of strings, or single string (space/comma separated).
+ * Strips leading '#' from tags. Case-sensitive comparison (no lowercasing).
+ */
 export function normalizeTags(tags: unknown): string[] {
 	if (Array.isArray(tags)) {
 		return tags.map((tag) => String(tag).trim().replace(/^#/, '')).filter(Boolean)
@@ -48,6 +53,11 @@ export function parseDate(value: unknown): Date | null {
 	return null
 }
 
+/**
+ * Formats a Date as ISO-like string using LOCAL time (not UTC).
+ * Output: "YYYY-MM-DDTHH:MM:SS" without timezone suffix.
+ * This format is used in sidecar files and must stay consistent with parseDate().
+ */
 export function formatDate(date: Date): string {
 	const year = date.getFullYear()
 	const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -58,6 +68,11 @@ export function formatDate(date: Date): string {
 	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
 }
 
+/**
+ * Parses frontmatter and filters by extractTag.
+ * Returns null if: raw is not an object, OR extractTag is set and note lacks it.
+ * This null return is the gate for "is this note eligible for review?"
+ */
 export function parseFrontmatter(raw: unknown, extractTag: string): NoteFrontmatter | null {
 	if (raw === null || raw === undefined || typeof raw !== 'object') return null
 	const data = raw as Record<string, unknown>

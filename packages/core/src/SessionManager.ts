@@ -18,9 +18,21 @@ export interface LoadPoolOptions {
 	folderFilter?: string
 }
 
+/**
+ * Manages the review session state including item selection and scheduling.
+ *
+ * Queue invariants:
+ * - pool: all items eligible for review (never mutated during session except state updates)
+ * - volatileQueue: items rated "again" that are cooling down before re-entry
+ * - historyIds: ordered list of reviewed item IDs (append-only within session)
+ * - An item can be in pool AND volatileQueue simultaneously (volatileQueue is subset filter)
+ * - availablePool = pool - historyIds - volatileQueue (computed, not stored)
+ */
 export class SessionManager {
 	private pool: SessionItem[] = []
+	/** Items marked "again" waiting for cooldown period before re-presentation */
 	private volatileQueue: SessionItem[] = []
+	/** Ordered review history for cooldown calculation. Index position matters. */
 	private historyIds: string[] = []
 	private lastNoteId: string | null = null
 	private seed: number = Date.now()
@@ -85,11 +97,13 @@ export class SessionManager {
 		const candidates = await this.getRankedCandidates(now)
 		if (candidates.length === 0) return null
 
-		// Probabilistic interleaving for JD1 (80/20)
+		// Probabilistic interleaving for JD1 (80/20 rule)
+		// 80% of the time: pick the highest-scored item (candidates[0])
+		// 20% of the time: randomly pick from remaining items to add variety
+		// This prevents "tunnel vision" on high-priority items while maintaining focus
 		if (this.config.strategy === 'JD1' && candidates.length > 1 && !this.config.deterministic) {
 			const rand = Math.random()
 			if (rand > 0.8) {
-				// Pick from lower bands (randomly from the rest)
 				const index = 1 + Math.floor(Math.random() * (candidates.length - 1))
 				return candidates[index] ?? null
 			}
@@ -128,7 +142,10 @@ export class SessionManager {
 
 		if (availablePool.length === 0 && this.volatileQueue.length === 0) return []
 
-		// Check volatileQueue for items that passed cooldown
+		// Check volatileQueue for items that passed cooldown.
+		// Cooldown = number of OTHER items that must be reviewed before this item reappears.
+		// itemsSince = (historyLength - 1) - lastIndex = count of reviews after this item's last review.
+		// If item never reviewed (not in history), it's immediately ready.
 		const readyFromVolatile = this.volatileQueue.filter((si) => {
 			const indexInHistory = this.historyIds.lastIndexOf(si.item.id)
 			if (indexInHistory === -1) return true
@@ -148,37 +165,45 @@ export class SessionManager {
 		return candidates
 	}
 
+	/**
+	 * Records a review and updates all state. Order of operations matters:
+	 * 1. Capture pre-grade state (for audit log)
+	 * 2. Update volatile queue (again→add, graduate→remove)
+	 * 3. Compute and persist new state
+	 * 4. Append to review log with OLD state values
+	 * 5. Update session stats and history
+	 */
 	async recordReview(itemId: string, rating: Rating, now: Date = new Date()): Promise<void> {
 		const si = this.pool.find((p) => p.item.id === itemId)
 		if (!si) return
 
-		// Use TopicScheduler for topics, configured scheduler for clozes
+		// Topics use fixed intervals; clozes use FSRS with stability/difficulty tracking
 		const scheduler =
 			si.item.type === 'topic'
 				? new TopicScheduler()
 				: getScheduler(this.config.schedulerId ?? 'fsrs', this.config.schedulingParams)
 
 		if (rating === 1) {
-			// Again: move to volatile queue
+			// Again: add to volatile queue for cooldown before re-presentation
 			if (!this.volatileQueue.some((v) => v.item.id === itemId)) {
 				this.volatileQueue.push(si)
 			}
 		} else {
-			// Graduate: remove from volatile if present
+			// Ratings 2-4 graduate from volatile queue
 			this.volatileQueue = this.volatileQueue.filter((v) => v.item.id !== itemId)
 		}
 
-		// Capture state before grading for the review log
+		// Capture BEFORE grading - these go in the review log for analysis
 		const stateBefore = si.state.status
 		const stabilityBefore = si.state.stability
 		const difficultyBefore = si.state.difficulty
 
-		// Always persist state (even for Again) to satisfy tests and ensure data safety
+		// Grade mutates nothing; newState is a fresh object
 		const newState = scheduler.grade(si.state, rating, now)
 		await this.dataStore.setState(itemId, newState)
 		si.state = newState
 
-		// Append to persistent log
+		// Log uses pre-grade values for before/after analysis
 		await this.dataStore.appendReview({
 			ts: now.toISOString(),
 			itemId,
@@ -232,6 +257,11 @@ export class SessionManager {
 		}
 	}
 
+	/**
+	 * Prevents reviewing too many clozes from the same note consecutively.
+	 * If the last N reviews were all from noteId X, exclude X from this pick.
+	 * This only affects the immediate next selection; X becomes eligible again after.
+	 */
 	private applyClumpLimit(items: SessionItem[]): SessionItem[] {
 		const limit = this.config.clumpLimit ?? 3
 		if (this.historyIds.length < limit) return items
@@ -241,13 +271,11 @@ export class SessionManager {
 			.map((id) => this.pool.find((p) => p.item.id === id)?.item.noteId)
 			.filter(Boolean)
 
-		// If the last N items are all from the same note, we should avoid that note
 		const lastNoteId = recentNoteIds[recentNoteIds.length - 1]
 		const isClumped =
 			recentNoteIds.every((id) => id === lastNoteId) && recentNoteIds.length === limit
 
 		if (isClumped) {
-			// Filter out items from this note for the very next pick
 			return items.filter((si) => si.item.noteId !== lastNoteId)
 		}
 
