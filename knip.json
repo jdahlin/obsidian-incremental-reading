@@ -17,6 +17,14 @@
 			"project": ["src/**/*.{ts,tsx}"],
 			"entry": ["src/tests/**/*.test.ts"]
 		},
+		"packages/web": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/main.tsx", "src/adapters/index.ts"]
+		},
+		"packages/api-backend": {
+			"project": ["src/**/*.ts"],
+			"entry": ["src/index.ts"]
+		},
 		"configs/vitest": {
 			"ignoreDependencies": ["vite"]
 		},
