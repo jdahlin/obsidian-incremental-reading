@@ -3,7 +3,7 @@ import './DeckSummaryHeader.css'
 
 interface DeckSummaryHeaderProps {
 	onStats: () => void
-	onStudy: () => void
+	onStudy: () => void | Promise<void>
 }
 
 export const DeckSummaryHeader: FunctionalComponent<DeckSummaryHeaderProps> = ({
@@ -17,7 +17,13 @@ export const DeckSummaryHeader: FunctionalComponent<DeckSummaryHeaderProps> = ({
 				<button type="button" className="ir-secondary" onClick={onStats}>
 					Statistics
 				</button>
-				<button type="button" className="ir-primary" onClick={onStudy}>
+				<button
+					type="button"
+					className="ir-primary"
+					onClick={() => {
+						void onStudy()
+					}}
+				>
 					Study now
 				</button>
 			</div>

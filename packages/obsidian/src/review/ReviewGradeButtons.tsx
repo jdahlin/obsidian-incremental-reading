@@ -2,11 +2,11 @@ import type { FunctionalComponent } from 'preact'
 import './ReviewGradeButtons.css'
 
 interface ReviewGradeButtonsProps {
-	onGrade: (grade: number) => void | Promise<void>
+	onGrade: (grade: 1 | 2 | 3 | 4) => void | Promise<void>
 }
 
 export const ReviewGradeButtons: FunctionalComponent<ReviewGradeButtonsProps> = ({ onGrade }) => {
-	const grades = [
+	const grades: Array<{ value: 1 | 2 | 3 | 4; className: string }> = [
 		{ value: 1, className: 'ir-grade ir-grade-again' },
 		{ value: 2, className: 'ir-grade ir-grade-hard' },
 		{ value: 3, className: 'ir-grade ir-grade-good' },

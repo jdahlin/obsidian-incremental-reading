@@ -5,7 +5,7 @@ import './ReviewFinishedScreen.css'
 
 interface ReviewFinishedScreenProps {
 	sessionStats: SessionStats
-	onBack: () => void
+	onBack: () => void | Promise<void>
 }
 
 export const ReviewFinishedScreen: FunctionalComponent<ReviewFinishedScreenProps> = ({
@@ -19,7 +19,13 @@ export const ReviewFinishedScreen: FunctionalComponent<ReviewFinishedScreenProps
 					<div className="ir-review-empty-title">Done!</div>
 					<div className="ir-review-empty-body">No more reviews for now.</div>
 					<ReviewSessionSummary sessionStats={sessionStats} />
-					<button type="button" className="ir-secondary" onClick={onBack}>
+					<button
+						type="button"
+						className="ir-secondary"
+						onClick={() => {
+							void onBack()
+						}}
+					>
 						Back to decks
 					</button>
 				</div>

@@ -5,7 +5,7 @@ import { DeckRow } from './DeckRow'
 import './DeckList.css'
 
 interface DeckListProps {
-	rows: DeckInfo[]
+	rows: readonly DeckInfo[]
 	selectedPath: string | null
 	allCounts: DeckCountsValue
 	onSelect: (path: string | null) => void
