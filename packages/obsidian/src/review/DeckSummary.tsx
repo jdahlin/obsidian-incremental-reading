@@ -8,14 +8,14 @@ import { DeckSummaryHeader } from './DeckSummaryHeader'
 import './DeckSummary.css'
 
 interface DeckSummaryProps {
-	decks: DeckInfo[]
+	decks: readonly DeckInfo[]
 	selectedPath: string | null
 	allCounts: DeckCountsValue
 	todayStats: TodayStats
 	streak: StreakInfo
 	showStreak: boolean
 	onSelect: (path: string | null) => void
-	onStudy: () => void
+	onStudy: () => void | Promise<void>
 	onStats: () => void
 }
 

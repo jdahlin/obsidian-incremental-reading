@@ -1,5 +1,2 @@
-export interface DeckCountsValue {
-	new: number
-	learning: number
-	due: number
-}
+// Re-export from core for backwards compatibility
+export type { DeckCounts as DeckCountsValue } from '@repo/core/review/types'
