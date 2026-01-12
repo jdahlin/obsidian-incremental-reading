@@ -5,14 +5,8 @@
  * of collations and data types.
  */
 
-import type {
-	CardRow,
-	DeckRow,
-	FieldRow,
-	NoteRow,
-	NotetypeRow,
-	TemplateRow,
-} from './types.js'
+import type { DeepReadonly } from './readonly.js'
+import type { CardRow, DeckRow, FieldRow, NoteRow, NotetypeRow, TemplateRow } from './types.js'
 import Database from 'better-sqlite3'
 
 // =============================================================================
@@ -40,7 +34,7 @@ export function openAnkiDatabase(dbPath: string): Database.Database {
 /**
  * Read all notetypes (models) from database
  */
-export function readNotetypes(db: Database.Database): NotetypeRow[] {
+export function readNotetypes(db: DeepReadonly<Database.Database>): NotetypeRow[] {
 	// Note: We don't ORDER BY name here because it has unicase collation
 	// which requires a custom collation function not available in better-sqlite3.
 	// Sort in JavaScript if needed.
@@ -55,7 +49,7 @@ export function readNotetypes(db: Database.Database): NotetypeRow[] {
  * Read all fields from database
  * @returns Fields sorted by notetype ID and ordinal
  */
-export function readFields(db: Database.Database): FieldRow[] {
+export function readFields(db: DeepReadonly<Database.Database>): FieldRow[] {
 	const stmt = db.prepare<[], FieldRow>(`
 		SELECT ntid, ord, name, config
 		FROM fields
@@ -68,7 +62,7 @@ export function readFields(db: Database.Database): FieldRow[] {
  * Read all templates from database
  * @returns Templates sorted by notetype ID and ordinal
  */
-export function readTemplates(db: Database.Database): TemplateRow[] {
+export function readTemplates(db: DeepReadonly<Database.Database>): TemplateRow[] {
 	const stmt = db.prepare<[], TemplateRow>(`
 		SELECT ntid, ord, name, mtime_secs, usn, config
 		FROM templates
@@ -80,7 +74,10 @@ export function readTemplates(db: Database.Database): TemplateRow[] {
 /**
  * Read fields for a specific notetype
  */
-export function readFieldsForNotetype(db: Database.Database, notetypeId: number): FieldRow[] {
+export function readFieldsForNotetype(
+	db: DeepReadonly<Database.Database>,
+	notetypeId: number,
+): FieldRow[] {
 	const stmt = db.prepare<[number], FieldRow>(`
 		SELECT ntid, ord, name, config
 		FROM fields
@@ -93,7 +90,10 @@ export function readFieldsForNotetype(db: Database.Database, notetypeId: number)
 /**
  * Read templates for a specific notetype
  */
-export function readTemplatesForNotetype(db: Database.Database, notetypeId: number): TemplateRow[] {
+export function readTemplatesForNotetype(
+	db: DeepReadonly<Database.Database>,
+	notetypeId: number,
+): TemplateRow[] {
 	const stmt = db.prepare<[number], TemplateRow>(`
 		SELECT ntid, ord, name, mtime_secs, usn, config
 		FROM templates
@@ -106,7 +106,7 @@ export function readTemplatesForNotetype(db: Database.Database, notetypeId: numb
 /**
  * Read all notes from database
  */
-export function readNotes(db: Database.Database): NoteRow[] {
+export function readNotes(db: DeepReadonly<Database.Database>): NoteRow[] {
 	const stmt = db.prepare<[], NoteRow>(`
 		SELECT id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data
 		FROM notes
@@ -118,7 +118,10 @@ export function readNotes(db: Database.Database): NoteRow[] {
 /**
  * Read notes for a specific notetype
  */
-export function readNotesForNotetype(db: Database.Database, notetypeId: number): NoteRow[] {
+export function readNotesForNotetype(
+	db: DeepReadonly<Database.Database>,
+	notetypeId: number,
+): NoteRow[] {
 	const stmt = db.prepare<[number], NoteRow>(`
 		SELECT id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data
 		FROM notes
@@ -131,7 +134,7 @@ export function readNotesForNotetype(db: Database.Database, notetypeId: number):
 /**
  * Read all cards from database
  */
-export function readCards(db: Database.Database): CardRow[] {
+export function readCards(db: DeepReadonly<Database.Database>): CardRow[] {
 	const stmt = db.prepare<[], CardRow>(`
 		SELECT id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data
 		FROM cards
@@ -143,7 +146,7 @@ export function readCards(db: Database.Database): CardRow[] {
 /**
  * Read cards for a specific note
  */
-export function readCardsForNote(db: Database.Database, noteId: number): CardRow[] {
+export function readCardsForNote(db: DeepReadonly<Database.Database>, noteId: number): CardRow[] {
 	const stmt = db.prepare<[number], CardRow>(`
 		SELECT id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data
 		FROM cards
@@ -156,7 +159,7 @@ export function readCardsForNote(db: Database.Database, noteId: number): CardRow
 /**
  * Read all decks from database
  */
-export function readDecks(db: Database.Database): DeckRow[] {
+export function readDecks(db: DeepReadonly<Database.Database>): DeckRow[] {
 	// Note: We don't ORDER BY name here because it has unicase collation.
 	// Sort in JavaScript if needed.
 	const stmt = db.prepare<[], DeckRow>(`
@@ -169,7 +172,7 @@ export function readDecks(db: Database.Database): DeckRow[] {
 /**
  * Read a specific deck by ID
  */
-export function readDeck(db: Database.Database, deckId: number): DeckRow | undefined {
+export function readDeck(db: DeepReadonly<Database.Database>, deckId: number): DeckRow | undefined {
 	const stmt = db.prepare<[number], DeckRow>(`
 		SELECT id, name, mtime_secs, usn, common, kind
 		FROM decks
@@ -185,9 +188,7 @@ export function readDeck(db: Database.Database, deckId: number): DeckRow | undef
 /**
  * Count notes per notetype
  */
-export function countNotesPerNotetype(
-	db: Database.Database,
-): Map<number, number> {
+export function countNotesPerNotetype(db: DeepReadonly<Database.Database>): Map<number, number> {
 	const stmt = db.prepare<[], { mid: number; count: number }>(`
 		SELECT mid, COUNT(*) as count
 		FROM notes
@@ -200,7 +201,7 @@ export function countNotesPerNotetype(
 /**
  * Count cards per deck
  */
-export function countCardsPerDeck(db: Database.Database): Map<number, number> {
+export function countCardsPerDeck(db: DeepReadonly<Database.Database>): Map<number, number> {
 	const stmt = db.prepare<[], { did: number; count: number }>(`
 		SELECT did, COUNT(*) as count
 		FROM cards
@@ -213,7 +214,7 @@ export function countCardsPerDeck(db: Database.Database): Map<number, number> {
 /**
  * Get database creation time from col table
  */
-export function getCollectionCreationTime(db: Database.Database): number {
+export function getCollectionCreationTime(db: DeepReadonly<Database.Database>): number {
 	const stmt = db.prepare<[], { crt: number }>(`
 		SELECT crt FROM col
 	`)
@@ -224,7 +225,7 @@ export function getCollectionCreationTime(db: Database.Database): number {
 /**
  * Get collection modification time
  */
-export function getCollectionModTime(db: Database.Database): number {
+export function getCollectionModTime(db: DeepReadonly<Database.Database>): number {
 	const stmt = db.prepare<[], { mod: number }>(`
 		SELECT mod FROM col
 	`)
@@ -251,13 +252,18 @@ export interface DatabaseStats {
 /**
  * Get database statistics
  */
-export function getDatabaseStats(db: Database.Database): DatabaseStats {
+export function getDatabaseStats(db: DeepReadonly<Database.Database>): DatabaseStats {
 	// Note: We use COUNT(id) instead of COUNT(*) because COUNT(*) triggers
 	// evaluation of all columns, including those with unicase collation.
-	const notetypeCount = db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM notetypes').get()?.count ?? 0
-	const noteCount = db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM notes').get()?.count ?? 0
-	const cardCount = db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM cards').get()?.count ?? 0
-	const deckCount = db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM decks').get()?.count ?? 0
+	const notetypeCount =
+		db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM notetypes').get()
+			?.count ?? 0
+	const noteCount =
+		db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM notes').get()?.count ?? 0
+	const cardCount =
+		db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM cards').get()?.count ?? 0
+	const deckCount =
+		db.prepare<[], { count: number }>('SELECT COUNT(id) as count FROM decks').get()?.count ?? 0
 	const crt = getCollectionCreationTime(db)
 	const mod = getCollectionModTime(db)
 

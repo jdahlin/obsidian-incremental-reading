@@ -1,8 +1,13 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { SessionConfig, SessionItem } from '../types'
 import type { SessionStrategy, StrategyContext } from './types'
 
 export class AnkiStrategy implements SessionStrategy {
-	rank(items: SessionItem[], config: SessionConfig, context: StrategyContext): SessionItem[] {
+	rank(
+		items: readonly DeepReadonly<SessionItem>[],
+		_config: DeepReadonly<SessionConfig>,
+		context: DeepReadonly<StrategyContext>,
+	): SessionItem[] {
 		return [...items].sort((a, b) => {
 			// Bucket order: learning -> due -> new
 			const aBucket = this.getBucket(a, context.now)
@@ -22,7 +27,7 @@ export class AnkiStrategy implements SessionStrategy {
 		})
 	}
 
-	private getBucket(item: SessionItem, now: Date): number {
+	private getBucket(item: DeepReadonly<SessionItem>, now: Date): number {
 		if (item.state.status === 'learning' || item.state.status === 'relearning') return 3
 		if (item.state.due && item.state.due <= now) return 2
 		if (item.state.status === 'new') return 1

@@ -27,17 +27,19 @@ export const ReviewMoreMenu: FunctionalComponent<ReviewMoreMenuProps> = ({
 	useEffect(() => {
 		if (!isOpen) return
 
-		const handleClickOutside = (event: MouseEvent): void => {
-			if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+		/* eslint-disable ts/prefer-readonly-parameter-types -- DOM types */
+		const handleClickOutside = (event: Event): void => {
+			if (menuRef.current !== null && !menuRef.current.contains(event.target as Node)) {
 				setIsOpen(false)
 			}
 		}
 
-		const handleEscape = (event: KeyboardEvent): void => {
-			if (event.key === 'Escape') {
+		const handleEscape = (event: Event): void => {
+			if ((event as KeyboardEvent).key === 'Escape') {
 				setIsOpen(false)
 			}
 		}
+		/* eslint-enable ts/prefer-readonly-parameter-types */
 
 		document.addEventListener('mousedown', handleClickOutside)
 		document.addEventListener('keydown', handleEscape)

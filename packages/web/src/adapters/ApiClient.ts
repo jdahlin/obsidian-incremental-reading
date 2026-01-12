@@ -7,6 +7,7 @@ export class ApiClient {
 	/**
 	 * Get the review queue.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- options object
 	async getQueue(options?: { folder?: string; limit?: number }): Promise<QueueResponse> {
 		const params = new URLSearchParams()
 		if (options?.folder !== undefined) {

@@ -52,6 +52,7 @@ interface UndoState {
 	previousState: ReviewState
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- callback type
 type Listener = (state: ReviewScreenState) => void
 
 /**
@@ -212,10 +213,11 @@ export class ReviewController {
 	/**
 	 * Handle keyboard events during review.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- event type
 	handleKeyDown(event: KeyDownEvent): void | Promise<void> {
 		if (event.defaultPrevented) return
 		const target = event.target
-		if (target?.tagName && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
+		if (target?.tagName !== undefined && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
 
 		if (event.key === 'Escape' && this.model.screen === 'review') {
 			void this.backToSummary()
@@ -615,6 +617,7 @@ export class ReviewController {
 		await this.updateSessionFile()
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- SessionItem type
 	private async loadItemContent(si: SessionItem | null, phase: ReviewPhase): Promise<void> {
 		const requestId = ++this.contentRequestId
 		if (!si) {
@@ -643,6 +646,7 @@ export class ReviewController {
 		}
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- callback/model type
 	private setModel(update: ReviewModel | ((prev: ReviewModel) => ReviewModel)): void {
 		this.model = typeof update === 'function' ? update(this.model) : update
 		this.emit()

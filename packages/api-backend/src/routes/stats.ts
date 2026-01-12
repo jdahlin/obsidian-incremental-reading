@@ -14,6 +14,7 @@ import { Hono } from 'hono'
 /**
  * Convert ReviewState to ItemState for compatibility.
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewState type
 function toItemState(state: ReviewState | null): ItemState {
 	if (state === null) {
 		return {
@@ -37,6 +38,7 @@ function toItemState(state: ReviewState | null): ItemState {
 	}
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
 export function createStatsRoutes(deps: ServerDeps): Hono {
 	const app = new Hono()
 
@@ -174,6 +176,7 @@ export function createStatsRoutes(deps: ServerDeps): Hono {
 	return app
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- fs object
 async function readRevlogFiles(fs: {
 	list: () => Promise<string[]>
 	read: (path: string) => Promise<string | null>

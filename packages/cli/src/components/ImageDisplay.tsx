@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import { Box, Text } from 'ink'
 import Image, { TerminalInfoContext } from 'ink-picture'
 import React from 'react'
@@ -7,7 +8,7 @@ interface ImageDisplayProps {
 	maxWidth: number
 }
 
-export function ImageDisplay({ imagePaths, maxWidth }: ImageDisplayProps) {
+export function ImageDisplay({ imagePaths, maxWidth }: DeepReadonly<ImageDisplayProps>) {
 	const terminalInfo = React.useContext(TerminalInfoContext)
 
 	if (imagePaths.length === 0) {

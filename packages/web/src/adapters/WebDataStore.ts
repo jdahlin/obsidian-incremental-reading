@@ -25,11 +25,13 @@ export class WebDataStore implements DataStore {
 		return this.states.get(itemId) ?? null
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- state object
 	async setState(itemId: string, state: ReviewState): Promise<void> {
 		this.states.set(itemId, state)
 		this.saveStates()
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- record object
 	async appendReview(record: ReviewRecord): Promise<void> {
 		const reviews = this.loadReviews()
 		reviews.push(record)
@@ -48,6 +50,7 @@ export class WebDataStore implements DataStore {
 	/**
 	 * Add an item to the store.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- item object
 	addItem(item: ReviewItem): void {
 		this.items.set(item.id, item)
 		this.saveItems()
@@ -79,6 +82,7 @@ export class WebDataStore implements DataStore {
 	/**
 	 * Import items from JSON data.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- item array
 	importItems(items: ReviewItem[]): void {
 		for (const item of items) {
 			this.items.set(item.id, item)

@@ -6,6 +6,7 @@
  */
 
 import type { Database } from 'sql.js'
+import type { DeepReadonly } from '../../core/readonly'
 import type { FutureDueData, FutureDueReport, FutureDueSummary } from '../types'
 
 export function getFutureDueReport(db: Database, days: number): FutureDueReport {
@@ -121,7 +122,10 @@ function getFutureDueData(db: Database, days: number): FutureDueData[] {
 	return results
 }
 
-function calculateSummary(data: FutureDueData[], days: number): FutureDueSummary {
+function calculateSummary(
+	data: readonly DeepReadonly<FutureDueData>[],
+	days: number,
+): FutureDueSummary {
 	// Total includes backlog + future
 	const total = data.reduce((sum, d) => sum + d.count, 0)
 	const dueTomorrow = data.find((d) => d.daysFromNow === 1)?.count ?? 0
