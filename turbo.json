@@ -1,14 +1,17 @@
 {
 	"$schema": "https://turbo.build/schema.json",
 	"ui": "stream",
+	"globalDependencies": [],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
+			"inputs": ["src/**", "package.json", "tsconfig.json", "tsconfig.build.json", "esbuild.config.mjs", "vite.config.ts", "manifest.json"],
 			"outputs": [],
 			"outputLogs": "errors-only"
 		},
 		"@repo/obsidian#build": {
 			"dependsOn": ["^build"],
+			"inputs": ["src/**", "package.json", "tsconfig.json", "tsconfig.build.json", "esbuild.config.mjs", "manifest.json", "styles.css"],
 			"outputs": ["main.js", "styles.css"],
 			"outputLogs": "errors-only"
 		},
@@ -18,15 +21,18 @@
 		},
 		"lint": {
 			"dependsOn": ["^build"],
+			"inputs": ["src/**", "package.json", "eslint.config.mjs", "tsconfig.json"],
 			"outputs": [],
 			"outputLogs": "errors-only"
 		},
 		"test": {
 			"dependsOn": ["^build"],
+			"inputs": ["src/**", "tests/**", "package.json", "vitest.config.ts", "tsconfig.json"],
 			"outputLogs": "errors-only"
 		},
 		"test:coverage": {
 			"dependsOn": ["^build"],
+			"inputs": ["src/**", "tests/**", "package.json", "vitest.config.ts", "tsconfig.json"],
 			"outputLogs": "errors-only"
 		},
 		"test:watch": {
@@ -34,7 +40,8 @@
 			"persistent": true
 		},
 		"typecheck": {
-			"dependsOn": ["^build"]
+			"dependsOn": ["^build"],
+			"inputs": ["src/**", "tests/**", "package.json", "tsconfig.json", "tsconfig.build.json"]
 		},
 		"clean": {
 			"cache": false
