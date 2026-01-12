@@ -5,9 +5,8 @@ import type {
 	StreakInfo,
 	TodayStats,
 } from '@repo/core/core/types'
+import type { CardInfo, SessionStateData } from '@repo/core/review'
 import type { App, TAbstractFile } from 'obsidian'
-import type { CardInfo } from '../adapters/EngineReviewController'
-import type { SessionStateData } from '../data/session'
 import { TFile } from 'obsidian'
 import { deleteReviewItemFile, readReviewItemFile, writeReviewItemFile } from '../data/review-items'
 import { getStreakInfo, getTodayStats } from '../data/review-stats'
@@ -16,6 +15,10 @@ import { loadReviewItemHtml } from '../review/content'
 import { CardInfoModal } from '../stats/CardInfoModal'
 import { VIEW_TYPE_STATS } from '../stats/StatsView'
 
+/**
+ * Obsidian-specific implementation of ReviewPlatformAdapter.
+ * Adapts core review operations to Obsidian's APIs.
+ */
 export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 	constructor(
 		private app: App,
@@ -51,7 +54,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		workspace.setActiveLeaf(leaf, { focus: true })
 	}
 
-	getPreselectedPath(decks: DeckInfo[]): string | null {
+	getPreselectedPath(decks: readonly DeckInfo[]): string | null {
 		const active = this.app.workspace.getActiveFile()
 		if (!active) return null
 		let folder = active.parent?.path ?? ''
@@ -119,12 +122,12 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		new CardInfoModal(this.app, info).open()
 	}
 
-	private collectDeckPaths(decks: DeckInfo[]): Set<string> {
+	private collectDeckPaths(decks: readonly DeckInfo[]): Set<string> {
 		const paths = new Set<string>()
-		const walk = (nodes: DeckInfo[]): void => {
+		const walk = (nodes: readonly DeckInfo[]): void => {
 			for (const node of nodes) {
 				paths.add(node.path)
-				if (node.children.length) walk(node.children)
+				if (node.children.length > 0) walk(node.children)
 			}
 		}
 		walk(decks)
