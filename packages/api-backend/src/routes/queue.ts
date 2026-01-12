@@ -173,6 +173,7 @@ export function createQueueRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 }
 
 function serializeDecks(decks: readonly DeepReadonly<DeckInfo>[]): unknown[] {
+function serializeDecks(decks: readonly DeepReadonly<DeckInfo>[]): unknown[] {
 	return decks.map((deck) => ({
 		path: deck.path,
 		name: deck.name,
