@@ -87,6 +87,7 @@ export class NodeFileSystem implements FileSystem {
 		return join(this.rootPath, path)
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- mutable array
 	private async walkDir(dir: string, files: string[]): Promise<void> {
 		try {
 			const entries = await readdir(dir, { withFileTypes: true })

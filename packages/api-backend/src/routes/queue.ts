@@ -8,6 +8,7 @@ import { Hono } from 'hono'
 /**
  * Convert ReviewState (camelCase lastReview) to ItemState (snake_case last_review).
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewState type
 function toItemState(state: ReviewState | null): ItemState {
 	if (state === null) {
 		return {
@@ -31,6 +32,7 @@ function toItemState(state: ReviewState | null): ItemState {
 	}
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
 export function createQueueRoutes(deps: ServerDeps): Hono {
 	const app = new Hono()
 
@@ -158,6 +160,7 @@ function mapItemType(type: string): ItemWithState['type'] {
 	return typeMap[type] ?? 'item'
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
 function serializeDecks(decks: DeckInfo[]): unknown[] {
 	return decks.map((deck) => ({
 		path: deck.path,

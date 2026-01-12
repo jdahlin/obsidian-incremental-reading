@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { FileSystem } from '../data/FileSystem'
 import type { MarkdownDataStore } from '../data/MarkdownDataStore'
 import type { EngineSnapshot, EngineStore } from '../memory/types'
@@ -134,6 +135,7 @@ extract:${sourceId}:${start}-${end}`,
 		end: number,
 		hint?: string,
 	) {
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- mutator function
 		await this.updateSidecar(path, (data: SidecarData) => {
 			if (!data.clozes) data.clozes = {}
 			data.clozes[clozeKey] = {
@@ -178,8 +180,9 @@ extract:${sourceId}:${start}-${end}`,
 		const { noteId, clozeKey } = this.parseItemId(itemId)
 		const sidecarPath = `IR/Review Items/${noteId}.md`
 
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- mutator function
 		await this.updateSidecar(sidecarPath, (data: SidecarData) => {
-			if (!clozeKey) data.priority = value
+			if (clozeKey === undefined) data.priority = value
 			return data
 		})
 	}
@@ -196,11 +199,11 @@ extract:${sourceId}:${start}-${end}`,
 		this.runtime.nextItem = itemId
 	}
 
-	setNextItems(itemIds: string[]): void {
-		this.runtime.nextItems = itemIds
+	setNextItems(itemIds: readonly string[]): void {
+		this.runtime.nextItems = [...itemIds]
 	}
 
-	setSession(config: Record<string, unknown>): void {
+	setSession(config: DeepReadonly<Record<string, unknown>>): void {
 		this.runtime.session = { ...this.runtime.session, ...config }
 	}
 
@@ -378,6 +381,7 @@ extract:${sourceId}:${start}-${end}`,
 		return { noteId: itemId }
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- mutator callback
 	private async updateSidecar(path: string, mutator: (data: SidecarData) => SidecarData) {
 		const content = await this.fs.read(path)
 		if (!content) return

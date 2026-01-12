@@ -107,6 +107,7 @@ export interface ReviewPlatform {
 	 * Get the preselected deck path based on available decks.
 	 * Returns null if no preselection should be made.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
 	readonly getPreselectedPath: (decks: readonly DeckInfo[]) => string | null
 
 	/**

@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { SessionManager } from '@repo/core/SessionManager'
 import type { Rating, SessionItem } from '@repo/core/types'
 import * as fs from 'node:fs/promises'
@@ -19,7 +20,13 @@ interface ReviewProps {
 	disableInput?: boolean
 }
 
-export function Review({ session, vaultPath, deckPath, deckFilter, disableInput }: ReviewProps) {
+export function Review({
+	session,
+	vaultPath,
+	deckPath,
+	deckFilter,
+	disableInput,
+}: DeepReadonly<ReviewProps>) {
 	const [currentItem, setCurrentItem] = useState<SessionItem | null>(null)
 	const [noteContent, setNoteContent] = useState<string>('')
 	const [phase, setPhase] = useState<Phase>('question')
@@ -77,7 +84,7 @@ export function Review({ session, vaultPath, deckPath, deckFilter, disableInput 
 		await loadNoteContent(next)
 	}, [session, deckPath, deckFilter])
 
-	const loadNoteContent = async (item: SessionItem) => {
+	const loadNoteContent = async (item: DeepReadonly<SessionItem>) => {
 		try {
 			const fullPath = path.join(vaultPath, item.item.notePath)
 			const content = await fs.readFile(fullPath, 'utf-8')

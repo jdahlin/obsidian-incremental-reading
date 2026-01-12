@@ -1,3 +1,4 @@
+import type { DeepReadonly } from './readonly'
 import type { CardType, NoteFrontmatter, Status } from './types'
 
 /**
@@ -89,7 +90,7 @@ export function parseFrontmatter(raw: unknown, extractTag: string): NoteFrontmat
 	}
 }
 
-export function serializeFrontmatter(fm: NoteFrontmatter): Record<string, unknown> {
+export function serializeFrontmatter(fm: DeepReadonly<NoteFrontmatter>): Record<string, unknown> {
 	const record: Record<string, unknown> = {
 		ir_note_id: fm.ir_note_id,
 		tags: fm.tags,

@@ -44,10 +44,12 @@ const clozeHiderPlugin = ViewPlugin.fromClass(
 	class {
 		decorations: DecorationSet
 
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- EditorView is a CodeMirror type
 		constructor(view: EditorView) {
 			this.decorations = buildDecorations(view, view.state.field(clozeStateField))
 		}
 
+		// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ViewUpdate is a CodeMirror type
 		update(update: ViewUpdate): void {
 			const prev = update.startState.field(clozeStateField)
 			const next = update.state.field(clozeStateField)
@@ -73,7 +75,8 @@ export function setActiveCloze(app: App, index: number | null, phase: ClozePhase
 	})
 }
 
-function buildDecorations(view: EditorView, state: ClozeState): DecorationSet {
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- EditorView is a CodeMirror type
+function buildDecorations(view: EditorView, state: Readonly<ClozeState>): DecorationSet {
 	if (state.index === null || state.index === 0 || state.phase !== 'question') {
 		return Decoration.none
 	}

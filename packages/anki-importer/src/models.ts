@@ -7,6 +7,7 @@
 
 import type Database from 'better-sqlite3'
 import type { ModelField, ModelFrontmatter, ModelTemplate } from './ir-types.js'
+import type { DeepReadonly } from './readonly.js'
 import type { Field, FieldRow, Model, NotetypeRow, Template, TemplateRow } from './types.js'
 import { stringify as yamlStringify } from 'yaml'
 import { readFields, readNotetypes, readTemplates } from './database.js'
@@ -28,8 +29,8 @@ import { fieldOrd, modelId, NotetypeKind, parseTemplateConfig, templateOrd } fro
  * - Otherwise → Normal
  */
 export function detectNotetypeKind(
-	notetype: NotetypeRow,
-	templates: TemplateRow[],
+	notetype: DeepReadonly<NotetypeRow>,
+	templates: readonly DeepReadonly<TemplateRow>[],
 ): typeof NotetypeKind.Normal | typeof NotetypeKind.Cloze {
 	// Heuristic: Cloze notetypes typically have a single template
 	// with "cloze" in the name (case-insensitive)
@@ -49,7 +50,7 @@ export function detectNotetypeKind(
  * Check if notetype is an Image Occlusion type
  * These have specific field names like "Occlusion", "Image"
  */
-export function isImageOcclusionNotetype(fields: FieldRow[]): boolean {
+export function isImageOcclusionNotetype(fields: readonly DeepReadonly<FieldRow>[]): boolean {
 	const fieldNames = fields.map((f) => f.name.toLowerCase())
 	return fieldNames.includes('occlusion') && fieldNames.includes('image')
 }
@@ -61,7 +62,7 @@ export function isImageOcclusionNotetype(fields: FieldRow[]): boolean {
 /**
  * Convert raw field row to hydrated Field
  */
-export function hydrateField(row: FieldRow): Field {
+export function hydrateField(row: DeepReadonly<FieldRow>): Field {
 	return {
 		name: row.name,
 		ord: fieldOrd(row.ord),
@@ -71,7 +72,7 @@ export function hydrateField(row: FieldRow): Field {
 /**
  * Convert raw template row to hydrated Template
  */
-export function hydrateTemplate(row: TemplateRow): Template {
+export function hydrateTemplate(row: DeepReadonly<TemplateRow>): Template {
 	const config = parseTemplateConfig(row.config)
 	return {
 		name: row.name,
@@ -85,9 +86,9 @@ export function hydrateTemplate(row: TemplateRow): Template {
  * Convert raw notetype row and related data to hydrated Model
  */
 export function hydrateModel(
-	notetypeRow: NotetypeRow,
-	fieldRows: FieldRow[],
-	templateRows: TemplateRow[],
+	notetypeRow: DeepReadonly<NotetypeRow>,
+	fieldRows: readonly DeepReadonly<FieldRow>[],
+	templateRows: readonly DeepReadonly<TemplateRow>[],
 ): Model {
 	const fields = fieldRows.map(hydrateField)
 	const templates = templateRows.map(hydrateTemplate)
@@ -105,7 +106,7 @@ export function hydrateModel(
 /**
  * Read all models from database with their fields and templates
  */
-export function readAllModels(db: Database.Database): Model[] {
+export function readAllModels(db: DeepReadonly<Database.Database>): Model[] {
 	const notetypes = readNotetypes(db)
 	const allFields = readFields(db)
 	const allTemplates = readTemplates(db)
@@ -126,11 +127,7 @@ export function readAllModels(db: Database.Database): Model[] {
 	}
 
 	return notetypes.map((nt) =>
-		hydrateModel(
-			nt,
-			fieldsByNtid.get(nt.id) ?? [],
-			templatesByNtid.get(nt.id) ?? [],
-		),
+		hydrateModel(nt, fieldsByNtid.get(nt.id) ?? [], templatesByNtid.get(nt.id) ?? []),
 	)
 }
 
@@ -141,7 +138,7 @@ export function readAllModels(db: Database.Database): Model[] {
 /**
  * Convert Model to markdown file content
  */
-export function modelToMarkdown(model: Model): string {
+export function modelToMarkdown(model: DeepReadonly<Model>): string {
 	const frontmatter: ModelFrontmatter = {
 		anki_model_id: String(model.id),
 		name: model.name,
@@ -175,7 +172,7 @@ ${yaml}---
 /**
  * Get the filename for a model
  */
-export function getModelFilename(model: Model): string {
+export function getModelFilename(model: DeepReadonly<Model>): string {
 	return `${sanitizeFilename(model.name)}.md`
 }
 
@@ -196,7 +193,9 @@ export interface ExportedModelFile {
  * Export all models to markdown file contents
  * (Does not write to filesystem - that's the caller's responsibility)
  */
-export function exportModelsToMarkdown(models: Model[]): ExportedModelFile[] {
+export function exportModelsToMarkdown(
+	models: readonly DeepReadonly<Model>[],
+): ExportedModelFile[] {
 	return models.map((model) => ({
 		model,
 		filename: getModelFilename(model),
@@ -218,7 +217,7 @@ export interface ModelExportSummary {
 /**
  * Export all models from database with summary
  */
-export function exportAllModels(db: Database.Database): ModelExportSummary {
+export function exportAllModels(db: DeepReadonly<Database.Database>): ModelExportSummary {
 	const models = readAllModels(db)
 	const allFields = readFields(db)
 

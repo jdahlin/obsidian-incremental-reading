@@ -16,6 +16,7 @@ export interface ServerDeps {
 	notePlatform: NotePlatform
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
 export function createServer(deps: ServerDeps): Hono {
 	const app = new Hono()
 

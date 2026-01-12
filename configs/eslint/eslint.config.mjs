@@ -33,6 +33,25 @@ const baseConfig = antfu({
 		'@typescript-eslint/no-unsafe-return': 'error',
 		'@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
 
+		// Immutability at boundaries - prevent mutation of shared data
+		'@typescript-eslint/prefer-readonly-parameter-types': [
+			'error',
+			{
+				checkParameterProperties: false, // Allow mutable constructor params
+				ignoreInferredTypes: true, // Don't require readonly on callback params from external libs
+				treatMethodsAsReadonly: true, // Methods aren't reassigned
+				allow: [
+					{ from: 'lib', name: 'Date' },
+					{ from: 'lib', name: 'RegExp' },
+					{ from: 'package', name: 'App', package: 'obsidian' },
+					{ from: 'package', name: 'TFile', package: 'obsidian' },
+					{ from: 'package', name: 'Plugin', package: 'obsidian' },
+					{ from: 'package', name: 'WorkspaceLeaf', package: 'obsidian' },
+					{ from: 'package', name: 'MarkdownView', package: 'obsidian' },
+				],
+			},
+		],
+
 		// Logic validation
 		'@typescript-eslint/switch-exhaustiveness-check': 'warn',
 		'@typescript-eslint/strict-boolean-expressions': 'warn', // Warn only to allow gradual migration
@@ -92,6 +111,7 @@ const testOverride = {
 		'@typescript-eslint/no-unsafe-return': 'off',
 		'@typescript-eslint/no-non-null-assertion': 'off',
 		'@typescript-eslint/strict-boolean-expressions': 'off',
+		'@typescript-eslint/prefer-readonly-parameter-types': 'off', // Tests often construct mutable data
 		// Note: no-explicit-any is NOT disabled for tests - use unknown instead
 	},
 }

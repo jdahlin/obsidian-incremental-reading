@@ -58,7 +58,11 @@ export class NodeFileSystem implements FileSystem, NotePlatform {
 		return files
 	}
 
-	private async listRecursive(base: string, rel: string, files: string[]): Promise<void> {
+	private async listRecursive(
+		base: string,
+		rel: string,
+		files: readonly string[],
+	): Promise<void> {
 		const dir = path.join(base, rel)
 		let entries
 		try {
@@ -71,7 +75,7 @@ export class NodeFileSystem implements FileSystem, NotePlatform {
 			if (entry.isDirectory()) {
 				await this.listRecursive(base, relPath, files)
 			} else if (entry.isFile()) {
-				files.push(relPath)
+				;(files as string[]).push(relPath)
 			}
 		}
 	}
