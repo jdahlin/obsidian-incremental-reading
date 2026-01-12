@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { ItemWithState, ReviewRecord, StreakInfo } from '../core/types'
 import { addDays, startOfDay } from '../core/dates'
 
@@ -18,13 +19,16 @@ export interface ForecastData {
 	count: number
 }
 
-export function calculateRetention(reviews: ReviewRecord[]): number {
+export function calculateRetention(reviews: readonly DeepReadonly<ReviewRecord>[]): number {
 	if (!reviews.length) return 0
 	const successes = reviews.filter((review) => review.rating > 1).length
 	return successes / reviews.length
 }
 
-export function calculateStreak(reviewDates: Date[], today: Date = new Date()): StreakInfo {
+export function calculateStreak(
+	reviewDates: readonly Date[],
+	today: Date = new Date(),
+): StreakInfo {
 	const dayKeys = new Set<string>()
 	for (const date of reviewDates) {
 		if (Number.isNaN(date.getTime())) continue
@@ -72,7 +76,9 @@ export function calculateStreak(reviewDates: Date[], today: Date = new Date()): 
 	return { current, longest }
 }
 
-export function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDistribution {
+export function calculateAnswerDistribution(
+	reviews: readonly DeepReadonly<ReviewRecord>[],
+): AnswerDistribution {
 	const distribution: AnswerDistribution = { again: 0, hard: 0, good: 0, easy: 0 }
 	for (const review of reviews) {
 		switch (review.rating) {
@@ -96,7 +102,7 @@ export function calculateAnswerDistribution(reviews: ReviewRecord[]): AnswerDist
 }
 
 export function buildHeatmapData(
-	reviews: ReviewRecord[],
+	reviews: readonly DeepReadonly<ReviewRecord>[],
 	days: number,
 	today: Date = new Date(),
 ): HeatmapData[] {
@@ -119,7 +125,7 @@ export function buildHeatmapData(
 }
 
 export function buildForecastData(
-	items: ItemWithState[],
+	items: readonly DeepReadonly<ItemWithState>[],
 	days: number,
 	now: Date = new Date(),
 ): ForecastData[] {

@@ -8,6 +8,7 @@ import { EngineReviewController } from '../adapters'
 export interface UseReviewStateResult {
 	state: ReviewScreenState
 	actions: ReviewScreenActions
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DOM type
 	onKeyDown: (event: KeyboardEvent) => void
 	controller: EngineReviewController
 }
@@ -19,6 +20,7 @@ export interface UseReviewStateDeps {
 	notePlatform: NotePlatform
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- deps contains complex types
 export function useReviewState(deps: UseReviewStateDeps): UseReviewStateResult {
 	const controller = useMemo(() => {
 		const engineDeps: EngineReviewControllerDeps = {
@@ -34,7 +36,7 @@ export function useReviewState(deps: UseReviewStateDeps): UseReviewStateResult {
 
 	useEffect(() => {
 		controller.mount()
-		const unsubscribe = controller.subscribe(setState)
+		const unsubscribe = controller.subscribe((state) => setState(state as ReviewScreenState))
 		void controller.refreshSummary()
 		return () => {
 			unsubscribe()
@@ -43,8 +45,10 @@ export function useReviewState(deps: UseReviewStateDeps): UseReviewStateResult {
 	}, [controller])
 
 	const actions = useMemo<ReviewScreenActions>(() => controller.getActions(), [controller])
+	/* eslint-disable ts/prefer-readonly-parameter-types -- DOM type */
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent) => {
+			/* eslint-enable ts/prefer-readonly-parameter-types */
 			void controller.handleKeyDown(event)
 		},
 		[controller],

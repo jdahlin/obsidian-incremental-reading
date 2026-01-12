@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { SchedulerId } from '../types'
 
 export interface EngineSnapshot {
@@ -23,7 +24,7 @@ export interface EngineSnapshot {
 export interface EngineStore {
 	createNote: (
 		content: string,
-		options?: { title?: string; priority?: number },
+		options?: DeepReadonly<{ title?: string; priority?: number }>,
 	) => Promise<string>
 	createExtract: (sourceId: string, start: number, end: number) => Promise<string>
 	addCloze: (noteId: string, start: number, end: number, hint?: string) => Promise<string>
@@ -35,8 +36,8 @@ export interface EngineStore {
 	recordScroll: (itemId: string, value: number) => Promise<void>
 	recordShow: (itemId: string, phase?: string) => Promise<void>
 	setNextItem: (itemId: string | null) => void
-	setNextItems: (itemIds: string[]) => void
-	setSession: (config: Record<string, unknown>) => void
+	setNextItems: (itemIds: readonly string[]) => void
+	setSession: (config: DeepReadonly<Record<string, unknown>>) => void
 	setScheduler: (id: SchedulerId) => void
 	setClock: (value: string) => void
 	getClock: () => string | null

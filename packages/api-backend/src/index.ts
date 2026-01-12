@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-console -- CLI application needs console output */
+/* eslint-disable no-console -- CLI entry point */
 import { serve } from '@hono/node-server'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 

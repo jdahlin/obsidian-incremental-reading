@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3'
+import type { DeepReadonly } from '../readonly.js'
 import type { Field, FieldRow, Model, NotetypeRow, Template, TemplateRow } from '../types.js'
 import { readFields, readNotetypes, readTemplates } from '../database.js'
 import { fieldOrd, modelId, NotetypeKind, parseTemplateConfig, templateOrd } from '../types.js'
@@ -20,8 +21,8 @@ import { fieldOrd, modelId, NotetypeKind, parseTemplateConfig, templateOrd } fro
  * with "cloze" in the name (case-insensitive)
  */
 function detectNotetypeKind(
-	notetype: NotetypeRow,
-	templates: TemplateRow[],
+	notetype: DeepReadonly<NotetypeRow>,
+	templates: readonly DeepReadonly<TemplateRow>[],
 ): typeof NotetypeKind.Normal | typeof NotetypeKind.Cloze {
 	if (templates.length === 1) {
 		const templateName = templates[0]?.name.toLowerCase() ?? ''
@@ -39,7 +40,7 @@ function detectNotetypeKind(
 /**
  * Convert raw field row to hydrated Field
  */
-function hydrateField(row: FieldRow): Field {
+function hydrateField(row: DeepReadonly<FieldRow>): Field {
 	return {
 		name: row.name,
 		ord: fieldOrd(row.ord),
@@ -49,7 +50,7 @@ function hydrateField(row: FieldRow): Field {
 /**
  * Convert raw template row to hydrated Template
  */
-function hydrateTemplate(row: TemplateRow): Template {
+function hydrateTemplate(row: DeepReadonly<TemplateRow>): Template {
 	const config = parseTemplateConfig(row.config)
 	return {
 		name: row.name,
@@ -63,9 +64,9 @@ function hydrateTemplate(row: TemplateRow): Template {
  * Convert raw notetype row and related data to hydrated Model
  */
 function hydrateModel(
-	notetypeRow: NotetypeRow,
-	fieldRows: FieldRow[],
-	templateRows: TemplateRow[],
+	notetypeRow: DeepReadonly<NotetypeRow>,
+	fieldRows: readonly DeepReadonly<FieldRow>[],
+	templateRows: readonly DeepReadonly<TemplateRow>[],
 ): Model {
 	const fields = fieldRows.map(hydrateField)
 	const templates = templateRows.map(hydrateTemplate)
@@ -87,7 +88,7 @@ function hydrateModel(
 /**
  * Import all models from database
  */
-export function importModels(db: Database.Database): Model[] {
+export function importModels(db: DeepReadonly<Database.Database>): Model[] {
 	const notetypes = readNotetypes(db)
 	const allFields = readFields(db)
 	const allTemplates = readTemplates(db)

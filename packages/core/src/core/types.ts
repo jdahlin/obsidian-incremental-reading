@@ -1,5 +1,6 @@
 // Re-export shared types from canonical source
 import type { DeckInfo, ItemState, Rating, Status } from '../types'
+import type { DeepReadonly } from './readonly'
 export type { DeckInfo, ItemState, Rating, Status } from '../types'
 
 // CardType differs from ItemType: uses 'item' (legacy) instead of 'cloze'
@@ -26,12 +27,12 @@ export interface ReviewPlatformAdapter {
 	getTodayStats: (now: Date) => Promise<TodayStats>
 	getStreakInfo: (now: Date) => Promise<StreakInfo>
 	renderItem: (
-		item: ItemWithState,
+		item: DeepReadonly<ItemWithState>,
 		phase: 'question' | 'answer',
 		extractTag: string,
 	) => Promise<string>
 	openStats: (extractTag: string) => void
-	getPreselectedPath: (decks: DeckInfo[]) => string | null
+	getPreselectedPath: (decks: readonly DeepReadonly<DeckInfo>[]) => string | null
 	onDataChange: (handler: () => void) => () => void
 }
 

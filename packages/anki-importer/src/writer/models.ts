@@ -4,6 +4,7 @@
  * Writes model definitions to markdown files.
  */
 
+import type { DeepReadonly } from '../readonly.js'
 import type { Model } from '../types.js'
 import type { WriteError } from './index.js'
 import { writeFile } from 'node:fs/promises'
@@ -36,7 +37,7 @@ interface ModelFrontmatter {
 /**
  * Convert Model to markdown content
  */
-function modelToMarkdown(model: Model): string {
+function modelToMarkdown(model: DeepReadonly<Model>): string {
 	const frontmatter: ModelFrontmatter = {
 		anki_model_id: String(model.id),
 		name: model.name,
@@ -77,8 +78,9 @@ function getModelFilename(model: Model): string {
 export async function writeModels(
 	models: readonly Model[],
 	outputDir: string,
-	errors: WriteError[],
+	errors: DeepReadonly<WriteError[]>,
 ): Promise<number> {
+	const errorsArray = errors as WriteError[]
 	let count = 0
 
 	for (const model of models) {
@@ -90,7 +92,7 @@ export async function writeModels(
 			await writeFile(path, content, 'utf-8')
 			count++
 		} catch (err) {
-			errors.push({
+			errorsArray.push({
 				type: 'model',
 				id: String(model.id),
 				path,

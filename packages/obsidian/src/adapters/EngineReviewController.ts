@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type {
 	ItemWithState as CoreReviewItem,
 	DeckInfo,
@@ -32,7 +33,7 @@ import { SessionManager } from '@repo/core/SessionManager'
 import { buildSessionState } from '../data/session'
 
 /** Get clozeIndex from a ReviewItem, or null if not applicable */
-function getClozeIndex(item: ReviewItem): number | null {
+function getClozeIndex(item: DeepReadonly<ReviewItem>): number | null {
 	if (item.type === 'cloze' || item.type === 'image_occlusion') {
 		return item.clozeIndex
 	}
@@ -41,10 +42,10 @@ function getClozeIndex(item: ReviewItem): number | null {
 
 /** Extended platform adapter with optional session state support */
 interface ExtendedPlatformAdapter extends ReviewPlatformAdapter {
-	updateSessionState?: (data: SessionStateData) => Promise<void>
-	openNote?: (notePath: string) => Promise<void>
-	deleteItem?: (noteId: string, clozeKey?: string) => Promise<void>
-	showCardInfo?: (info: CardInfo) => void
+	updateSessionState?: DeepReadonly<(data: DeepReadonly<SessionStateData>) => Promise<void>>
+	openNote?: DeepReadonly<(notePath: string) => Promise<void>>
+	deleteItem?: DeepReadonly<(noteId: string, clozeKey?: string) => Promise<void>>
+	showCardInfo?: DeepReadonly<(info: DeepReadonly<CardInfo>) => void>
 }
 
 export interface CardInfo {
@@ -102,7 +103,7 @@ interface EngineReviewModel {
 	undoState: UndoState | null
 }
 
-type Listener = (state: ReviewScreenState) => void
+type Listener = (state: DeepReadonly<ReviewScreenState>) => void
 
 const emptyCounts: DeckCountsValue = { new: 0, learning: 0, due: 0 }
 const emptyTodayStats = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 }
@@ -124,7 +125,7 @@ export class EngineReviewController {
 	private static readonly SPACE_GRADE: 1 | 2 | 3 | 4 = 3
 
 	/** Callback to trigger Obsidian's navigation history recording, passing the state to record */
-	onHistoryChange: ((stateToRecord: ReviewViewState) => void) | null = null
+	onHistoryChange: ((stateToRecord: DeepReadonly<ReviewViewState>) => void) | null = null
 
 	/** Track if we're currently restoring state (to avoid re-recording history) */
 	private isRestoring = false
@@ -151,7 +152,7 @@ export class EngineReviewController {
 	private refreshRequestId = 0
 	private contentRequestId = 0
 
-	constructor(private deps: EngineReviewControllerDeps) {}
+	constructor(private deps: DeepReadonly<EngineReviewControllerDeps>) {}
 
 	mount(): void {
 		this.unbindDataChange = this.deps.platform.onDataChange(() => {
@@ -174,7 +175,7 @@ export class EngineReviewController {
 		}
 	}
 
-	subscribe(listener: Listener): () => void {
+	subscribe(listener: DeepReadonly<Listener>): () => void {
 		this.listeners.add(listener)
 		listener(this.state)
 		return () => {
@@ -214,6 +215,7 @@ export class EngineReviewController {
 	 * 3. Escape always works (back to folder view)
 	 * 4. Other shortcuts only in review screen
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- KeyboardEvent is a DOM type
 	handleKeyDown(event: KeyboardEvent): void | Promise<void> {
 		if (event.defaultPrevented) return
 		const target = event.target as HTMLElement | null
@@ -319,21 +321,24 @@ export class EngineReviewController {
 		if (requestId !== this.refreshRequestId) return
 
 		const selectedPath = this.deps.platform.getPreselectedPath(decks)
-		this.setModel((prev) => ({
-			...prev,
-			screen: 'folder',
-			items,
-			decks,
-			allCounts,
-			selectedPath,
-			todayStats,
-			streak,
-			currentSessionItem: null,
-			phase: 'question',
-			sessionStats: createSessionStats(),
-			currentStartedAt: null,
-			currentContent: '',
-		}))
+		this.setModel(
+			(prev) =>
+				({
+					...prev,
+					screen: 'folder',
+					items,
+					decks,
+					allCounts,
+					selectedPath,
+					todayStats,
+					streak,
+					currentSessionItem: null,
+					phase: 'question',
+					sessionStats: createSessionStats(),
+					currentStartedAt: null,
+					currentContent: '',
+				}) as EngineReviewModel,
+		)
 	}
 
 	async startReview(): Promise<void> {
@@ -373,15 +378,18 @@ export class EngineReviewController {
 		const currentSessionItem = await this.sessionManager.getNext(now)
 		const phase = this.determinePhase(currentSessionItem)
 
-		this.setModel((prev) => ({
-			...prev,
-			screen: 'review',
-			currentSessionItem,
-			phase,
-			sessionStats: createSessionStats(),
-			currentStartedAt: currentSessionItem ? now : null,
-			currentContent: '',
-		}))
+		this.setModel(
+			(prev) =>
+				({
+					...prev,
+					screen: 'review',
+					currentSessionItem,
+					phase,
+					sessionStats: createSessionStats(),
+					currentStartedAt: currentSessionItem ? now : null,
+					currentContent: '',
+				}) as EngineReviewModel,
+		)
 
 		await this.loadItemContent(currentSessionItem, phase)
 		await this.updateSessionFile()
@@ -431,7 +439,7 @@ export class EngineReviewController {
 			good: engineStats.good,
 			easy: engineStats.easy,
 		}
-		this.setModel((prev) => ({ ...prev, sessionStats, undoState }))
+		this.setModel((prev) => ({ ...prev, sessionStats, undoState }) as EngineReviewModel)
 
 		await this.advanceQueue()
 
@@ -439,7 +447,7 @@ export class EngineReviewController {
 		this.recordHistory(stateToRecord)
 	}
 
-	private determinePhase(si: SessionItem | null): ReviewPhase {
+	private determinePhase(si: DeepReadonly<SessionItem> | null): ReviewPhase {
 		if (!si) return 'question'
 		// Cloze and basic cards start with question phase
 		// Topic cards go directly to answer (show full content)
@@ -450,10 +458,13 @@ export class EngineReviewController {
 		return 'answer'
 	}
 
-	private async loadItemContent(si: SessionItem | null, phase: ReviewPhase): Promise<void> {
+	private async loadItemContent(
+		si: DeepReadonly<SessionItem> | null,
+		phase: ReviewPhase,
+	): Promise<void> {
 		const requestId = ++this.contentRequestId
 		if (!si) {
-			this.setModel((prev) => ({ ...prev, currentContent: '' }))
+			this.setModel((prev) => ({ ...prev, currentContent: '' }) as EngineReviewModel)
 			return
 		}
 
@@ -465,7 +476,7 @@ export class EngineReviewController {
 			this.deps.settings.extractTag,
 		)
 		if (requestId !== this.contentRequestId) return
-		this.setModel((prev) => ({ ...prev, currentContent: html }))
+		this.setModel((prev) => ({ ...prev, currentContent: html }) as EngineReviewModel)
 	}
 
 	private async backToSummary(): Promise<void> {
@@ -481,7 +492,7 @@ export class EngineReviewController {
 
 		const type = si.item.type
 		if (type === 'cloze' || type === 'basic' || type === 'image_occlusion') {
-			this.setModel((prev) => ({ ...prev, phase: 'answer' }))
+			this.setModel((prev) => ({ ...prev, phase: 'answer' }) as EngineReviewModel)
 			void this.loadItemContent(si, 'answer').then(async () => this.updateSessionFile())
 		}
 	}
@@ -493,13 +504,16 @@ export class EngineReviewController {
 		const nextItem = await this.sessionManager.getNext(now)
 		const phase = this.determinePhase(nextItem)
 
-		this.setModel((prev) => ({
-			...prev,
-			currentSessionItem: nextItem,
-			phase,
-			currentStartedAt: nextItem ? new Date() : null,
-			currentContent: '',
-		}))
+		this.setModel(
+			(prev) =>
+				({
+					...prev,
+					currentSessionItem: nextItem,
+					phase,
+					currentStartedAt: nextItem ? new Date() : null,
+					currentContent: '',
+				}) as EngineReviewModel,
+		)
 
 		await this.loadItemContent(nextItem, phase)
 		await this.updateSessionFile()
@@ -513,9 +527,13 @@ export class EngineReviewController {
 	}
 
 	private setModel(
-		update: EngineReviewModel | ((prev: EngineReviewModel) => EngineReviewModel),
+		update:
+			| DeepReadonly<EngineReviewModel>
+			| ((prev: DeepReadonly<EngineReviewModel>) => EngineReviewModel),
 	): void {
-		this.model = typeof update === 'function' ? update(this.model) : update
+		this.model = (
+			typeof update === 'function' ? update(this.model) : update
+		) as EngineReviewModel
 		this.emit()
 	}
 
@@ -569,7 +587,7 @@ export class EngineReviewController {
 		return 'review'
 	}
 
-	private sessionItemToCoreItem(si: SessionItem): CoreReviewItem {
+	private sessionItemToCoreItem(si: DeepReadonly<SessionItem>): CoreReviewItem {
 		return {
 			id: si.item.id,
 			noteId: si.item.noteId,
@@ -593,7 +611,7 @@ export class EngineReviewController {
 		return typeMap[type] ?? 'item'
 	}
 
-	private reviewStateToItemState(state: ReviewState): ItemState {
+	private reviewStateToItemState(state: DeepReadonly<ReviewState>): ItemState {
 		return {
 			status: state.status,
 			due: state.due,
@@ -675,7 +693,7 @@ export class EngineReviewController {
 	}
 
 	private readonly onSelectDeck = (path: string | null): void => {
-		this.setModel((prev) => ({ ...prev, selectedPath: path }))
+		this.setModel((prev) => ({ ...prev, selectedPath: path }) as EngineReviewModel)
 	}
 
 	private readonly onStudy = (): void => {
@@ -728,15 +746,18 @@ export class EngineReviewController {
 			const stats = { ...this.model.sessionStats }
 			if (stats.reviewed > 0) stats.reviewed--
 
-			this.setModel((prev) => ({
-				...prev,
-				currentSessionItem: restoredItem,
-				phase,
-				undoState: null,
-				sessionStats: stats,
-				currentStartedAt: new Date(),
-				currentContent: '',
-			}))
+			this.setModel(
+				(prev) =>
+					({
+						...prev,
+						currentSessionItem: restoredItem,
+						phase,
+						undoState: null,
+						sessionStats: stats,
+						currentStartedAt: new Date(),
+						currentContent: '',
+					}) as EngineReviewModel,
+			)
 
 			void this.loadItemContent(restoredItem, phase)
 			void this.updateSessionFile()
@@ -825,7 +846,7 @@ export class EngineReviewController {
 	/**
 	 * Restore state from Obsidian's navigation history.
 	 */
-	async restoreState(state: ReviewViewState): Promise<void> {
+	async restoreState(state: DeepReadonly<ReviewViewState>): Promise<void> {
 		this.isRestoring = true
 		try {
 			if (state.screen === 'folder') {
@@ -834,7 +855,13 @@ export class EngineReviewController {
 				this.stateBeforeGrade = null
 				await this.refreshSummary()
 				if (state.selectedPath !== undefined) {
-					this.setModel((prev) => ({ ...prev, selectedPath: state.selectedPath ?? null }))
+					this.setModel(
+						(prev) =>
+							({
+								...prev,
+								selectedPath: state.selectedPath ?? null,
+							}) as EngineReviewModel,
+					)
 				}
 				return
 			}
@@ -877,13 +904,16 @@ export class EngineReviewController {
 
 			const phase = state.phase ?? this.determinePhase(sessionItem)
 
-			this.setModel((prev) => ({
-				...prev,
-				screen: 'review',
-				currentSessionItem: sessionItem,
-				phase,
-				currentContent: state.content ?? '',
-			}))
+			this.setModel(
+				(prev) =>
+					({
+						...prev,
+						screen: 'review',
+						currentSessionItem: sessionItem,
+						phase,
+						currentContent: state.content ?? '',
+					}) as EngineReviewModel,
+			)
 
 			// If content wasn't stored, reload it
 			if (state.content === undefined || state.content === null || state.content === '') {
@@ -898,7 +928,7 @@ export class EngineReviewController {
 	 * Record a state in navigation history.
 	 * @param stateToRecord The state to record in history (typically the previous state before a transition)
 	 */
-	private recordHistory(stateToRecord: ReviewViewState): void {
+	private recordHistory(stateToRecord: DeepReadonly<ReviewViewState>): void {
 		if (!this.isRestoring && this.onHistoryChange) {
 			this.onHistoryChange(stateToRecord)
 		}

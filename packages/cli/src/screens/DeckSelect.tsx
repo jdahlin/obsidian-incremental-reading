@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { SessionManager } from '@repo/core/SessionManager'
 import { Box, Text, useInput } from 'ink'
 import React, { useEffect, useState } from 'react'
@@ -16,7 +17,7 @@ interface DeckSelectProps {
 	onQuit: () => void
 }
 
-export function DeckSelect({ session, onSelect }: DeckSelectProps) {
+export function DeckSelect({ session, onSelect }: DeepReadonly<DeckSelectProps>) {
 	const [decks, setDecks] = useState<DeckInfo[]>([])
 	const [selectedIndex, setSelectedIndex] = useState(0)
 	const [loading, setLoading] = useState(true)

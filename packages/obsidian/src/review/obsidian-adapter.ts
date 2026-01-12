@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type {
 	DeckInfo,
 	ItemWithState,
@@ -34,7 +35,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 	}
 
 	async renderItem(
-		item: ItemWithState,
+		item: DeepReadonly<ItemWithState>,
 		phase: 'question' | 'answer',
 		extractTag: string,
 	): Promise<string> {
@@ -54,7 +55,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		workspace.setActiveLeaf(leaf, { focus: true })
 	}
 
-	getPreselectedPath(decks: readonly DeckInfo[]): string | null {
+	getPreselectedPath(decks: readonly DeepReadonly<DeckInfo>[]): string | null {
 		const active = this.app.workspace.getActiveFile()
 		if (!active) return null
 		let folder = active.parent?.path ?? ''
@@ -71,7 +72,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 
 	onDataChange(handler: () => void): () => void {
 		const { vault } = this.app
-		const refresh = (file: TAbstractFile) => {
+		const refresh = (file: DeepReadonly<TAbstractFile>) => {
 			if (file.path?.startsWith('IR/Review Items/')) {
 				handler()
 			}
@@ -88,7 +89,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		}
 	}
 
-	async updateSessionState(data: SessionStateData): Promise<void> {
+	async updateSessionState(data: DeepReadonly<SessionStateData>): Promise<void> {
 		await writeSessionState(this.app, data)
 	}
 
@@ -100,7 +101,7 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 	}
 
 	async deleteItem(noteId: string, clozeKey?: string): Promise<void> {
-		if (clozeKey) {
+		if (clozeKey !== undefined && clozeKey !== '') {
 			// Delete only the specific cloze entry
 			const data = await readReviewItemFile(this.app, noteId)
 			if (data?.clozes && data.clozes[clozeKey]) {
@@ -118,13 +119,13 @@ export class ObsidianReviewAdapter implements ReviewPlatformAdapter {
 		}
 	}
 
-	showCardInfo(info: CardInfo): void {
+	showCardInfo(info: DeepReadonly<CardInfo>): void {
 		new CardInfoModal(this.app, info).open()
 	}
 
-	private collectDeckPaths(decks: readonly DeckInfo[]): Set<string> {
+	private collectDeckPaths(decks: readonly DeepReadonly<DeckInfo>[]): Set<string> {
 		const paths = new Set<string>()
-		const walk = (nodes: readonly DeckInfo[]): void => {
+		const walk = (nodes: readonly DeepReadonly<DeckInfo>[]): void => {
 			for (const node of nodes) {
 				paths.add(node.path)
 				if (node.children.length > 0) walk(node.children)

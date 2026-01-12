@@ -4,6 +4,8 @@
  * Strict types matching schema-v18.md with enforced invariants.
  */
 
+import type { DeepReadonly } from './readonly.js'
+
 // =============================================================================
 // Branded Types (Nominal Typing)
 // =============================================================================
@@ -515,14 +517,15 @@ export function cardOrd(ord: number): CardOrd {
  * Parse a varint from a buffer at a given offset
  * @returns [value, bytesRead]
  */
-function readVarint(buffer: Uint8Array, offset: number): [number, number] {
+function readVarint(buffer: DeepReadonly<Uint8Array>, offset: number): [number, number] {
 	let result = 0
 	let shift = 0
 	let bytesRead = 0
 
 	while (offset + bytesRead < buffer.length) {
 		const byte = buffer[offset + bytesRead]!
-		result |= (byte & 0x7F) << shift
+		// eslint-disable-next-line unicorn/number-literal-case -- prettier conflict
+		result |= (byte & 0x7f) << shift
 		bytesRead++
 		if ((byte & 0x80) === 0) {
 			break
@@ -541,7 +544,7 @@ function readVarint(buffer: Uint8Array, offset: number): [number, number] {
  * - Field 2 (string): afmt (answer format / back template)
  * - Other fields we ignore
  */
-export function parseTemplateConfig(config: Uint8Array): TemplateConfig {
+export function parseTemplateConfig(config: DeepReadonly<Uint8Array>): TemplateConfig {
 	let qfmt = ''
 	let afmt = ''
 	let offset = 0

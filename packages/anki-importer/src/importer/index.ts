@@ -6,6 +6,7 @@
  */
 
 import type Database from 'better-sqlite3'
+import type { DeepReadonly } from '../readonly.js'
 import type { Card, Deck, Model, Note } from '../types.js'
 import { openAnkiDatabase } from '../database.js'
 import { importCards } from './cards.js'
@@ -79,7 +80,7 @@ export function importAnkiDatabase(dbPath: string): AnkiImportResult {
 /**
  * Import with open database connection (for incremental/partial imports)
  */
-export function importFromDatabase(db: Database.Database): AnkiImportResult {
+export function importFromDatabase(db: DeepReadonly<Database.Database>): AnkiImportResult {
 	const models = importModels(db)
 	const decks = importDecks(db)
 	const notes = importNotes(db, models)

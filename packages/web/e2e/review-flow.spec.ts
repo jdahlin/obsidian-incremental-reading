@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 // Helper to wait for the app to fully initialize
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Playwright type
 async function waitForAppReady(page: Page) {
 	// Wait for the main app container to be visible
 	await page.waitForSelector('.ir-review-app', { timeout: 15000 })

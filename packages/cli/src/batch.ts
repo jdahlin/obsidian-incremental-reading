@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { SessionStrategyId } from '@repo/core/types'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 import { parseRvScript } from '@repo/core/rv/parser'
@@ -9,7 +10,7 @@ interface ParsedArgs {
 	options: Record<string, string>
 }
 
-function parseArgs(args: string[]): ParsedArgs {
+function parseArgs(args: readonly DeepReadonly<string>[]): ParsedArgs {
 	const positional: string[] = []
 	const options: Record<string, string> = {}
 	let i = 0

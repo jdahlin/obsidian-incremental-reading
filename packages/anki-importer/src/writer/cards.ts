@@ -6,6 +6,7 @@
 
 import type { SchedulingStatus } from '../importer/cards.js'
 import type { IRNoteId } from '../ir-types.js'
+import type { DeepReadonly } from '../readonly.js'
 import type { Card, Model, Note } from '../types.js'
 import type { WriteError } from './index.js'
 import { writeFile } from 'node:fs/promises'
@@ -60,7 +61,7 @@ type Sidecar = BasicSidecar | ClozeSidecar
 
 type NoteType = 'basic' | 'cloze' | 'image_occlusion' | 'standard'
 
-function getNoteType(model: Model): NoteType {
+function getNoteType(model: DeepReadonly<Model>): NoteType {
 	const fieldNames = model.fields.map((f) => f.name.toLowerCase())
 	if (fieldNames.includes('occlusion') && fieldNames.includes('image')) {
 		return 'image_occlusion'
@@ -81,7 +82,7 @@ function getNoteType(model: Model): NoteType {
 /**
  * Create FSRS state from Anki card
  */
-function createFSRSState(card: Card, collectionCreatedAt: number): FSRSState | null {
+function createFSRSState(card: DeepReadonly<Card>, collectionCreatedAt: number): FSRSState | null {
 	const status = queueToStatus(card.queue, card.type)
 	if (status === null) {
 		return null // Suspended
@@ -104,10 +105,10 @@ function createFSRSState(card: Card, collectionCreatedAt: number): FSRSState | n
  * Generate sidecar for a note
  */
 function generateSidecar(
-	note: Note,
+	note: DeepReadonly<Note>,
 	notePath: string,
-	cards: Card[],
-	model: Model,
+	cards: readonly DeepReadonly<Card>[],
+	model: DeepReadonly<Model>,
 	irNoteId: string,
 	collectionCreatedAt: number,
 ): Sidecar | null {
@@ -188,7 +189,7 @@ function generateSidecar(
 /**
  * Convert sidecar to markdown content
  */
-function sidecarToMarkdown(sidecar: Sidecar): string {
+function sidecarToMarkdown(sidecar: DeepReadonly<Sidecar>): string {
 	const yaml = yamlStringify(sidecar, {
 		indent: 2,
 		lineWidth: 0,
@@ -210,17 +211,18 @@ function sidecarToMarkdown(sidecar: Sidecar): string {
 export async function writeCards(
 	notes: readonly Note[],
 	cards: readonly Card[],
-	modelMap: Map<number, Model>,
-	irNoteIdMap: Map<number, IRNoteId>,
-	notePathMap: Map<number, string>,
+	modelMap: DeepReadonly<Map<number, Model>>,
+	irNoteIdMap: DeepReadonly<Map<number, IRNoteId>>,
+	notePathMap: DeepReadonly<Map<number, string>>,
 	outputDir: string,
 	collectionCreatedAt: number,
-	errors: WriteError[],
+	errors: DeepReadonly<WriteError[]>,
 ): Promise<number> {
 	let count = 0
 
 	// Group cards by note
 	const cardsByNote = new Map<number, Card[]>()
+	const errorsArray = errors as WriteError[]
 	for (const card of cards) {
 		const nid = card.noteId as number
 		const existing = cardsByNote.get(nid) ?? []
@@ -262,7 +264,7 @@ export async function writeCards(
 			await writeFile(filePath, content, 'utf-8')
 			count++
 		} catch (err) {
-			errors.push({
+			errorsArray.push({
 				type: 'card',
 				id: String(note.id),
 				path: filePath,

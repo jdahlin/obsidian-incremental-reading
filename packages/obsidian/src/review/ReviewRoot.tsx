@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { App } from 'obsidian'
 import type { FunctionalComponent } from 'preact'
 import type { EngineReviewController } from '../adapters'
@@ -13,8 +14,9 @@ import { useReviewState } from './useReviewState'
 interface ReviewRootProps {
 	app: App
 	view: unknown
-	settings: IncrementalReadingSettings
+	settings: DeepReadonly<IncrementalReadingSettings>
 	/** Callback when the controller is ready, for Obsidian navigation integration */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Controller is mutable
 	onControllerReady?: (controller: EngineReviewController) => void
 }
 
@@ -90,28 +92,34 @@ export const ReviewRoot: FunctionalComponent<ReviewRootProps> = ({
 	}, [controller, onControllerReady])
 
 	useEffect(() => {
-		const handler = (event: KeyboardEvent): void => {
+		/* eslint-disable ts/prefer-readonly-parameter-types -- DOM types */
+		const handler = (event: Event): void => {
+			/* eslint-enable ts/prefer-readonly-parameter-types */
+			const keyboardEvent = event as KeyboardEvent
 			const root = rootRef.current
-			if (!root) return
+			if (root === null) return
 
 			// Skip if target is an input element (user is typing)
-			const target = event.target as HTMLElement | null
-			if (target) {
+			const target = keyboardEvent.target as HTMLElement | null
+			if (target !== null) {
 				const tagName = target.tagName.toLowerCase()
 				if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
 					return
 				}
 				// Skip if inside a modal or command palette
-				if (target.closest('.modal-container') || target.closest('.prompt')) {
+				if (
+					target.closest('.modal-container') !== null ||
+					target.closest('.prompt') !== null
+				) {
 					return
 				}
 			}
 
-			onKeyDown(event)
+			onKeyDown(keyboardEvent)
 
 			// Refocus the review container after handling keys to ensure
 			// subsequent keypresses are captured properly
-			if (event.defaultPrevented) {
+			if (keyboardEvent.defaultPrevented) {
 				root.focus({ preventScroll: true })
 			}
 		}

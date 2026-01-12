@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3'
+import type { DeepReadonly } from '../readonly.js'
 import type { Model, Note, NoteRow } from '../types.js'
 import { readNotes } from '../database.js'
 import { modelId, noteId, parseFieldValues, parseTags } from '../types.js'
@@ -16,7 +17,7 @@ import { modelId, noteId, parseFieldValues, parseTags } from '../types.js'
 /**
  * Convert raw note row to hydrated Note
  */
-function hydrateNote(row: NoteRow): Note {
+function hydrateNote(row: DeepReadonly<NoteRow>): Note {
 	return {
 		id: noteId(row.id),
 		guid: row.guid,
@@ -37,7 +38,10 @@ function hydrateNote(row: NoteRow): Note {
  * @param db - Database connection
  * @param models - Models to validate against (optional)
  */
-export function importNotes(db: Database.Database, _models?: readonly Model[]): Note[] {
+export function importNotes(
+	db: DeepReadonly<Database.Database>,
+	_models?: readonly Model[],
+): Note[] {
 	const rows = readNotes(db)
 	const notes = rows.map(hydrateNote)
 

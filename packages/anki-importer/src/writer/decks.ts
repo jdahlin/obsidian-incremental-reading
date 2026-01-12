@@ -5,6 +5,7 @@
  */
 
 import type { DeckTreeNode } from '../importer/decks.js'
+import type { DeepReadonly } from '../readonly.js'
 import type { Deck } from '../types.js'
 import type { WriteError } from './index.js'
 import { writeFile } from 'node:fs/promises'
@@ -27,7 +28,7 @@ interface DeckTreeFrontmatter {
 /**
  * Render deck tree node as markdown list item
  */
-function renderDeckNode(node: DeckTreeNode, indent: number): string {
+function renderDeckNode(node: DeepReadonly<DeckTreeNode>, indent: number): string {
 	const prefix = '  '.repeat(indent)
 	const leafName = node.deck.pathSegments[node.deck.pathSegments.length - 1] ?? node.deck.name
 	const line = `${prefix}- **${leafName}** (id: ${node.deck.id})`
@@ -44,7 +45,7 @@ function renderDeckNode(node: DeckTreeNode, indent: number): string {
 /**
  * Convert deck list to markdown content
  */
-function decksToMarkdown(decks: readonly Deck[]): string {
+function decksToMarkdown(decks: readonly DeepReadonly<Deck>[]): string {
 	const frontmatter: DeckTreeFrontmatter = {
 		generated: new Date().toISOString(),
 		deck_count: decks.length,
@@ -71,8 +72,9 @@ function decksToMarkdown(decks: readonly Deck[]): string {
 export async function writeDecks(
 	decks: readonly Deck[],
 	outputRoot: string,
-	errors: WriteError[],
+	errors: DeepReadonly<WriteError[]>,
 ): Promise<number> {
+	const errorsArray = errors as WriteError[]
 	const filePath = join(outputRoot, '_deck-tree.md')
 
 	try {
@@ -80,7 +82,7 @@ export async function writeDecks(
 		await writeFile(filePath, content, 'utf-8')
 		return 1
 	} catch (err) {
-		errors.push({
+		errorsArray.push({
 			type: 'deck',
 			id: 'tree',
 			path: filePath,
