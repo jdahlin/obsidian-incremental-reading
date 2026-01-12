@@ -196,6 +196,13 @@ export class EngineReviewController {
 		}
 	}
 
+	/**
+	 * Keyboard shortcuts for review. Check order matters:
+	 * 1. Skip if already handled (defaultPrevented)
+	 * 2. Skip if typing in input/textarea (preserve text entry)
+	 * 3. Escape always works (back to folder view)
+	 * 4. Other shortcuts only in review screen
+	 */
 	handleKeyDown(event: KeyboardEvent): void | Promise<void> {
 		if (event.defaultPrevented) return
 		const target = event.target as HTMLElement | null
@@ -366,6 +373,14 @@ export class EngineReviewController {
 		await this.updateSessionFile()
 	}
 
+	/**
+	 * Grades the current item and advances the queue.
+	 *
+	 * CRITICAL: undo state must be captured BEFORE recordReview() because:
+	 * - recordReview() persists the new state to sidecar files
+	 * - undo needs the previous state to restore
+	 * - The shallow copy {...si.state} captures the pre-grade values
+	 */
 	async gradeCurrentItem(grade: number): Promise<void> {
 		const si = this.model.currentSessionItem
 		if (!si || !this.sessionManager) return
@@ -375,7 +390,7 @@ export class EngineReviewController {
 			return
 		}
 
-		// Save undo state before grading
+		// Capture undo state BEFORE grading - this is the state we'll restore on undo
 		const undoState: UndoState = {
 			item: si,
 			previousState: { ...si.state },
@@ -384,7 +399,7 @@ export class EngineReviewController {
 		const now = new Date()
 		const rating = grade as Rating
 
-		// Record review through session manager (persists to sidecar files)
+		// This persists to disk and mutates session manager state
 		await this.sessionManager.recordReview(si.item.id, rating, now)
 
 		// Update session stats

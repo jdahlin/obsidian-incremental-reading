@@ -30,6 +30,17 @@ export class FSRSScheduler implements Scheduler {
 		return state.due <= now
 	}
 
+	/**
+	 * Pulls due dates forward to ensure adequate reviews before an exam.
+	 * Goal: ~6 reviews spread across the time remaining until exam.
+	 *
+	 * Algorithm:
+	 * - targetInterval = daysToExam / 6, clamped to [1, 60] days
+	 * - If card's current due date is AFTER (now + targetInterval), pull it forward
+	 * - Cards already due sooner than target are not modified
+	 *
+	 * This is a one-way adjustment (only pulls forward, never pushes back).
+	 */
 	applyExamAdjustment(state: ReviewState, examDate: Date, now: Date): ReviewState {
 		const targetReviews = 6
 		const minIntervalDays = 1
@@ -45,6 +56,7 @@ export class FSRSScheduler implements Scheduler {
 		const schedulerDue = state.due ?? now
 		const adjustedDue = new Date(now.getTime() + targetInterval * oneDay)
 
+		// Only adjust if current due is later than our target
 		if (schedulerDue > adjustedDue) {
 			return {
 				...state,
@@ -55,6 +67,11 @@ export class FSRSScheduler implements Scheduler {
 		return state
 	}
 
+	/**
+	 * Converts our ReviewState to ts-fsrs Card format.
+	 * elapsed_days/scheduled_days are set to 0 because FSRS computes them from dates.
+	 * due defaults to epoch (Date(0)) for new cards to avoid undefined issues.
+	 */
 	private toCard(state: ReviewState): Card {
 		return {
 			due: state.due ?? new Date(0),
