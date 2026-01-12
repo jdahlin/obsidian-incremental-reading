@@ -20,7 +20,8 @@
 		"clean": "turbo clean && rm -rf node_modules",
 		"prepare": "husky",
 		"knip": "knip",
-		"cli": "tsx packages/cli/src/index.tsx"
+		"cli": "tsx packages/cli/src/index.tsx",
+		"dev:web": "./scripts/dev-web.sh"
 	},
 	"nano-staged": {
 		"*.{ts,tsx,js,mjs,json}": [
