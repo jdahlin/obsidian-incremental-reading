@@ -1,4 +1,5 @@
 import type { DataStore, NotePlatform } from '@repo/core/types'
+import type { CachingDataStore } from './data/CachingDataStore'
 import type { NodeFileSystem } from './fs/NodeFileSystem'
 
 import { Hono } from 'hono'
@@ -13,6 +14,7 @@ import { createStatsRoutes } from './routes/stats'
 export interface ServerDeps {
 	fs: NodeFileSystem
 	dataStore: DataStore
+	cachingDataStore?: CachingDataStore
 	notePlatform: NotePlatform
 }
 

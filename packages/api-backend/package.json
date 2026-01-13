@@ -7,7 +7,7 @@
 		"ir-server": "./dist/index.js"
 	},
 	"scripts": {
-		"dev": "tsx src/index.ts",
+		"dev": "tsx src/index.ts --",
 		"build": "tsc",
 		"start": "node dist/index.js",
 		"lint": "eslint .",

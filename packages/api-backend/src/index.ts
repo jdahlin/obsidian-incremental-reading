@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /* eslint-disable no-console -- CLI entry point */
+
 import { serve } from '@hono/node-server'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 
+import { CachingDataStore } from './data/CachingDataStore'
 import { NodeFileSystem } from './fs/NodeFileSystem'
 import { NodeNotePlatform } from './platforms/NodeNotePlatform'
 import { createServer } from './server'
@@ -27,10 +29,15 @@ async function main(): Promise<void> {
 	// Create dependencies
 	const fs = new NodeFileSystem(absolutePath)
 	const notePlatform = new NodeNotePlatform(fs)
-	const dataStore = new MarkdownDataStore(fs, notePlatform)
+	const baseDataStore = new MarkdownDataStore(fs, notePlatform)
+	const cachingDataStore = new CachingDataStore(baseDataStore)
+
+	// Initialize cache before starting server
+	console.log('Loading vault data into cache...')
+	await cachingDataStore.initialize()
 
 	// Create and start server
-	const app = createServer({ fs, dataStore, notePlatform })
+	const app = createServer({ fs, dataStore: cachingDataStore, cachingDataStore, notePlatform })
 
 	const port = Number(process.env.PORT ?? DEFAULT_PORT)
 
