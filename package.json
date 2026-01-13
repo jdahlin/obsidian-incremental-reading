@@ -25,11 +25,7 @@
 		"dev:web": "./scripts/dev-web.sh"
 	},
 	"nano-staged": {
-		"*.{ts,tsx,js,mjs,json}": [
-			"eslint --fix",
-			"prettier --write"
-		],
-		"*.{css,md}": [
+		"*.{ts,tsx,js,mjs,json,css,md}": [
 			"prettier --write"
 		]
 	},
