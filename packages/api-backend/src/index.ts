@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console -- CLI entry point */
+
 import { serve } from '@hono/node-server'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 
@@ -33,7 +34,6 @@ async function main(): Promise<void> {
 		fetch: app.fetch,
 		port,
 	})
-
 }
 
 main().catch((err) => {
