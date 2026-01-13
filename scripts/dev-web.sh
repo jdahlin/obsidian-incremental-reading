@@ -22,7 +22,7 @@ fi
 echo "Starting development servers..."
 echo "  Vault: $VAULT_PATH"
 echo "  API:   http://localhost:3001"
-echo "  Web:   http://localhost:3000"
+echo "  Web:   http://localhost:5173"
 echo ""
 
 # Kill background processes on exit
@@ -61,7 +61,7 @@ cd - > /dev/null
 
 echo ""
 echo "Both servers are running!"
-echo "  Open http://localhost:3000 in your browser"
+echo "  Open http://localhost:5173 in your browser"
 echo "  Press Ctrl+C to stop"
 echo ""
 

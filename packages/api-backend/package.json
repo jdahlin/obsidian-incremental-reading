@@ -19,6 +19,7 @@
 		"@hono/zod-validator": "^0.4.3",
 		"@repo/core": "workspace:*",
 		"hono": "^4.7.4",
+		"pg": "^8.13.1",
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {
@@ -26,6 +27,7 @@
 		"@repo/tsconfig": "workspace:*",
 		"@repo/vitest-config": "workspace:*",
 		"@types/node": "catalog:",
+		"@types/pg": "^8.10.9",
 		"tsx": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
