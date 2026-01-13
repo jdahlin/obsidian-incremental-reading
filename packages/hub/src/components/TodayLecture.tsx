@@ -1,6 +1,6 @@
+import type { LectureSummary } from '@/lib/api'
 import { Calendar, Clock, ExternalLink } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { LectureSummary } from '@/lib/api'
 import { withHubBase } from '@/lib/paths'
 
 interface TodayLectureProps {
@@ -8,7 +8,7 @@ interface TodayLectureProps {
 	moduleId: string
 }
 
-export const TodayLecture = ({ lecture, moduleId }: TodayLectureProps) => {
+export const TodayLecture = ({ lecture, moduleId }: Readonly<TodayLectureProps>) => {
 	const { courseCode } = useParams()
 	const today = new Date().toISOString().split('T')[0]
 

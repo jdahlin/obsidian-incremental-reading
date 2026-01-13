@@ -1,4 +1,5 @@
-import { LogOut, Settings, User, HelpCircle, Moon, Sun } from 'lucide-react'
+import { HelpCircle, LogOut, Moon, Settings, User } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
@@ -8,7 +9,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 export const ProfileMenu = () => {
 	return (

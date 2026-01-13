@@ -114,6 +114,12 @@ packages/core/src/anki/
 - Commit `main.js`, `styles.css`, or `node_modules/`
 - Open separate editor tabs during review (single-pane design)
 
+## Coding Style
+
+- Always use `readonly` or `Readonly<T>` for parameters where applicable.
+- Follow existing lint rules and patterns even when not explicitly requested.
+- Commit early and commit often unless the user says otherwise.
+
 ## Debugging Review UI
 
 Launch Obsidian with remote debugging:

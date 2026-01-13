@@ -1,17 +1,17 @@
+import { CalendarDays, Loader2, Settings, Sparkles } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { CalendarDays, Loader2, Settings, Sparkles } from 'lucide-react'
-import { Sidebar } from '@/components/Sidebar'
 import { Breadcrumb } from '@/components/Breadcrumb'
-import { TodayLecture } from '@/components/TodayLecture'
 import { ExamCountdown } from '@/components/ExamCountdown'
 import { MiniCalendar } from '@/components/MiniCalendar'
-import { ProgressRing } from '@/components/ProgressRing'
 import { ProfileMenu } from '@/components/ProfileMenu'
+import { ProgressRing } from '@/components/ProgressRing'
+import { Sidebar } from '@/components/Sidebar'
+import { TodayLecture } from '@/components/TodayLecture'
 import {
+	useCourseExams,
 	useCourses,
 	useLectures,
-	useCourseExams,
 	useNextExam,
 	useTodayLecture,
 } from '@/hooks/useApi'

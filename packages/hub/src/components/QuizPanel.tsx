@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import type { QuizQuestion } from '@/data/mockData'
 import { ArrowRight, Brain, Check, RefreshCw, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { QuizQuestion } from '@/data/mockData'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface QuizPanelProps {
-	questions: QuizQuestion[]
+	readonly questions: readonly QuizQuestion[]
 	lectureTitle: string
 	isEmbedded?: boolean
 }
 
-export const QuizPanel = ({ questions, lectureTitle, isEmbedded = false }: QuizPanelProps) => {
+export const QuizPanel = ({
+	questions,
+	lectureTitle,
+	isEmbedded = false,
+}: Readonly<QuizPanelProps>) => {
 	const [currentIndex, setCurrentIndex] = useState(0)
 	const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
 	const [showResult, setShowResult] = useState(false)

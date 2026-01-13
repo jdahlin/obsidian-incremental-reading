@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import type { ChatMessage } from '@/data/mockData'
 import { Bot, Send, Sparkles, User } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { ChatMessage, initialChatMessages } from '@/data/mockData'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { initialChatMessages } from '@/data/mockData'
+import { cn } from '@/lib/utils'
 
 interface TutorChatProps {
 	lectureContext?: string
@@ -16,7 +17,7 @@ const mockResponses = [
 	'From Chapter 4 of Lehninger, quaternary structure refers to the arrangement of multiple polypeptide chains (subunits) in a protein complex. Hemoglobin is a classic example with its α₂β₂ structure.',
 ]
 
-export const TutorChat = ({ lectureContext, isEmbedded = false }: TutorChatProps) => {
+export const TutorChat = ({ lectureContext, isEmbedded = false }: Readonly<TutorChatProps>) => {
 	const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages)
 	const [input, setInput] = useState('')
 	const [isTyping, setIsTyping] = useState(false)
@@ -61,7 +62,7 @@ export const TutorChat = ({ lectureContext, isEmbedded = false }: TutorChatProps
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault()
-			handleSend()
+			void handleSend()
 		}
 	}
 
@@ -190,7 +191,7 @@ export const TutorChat = ({ lectureContext, isEmbedded = false }: TutorChatProps
 						style={{ minHeight: '48px', maxHeight: '120px' }}
 					/>
 					<Button
-						onClick={handleSend}
+						onClick={() => void handleSend()}
 						disabled={!input.trim() || isTyping}
 						size="icon"
 						className="h-12 w-12 rounded-xl"

@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import type { ContentItem } from '@/data/mockData'
 import {
-	BookOpen,
 	ChevronLeft,
 	ChevronRight,
 	Download,
@@ -11,9 +10,9 @@ import {
 	ZoomIn,
 	ZoomOut,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { ContentItem } from '@/data/mockData'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface ContentViewerProps {
 	item: ContentItem
@@ -21,10 +20,14 @@ interface ContentViewerProps {
 	isSelectionMode?: boolean
 }
 
-export const ContentViewer = ({ item, onClose, isSelectionMode = false }: ContentViewerProps) => {
+export const ContentViewer = ({
+	item,
+	onClose,
+	isSelectionMode = false,
+}: Readonly<ContentViewerProps>) => {
 	const [currentPage, setCurrentPage] = useState(1)
 	const [zoom, setZoom] = useState(100)
-	const [selectedText, setSelectedText] = useState('')
+	const [_selectedText, _setSelectedText] = useState('')
 	const totalPages = item.pageCount || 1
 
 	// Mock PDF content - in real app this would be actual PDF rendering

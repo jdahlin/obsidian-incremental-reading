@@ -1,5 +1,5 @@
+import type { Exam } from '@/lib/api'
 import { AlarmClock, Calendar } from 'lucide-react'
-import { Exam } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 interface ExamCountdownProps {
@@ -17,7 +17,7 @@ const getUrgencyStyles = (daysUntil: number) => {
 	return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
 }
 
-export const ExamCountdown = ({ exam, daysUntil }: ExamCountdownProps) => {
+export const ExamCountdown = ({ exam, daysUntil }: Readonly<ExamCountdownProps>) => {
 	const urgencyClass = getUrgencyStyles(daysUntil)
 	const examDate = new Date(exam.date)
 

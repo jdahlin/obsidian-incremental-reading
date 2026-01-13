@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import type { Course } from '@/lib/api'
 import {
 	BookOpen,
 	Calendar,
@@ -10,36 +10,36 @@ import {
 	LayoutDashboard,
 	Loader2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Course } from '@/lib/api'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { withHubBase } from '@/lib/paths'
+import { cn } from '@/lib/utils'
 
 interface Lecture {
-	id: string
-	number: number
-	title: string
-	date: string
-	duration: string
-	contentCount: number
-	isCompleted: boolean
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly duration: string
+	readonly contentCount: number
+	readonly isCompleted: boolean
 }
 
 interface Exam {
-	id: string
-	number: number
-	title: string
-	date: string
-	start: string
-	end: string
-	duration: string
-	note?: string
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly start: string
+	readonly end: string
+	readonly duration: string
+	readonly note?: string
 }
 
 interface SidebarProps {
-	courses: Course[]
-	lectures: Lecture[]
-	exams: Exam[]
+	readonly courses: readonly Course[]
+	readonly lectures: readonly Lecture[]
+	readonly exams: readonly Exam[]
 	courseCode: string | null
 	activeCourseId: string | null
 	activeLectureId: string | null
@@ -58,7 +58,7 @@ export const Sidebar = ({
 	onCourseSelect,
 	onLectureSelect,
 	isLoading,
-}: SidebarProps) => {
+}: Readonly<SidebarProps>) => {
 	const [isLecturesExpanded, setIsLecturesExpanded] = useState(true)
 	const [isExamsExpanded, setIsExamsExpanded] = useState(true)
 	const [showCourseDropdown, setShowCourseDropdown] = useState(false)

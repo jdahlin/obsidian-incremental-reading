@@ -14,22 +14,22 @@ import { cn } from '@/lib/utils'
 type ContentType = 'book' | 'video' | 'notes' | 'exam' | 'lecture'
 
 interface ContentItem {
-	id: string
-	title: string
-	type: ContentType
-	description: string
-	lectureId: string
-	pageCount?: number
-	duration?: string
-	author?: string
-	highlights?: number
-	annotations?: number
-	tags?: string[]
+	readonly id: string
+	readonly title: string
+	readonly type: ContentType
+	readonly description: string
+	readonly lectureId: string
+	readonly pageCount?: number
+	readonly duration?: string
+	readonly author?: string
+	readonly highlights?: number
+	readonly annotations?: number
+	readonly tags?: readonly string[]
 }
 
 interface ContentGridProps {
-	items: ContentItem[]
-	onItemSelect: (item: ContentItem) => void
+	readonly items: readonly ContentItem[]
+	onItemSelect: (item: Readonly<ContentItem>) => void
 	selectedItemId?: string
 	isLoading?: boolean
 }
@@ -63,7 +63,7 @@ export const ContentGrid = ({
 	onItemSelect,
 	selectedItemId,
 	isLoading,
-}: ContentGridProps) => {
+}: Readonly<ContentGridProps>) => {
 	if (isLoading) {
 		return (
 			<div className="flex flex-col items-center justify-center py-16 text-center">

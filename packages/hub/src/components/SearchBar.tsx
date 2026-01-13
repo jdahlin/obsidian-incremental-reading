@@ -1,37 +1,37 @@
-import { useState, useRef, useEffect } from 'react'
 import {
-	Search,
-	ChevronDown,
-	X,
-	FileText,
 	BookOpen,
-	Video,
+	ChevronDown,
 	FileQuestion,
-	Presentation,
+	FileText,
 	Loader2,
+	Presentation,
+	Search,
+	Video,
+	X,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useEffect, useRef, useState } from 'react'
 import { useSearch } from '@/hooks/useApi'
+import { cn } from '@/lib/utils'
 
 type ContentType = 'book' | 'video' | 'notes' | 'exam' | 'lecture'
 type SearchScope = 'lecture' | 'course' | 'all'
 
 interface ContentItem {
-	id: string
-	title: string
-	type: ContentType
-	description: string
-	lectureId: string
-	pageCount?: number
-	duration?: string
-	author?: string
-	tags?: string[]
+	readonly id: string
+	readonly title: string
+	readonly type: ContentType
+	readonly description: string
+	readonly lectureId: string
+	readonly pageCount?: number
+	readonly duration?: string
+	readonly author?: string
+	readonly tags?: readonly string[]
 }
 
 interface SearchBarProps {
 	currentLectureId: string | null
 	currentLectureTitle?: string
-	onResultSelect: (item: ContentItem) => void
+	onResultSelect: (item: Readonly<ContentItem>) => void
 }
 
 const typeIcons: Record<ContentType, React.ReactNode> = {
@@ -51,10 +51,10 @@ const typeBadgeClasses: Record<ContentType, string> = {
 }
 
 export const SearchBar = ({
-	currentLectureId,
+	currentLectureId: _currentLectureId,
 	currentLectureTitle,
 	onResultSelect,
-}: SearchBarProps) => {
+}: Readonly<SearchBarProps>) => {
 	const [query, setQuery] = useState('')
 	const [debouncedQuery, setDebouncedQuery] = useState('')
 	const [scope, setScope] = useState<SearchScope>('all')

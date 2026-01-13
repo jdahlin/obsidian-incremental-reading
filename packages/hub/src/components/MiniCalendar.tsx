@@ -1,24 +1,24 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cn } from '@/lib/utils'
 import { withHubBase } from '@/lib/paths'
+import { cn } from '@/lib/utils'
 
 export interface CalendarEvent {
-	id: string
-	title: string
-	date: string
-	type: 'lecture' | 'exam'
-	href: string
+	readonly id: string
+	readonly title: string
+	readonly date: string
+	readonly type: 'lecture' | 'exam'
+	readonly href: string
 }
 
 interface MiniCalendarProps {
-	events: CalendarEvent[]
+	readonly events: readonly CalendarEvent[]
 	currentDate: Date
 }
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export const MiniCalendar = ({ events, currentDate }: MiniCalendarProps) => {
+export const MiniCalendar = ({ events, currentDate }: Readonly<MiniCalendarProps>) => {
 	const navigate = useNavigate()
 
 	const { cells, monthLabel, eventsByDate } = useMemo(() => {
