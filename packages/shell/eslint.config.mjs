@@ -1,3 +1,6 @@
-import config, { allBoundaries } from '@repo/eslint-config'
+import config, { allBoundaries, jsConfigOverride, testOverride } from '@repo/eslint-config'
 
-export default config.append(...allBoundaries)
+export default config
+	.append(...allBoundaries)
+	.append(testOverride)
+	.append(jsConfigOverride)

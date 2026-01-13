@@ -48,7 +48,6 @@ const baseConfig = antfu({
 					{ from: 'package', name: 'Plugin', package: 'obsidian' },
 					{ from: 'package', name: 'WorkspaceLeaf', package: 'obsidian' },
 					{ from: 'package', name: 'MarkdownView', package: 'obsidian' },
-					{ from: 'package', name: 'Hono', package: 'hono' },
 				],
 			},
 		],

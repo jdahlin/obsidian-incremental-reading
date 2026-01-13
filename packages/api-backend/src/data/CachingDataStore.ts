@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- Logging cache initialization status */
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { DataStore, ReviewItem, ReviewRecord, ReviewState } from '@repo/core/types'
 
 /**
@@ -48,7 +48,7 @@ export class CachingDataStore implements DataStore {
 
 		this.initialized = true
 		const elapsed = Date.now() - startTime
-		console.log(`Cache initialized: ${this.items.length} items in ${elapsed}ms`)
+		process.stdout.write(`Cache initialized: ${this.items.length} items in ${elapsed}ms\n`)
 	}
 
 	async listItems(): Promise<ReviewItem[]> {
@@ -67,15 +67,13 @@ export class CachingDataStore implements DataStore {
 		return state
 	}
 
-	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewState type
-	async setState(itemId: string, state: ReviewState): Promise<void> {
+	async setState(itemId: string, state: DeepReadonly<ReviewState>): Promise<void> {
 		await this.delegate.setState(itemId, state)
 		// Update cache
 		this.states.set(itemId, state)
 	}
 
-	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewRecord type
-	async appendReview(record: ReviewRecord): Promise<void> {
+	async appendReview(record: DeepReadonly<ReviewRecord>): Promise<void> {
 		await this.delegate.appendReview(record)
 	}
 

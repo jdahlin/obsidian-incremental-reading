@@ -1,22 +1,21 @@
-import { useState } from 'react'
 import {
-	Scissors,
-	StickyNote,
-	Highlighter,
 	BookmarkPlus,
-	Sparkles,
-	X,
 	ChevronDown,
+	Highlighter,
+	Scissors,
+	Sparkles,
+	StickyNote,
 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface Extract {
 	id: string
@@ -28,7 +27,7 @@ interface Extract {
 }
 
 interface ExtractToolbarProps {
-	onExtractCreate?: (extract: Extract) => void
+	onExtractCreate?: (extract: Readonly<Extract>) => void
 	isSelectionMode: boolean
 	onToggleSelectionMode: () => void
 }
@@ -37,7 +36,7 @@ export const ExtractToolbar = ({
 	onExtractCreate,
 	isSelectionMode,
 	onToggleSelectionMode,
-}: ExtractToolbarProps) => {
+}: Readonly<ExtractToolbarProps>) => {
 	const [extractCount, setExtractCount] = useState(3)
 
 	const handleCreateExtract = (type: 'extract' | 'note' | 'highlight') => {

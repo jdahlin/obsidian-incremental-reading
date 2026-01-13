@@ -1,13 +1,14 @@
+import type { Lecture } from '@/lib/api'
+import { useQueries } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
-import { useQueries } from '@tanstack/react-query'
-import { Sidebar } from '@/components/Sidebar'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { MiniCalendar } from '@/components/MiniCalendar'
 import { ProfileMenu } from '@/components/ProfileMenu'
+import { Sidebar } from '@/components/Sidebar'
 import { useCourses } from '@/hooks/useApi'
-import { adaptLecture, fetchCourseExams, fetchLectures, Lecture } from '@/lib/api'
+import { adaptLecture, fetchCourseExams, fetchLectures } from '@/lib/api'
 import { withHubBase } from '@/lib/paths'
 
 const CourseDashboard = () => {
@@ -24,7 +25,7 @@ const CourseDashboard = () => {
 			queryKey: ['lectures', module.id],
 			queryFn: async () => fetchLectures(module.id),
 			enabled: courseModules.length > 0,
-			select: (data: Lecture[]) => data.map(adaptLecture),
+			select: (data: readonly Lecture[]) => data.map(adaptLecture),
 		})),
 	})
 

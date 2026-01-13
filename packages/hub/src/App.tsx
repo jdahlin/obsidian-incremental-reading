@@ -1,9 +1,9 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import CoursePage from './pages/CoursePage'
 import CourseDashboard from './pages/CourseDashboard'
+import CoursePage from './pages/CoursePage'
 import ModuleDashboard from './pages/ModuleDashboard'
 import NotFound from './pages/NotFound'
 

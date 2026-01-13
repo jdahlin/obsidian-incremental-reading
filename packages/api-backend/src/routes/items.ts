@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { Rating, ReviewState } from '@repo/core/types'
 import type { ServerDeps } from '../server'
 
@@ -10,8 +11,7 @@ const reviewSchema = z.object({
 	elapsedMs: z.number().optional(),
 })
 
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
-export function createItemsRoutes(deps: ServerDeps): Hono {
+export function createItemsRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 
 	/**

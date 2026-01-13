@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { DataStore, NotePlatform } from '@repo/core/types'
 import type { CachingDataStore } from './data/CachingDataStore'
 import type { NodeFileSystem } from './fs/NodeFileSystem'
@@ -24,8 +25,7 @@ export interface ServerDeps {
 	notePlatform: NotePlatform
 }
 
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
-export function createServer(deps: ServerDeps): Hono {
+export function createServer(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 	const calendarPath = resolve(process.cwd(), 'calendar.json')
 	let calendarCache: CalendarData | null = null

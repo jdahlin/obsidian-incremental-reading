@@ -6,7 +6,7 @@ interface ProgressRingProps {
 	className?: string
 }
 
-export const ProgressRing = ({ completed, total, className }: ProgressRingProps) => {
+export const ProgressRing = ({ completed, total, className }: Readonly<ProgressRingProps>) => {
 	const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
 	const clamped = Math.min(100, Math.max(0, percentage))
 	const radius = 40

@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 interface BreadcrumbItem {
-	label: string
-	href: string
+	readonly label: string
+	readonly href: string
 }
 
 interface BreadcrumbProps {
-	items: BreadcrumbItem[]
+	readonly items: readonly BreadcrumbItem[]
 }
 
-export const Breadcrumb = ({ items }: BreadcrumbProps) => {
+export const Breadcrumb = ({ items }: Readonly<BreadcrumbProps>) => {
 	return (
 		<nav
 			aria-label="Breadcrumb"

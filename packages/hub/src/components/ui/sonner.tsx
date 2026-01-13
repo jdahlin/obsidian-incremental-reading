@@ -3,7 +3,7 @@ import { Toaster as Sonner, toast } from 'sonner'
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ ...props }: Readonly<ToasterProps>) => {
 	const { theme = 'system' } = useTheme()
 
 	return (

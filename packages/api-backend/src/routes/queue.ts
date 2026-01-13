@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { DeckInfo, ItemState, ItemWithState } from '@repo/core/core/types'
 import type { ReviewItem, ReviewState } from '@repo/core/types'
 import type { ServerDeps } from '../server'
@@ -8,8 +9,7 @@ import { Hono } from 'hono'
 /**
  * Convert ReviewState (camelCase lastReview) to ItemState (snake_case last_review).
  */
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewState type
-function toItemState(state: ReviewState | null): ItemState {
+function toItemState(state: DeepReadonly<ReviewState> | null): ItemState {
 	if (state === null) {
 		return {
 			status: 'new',
@@ -42,8 +42,10 @@ function mapItemType(type: string): ItemWithState['type'] {
 	return typeMap[type] ?? 'item'
 }
 
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewItem/ReviewState types
-function toItemWithState(item: ReviewItem, state: ReviewState | null): ItemWithState {
+function toItemWithState(
+	item: DeepReadonly<ReviewItem>,
+	state: DeepReadonly<ReviewState> | null,
+): ItemWithState {
 	return {
 		id: item.id,
 		noteId: item.noteId,
@@ -56,8 +58,7 @@ function toItemWithState(item: ReviewItem, state: ReviewState | null): ItemWithS
 	}
 }
 
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- Hono deps
-export function createQueueRoutes(deps: ServerDeps): Hono {
+export function createQueueRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 
 	/**
@@ -171,8 +172,7 @@ export function createQueueRoutes(deps: ServerDeps): Hono {
 	return app
 }
 
-// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
-function serializeDecks(decks: DeckInfo[]): unknown[] {
+function serializeDecks(decks: readonly DeepReadonly<DeckInfo>[]): unknown[] {
 	return decks.map((deck) => ({
 		path: deck.path,
 		name: deck.name,

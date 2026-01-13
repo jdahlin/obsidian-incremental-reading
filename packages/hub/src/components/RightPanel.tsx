@@ -1,19 +1,19 @@
+import type { QuizQuestion } from '@/data/mockData'
+import { Brain, HelpCircle, X } from 'lucide-react'
 import { useState } from 'react'
-import { Brain, HelpCircle, ChevronRight, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { QuizPanel } from './QuizPanel'
 import { TutorChat } from './TutorChat'
-import { QuizQuestion } from '@/data/mockData'
 
 interface RightPanelProps {
-	quizQuestions: QuizQuestion[]
+	readonly quizQuestions: readonly QuizQuestion[]
 	lectureTitle: string
 }
 
 type PanelType = 'quiz' | 'tutor' | null
 
-export const RightPanel = ({ quizQuestions, lectureTitle }: RightPanelProps) => {
+export const RightPanel = ({ quizQuestions, lectureTitle }: Readonly<RightPanelProps>) => {
 	const [activePanel, setActivePanel] = useState<PanelType>(null)
 
 	const togglePanel = (panel: PanelType) => {

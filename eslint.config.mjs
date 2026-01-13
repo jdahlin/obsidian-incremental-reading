@@ -1,22 +1,11 @@
 import config, { allBoundaries, jsConfigOverride } from '@repo/eslint-config'
 
-// Ignore hub package entirely - it's external/generated code with its own lint setup
-// Ignore shell package config files
-const ignores = {
-	ignores: [
-		'packages/hub/**',
-		'packages/shell/postcss.config.js',
-		'packages/shell/tailwind.config.ts',
-	],
-}
-
-// Relax strict rules for shell package
-const shellOverride = {
-	files: ['packages/shell/**/*.{ts,tsx}'],
+// Disable prefer-readonly-parameter-types for hub package - too strict for React apps
+const hubOverride = {
+	files: ['packages/hub/**/*.tsx', 'packages/hub/**/*.ts'],
 	rules: {
-		'@typescript-eslint/strict-boolean-expressions': 'off',
-		'@typescript-eslint/prefer-readonly-parameter-types': 'off',
+		'ts/prefer-readonly-parameter-types': 'off',
 	},
 }
 
-export default [...(await config), ...allBoundaries, jsConfigOverride, ignores, shellOverride]
+export default [...(await config), ...allBoundaries, jsConfigOverride, hubOverride]

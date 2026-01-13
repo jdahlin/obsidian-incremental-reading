@@ -2,76 +2,76 @@
  * API client for the lecture navigator backend.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || window.location.origin
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? window.location.origin
 
 // --- Types ---
 
 export type ContentType = 'book' | 'video' | 'notes' | 'exam' | 'lecture'
 
 export interface Course {
-	id: string
-	name: string
-	code: string
-	lecture_count: number
-	lab_count: number
-	exam_count: number
+	readonly id: string
+	readonly name: string
+	readonly code: string
+	readonly lecture_count: number
+	readonly lab_count: number
+	readonly exam_count: number
 }
 
 export interface Lecture {
-	id: string
-	number: number
-	title: string
-	date: string
-	start: string
-	end: string
-	duration: string
-	content_count: number
-	is_completed: boolean
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly start: string
+	readonly end: string
+	readonly duration: string
+	readonly content_count: number
+	readonly is_completed: boolean
 }
 
 export interface LectureSummary {
-	id: string
-	number: number
-	title: string
-	date: string
-	start: string
-	end: string
-	duration: string
-	contentCount: number
-	isCompleted: boolean
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly start: string
+	readonly end: string
+	readonly duration: string
+	readonly contentCount: number
+	readonly isCompleted: boolean
 }
 
 export interface Exam {
-	id: string
-	number: number
-	title: string
-	date: string
-	start: string
-	end: string
-	duration: string
-	note?: string
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly start: string
+	readonly end: string
+	readonly duration: string
+	readonly note?: string
 }
 
 export interface ContentItem {
-	id: string
-	title: string
-	type: ContentType
-	description: string
-	lecture_id: string | null
-	page_count: number | null
-	duration: string | null
-	author: string | null
-	tags: string[]
+	readonly id: string
+	readonly title: string
+	readonly type: ContentType
+	readonly description: string
+	readonly lecture_id: string | null
+	readonly page_count: number | null
+	readonly duration: string | null
+	readonly author: string | null
+	readonly tags: readonly string[]
 }
 
 export interface SearchResult {
-	resource_id: number
-	title: string
-	type: ContentType
-	page_number: number
-	rank: number
-	snippet: string
-	tags: string[]
+	readonly resource_id: number
+	readonly title: string
+	readonly type: ContentType
+	readonly page_number: number
+	readonly rank: number
+	readonly snippet: string
+	readonly tags: readonly string[]
 }
 
 // --- API Responses ---
@@ -103,7 +103,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 	if (!response.ok) {
 		throw new Error(`API error: ${response.status} ${response.statusText}`)
 	}
-	return response.json()
+	return response.json() as Promise<T>
 }
 
 export async function fetchCourses(): Promise<Course[]> {
@@ -176,7 +176,7 @@ export async function searchContent(query: string, limit = 20): Promise<SearchRe
 /**
  * Convert API Lecture to frontend-compatible format.
  */
-export function adaptLecture(lecture: Lecture): LectureSummary {
+export function adaptLecture(lecture: Readonly<Lecture>): LectureSummary {
 	return {
 		id: lecture.id,
 		number: lecture.number,
@@ -193,7 +193,7 @@ export function adaptLecture(lecture: Lecture): LectureSummary {
 /**
  * Convert API ContentItem to frontend-compatible format.
  */
-export function adaptContentItem(item: ContentItem): {
+export function adaptContentItem(item: Readonly<ContentItem>): {
 	id: string
 	title: string
 	type: ContentType
@@ -202,7 +202,7 @@ export function adaptContentItem(item: ContentItem): {
 	pageCount?: number
 	duration?: string
 	author?: string
-	tags: string[]
+	tags: readonly string[]
 } {
 	return {
 		id: item.id,
@@ -220,14 +220,14 @@ export function adaptContentItem(item: ContentItem): {
 /**
  * Convert SearchResult to ContentItem-like format for display.
  */
-export function adaptSearchResult(result: SearchResult): {
+export function adaptSearchResult(result: Readonly<SearchResult>): {
 	id: string
 	title: string
 	type: ContentType
 	description: string
 	lectureId: string
 	pageCount?: number
-	tags: string[]
+	tags: readonly string[]
 } {
 	return {
 		id: String(result.resource_id),
@@ -240,13 +240,13 @@ export function adaptSearchResult(result: SearchResult): {
 	}
 }
 
-export function getTodayLecture<T extends { date: string }>(lectures: T[]): T | null {
+export function getTodayLecture<T extends { date: string }>(lectures: readonly T[]): T | null {
 	const today = new Date().toISOString().split('T')[0]
 	return lectures.find((lecture) => lecture.date === today) || null
 }
 
 export function getNextExam<T extends { date: string }>(
-	exams: T[],
+	exams: readonly T[],
 ): { exam: T; daysUntil: number } | null {
 	const today = new Date().toISOString().split('T')[0]
 	const upcoming = exams

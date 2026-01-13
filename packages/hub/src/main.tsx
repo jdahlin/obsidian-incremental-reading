@@ -3,7 +3,8 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 
-createRoot(document.getElementById('root')).render(
+// eslint-disable-next-line ts/no-non-null-assertion -- root element is guaranteed to exist
+createRoot(document.getElementById('root')!).render(
 	<BrowserRouter
 		future={{
 			v7_startTransition: true,

@@ -5,17 +5,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import {
+	adaptContentItem,
+	adaptLecture,
+	adaptSearchResult,
+	fetchContent,
+	fetchCourseExams,
+	fetchCourseMaterials,
 	fetchCourses,
 	fetchLectures,
-	fetchContent,
-	fetchCourseMaterials,
-	fetchCourseExams,
-	searchContent,
-	adaptLecture,
-	adaptContentItem,
-	adaptSearchResult,
-	getTodayLecture,
 	getNextExam,
+	getTodayLecture,
+	searchContent,
 } from '@/lib/api'
 
 export function useCourses() {
@@ -28,7 +28,8 @@ export function useCourses() {
 export function useLectures(courseId: string | null) {
 	return useQuery({
 		queryKey: ['lectures', courseId],
-		queryFn: async () => fetchLectures(courseId),
+		// eslint-disable-next-line ts/no-non-null-assertion -- enabled guard ensures courseId is non-null
+		queryFn: async () => fetchLectures(courseId!),
 		enabled: !!courseId,
 		select: (data) => data.map(adaptLecture),
 	})
@@ -37,7 +38,7 @@ export function useLectures(courseId: string | null) {
 export function useContent(courseId: string | null, limit = 50, offset = 0) {
 	return useQuery({
 		queryKey: ['content', courseId, limit, offset],
-		queryFn: async () => fetchContent(limit, offset, courseId || undefined),
+		queryFn: async () => fetchContent(limit, offset, courseId ?? undefined),
 		enabled: !!courseId,
 		select: (data) => ({
 			items: data.items.map(adaptContentItem),
@@ -49,7 +50,8 @@ export function useContent(courseId: string | null, limit = 50, offset = 0) {
 export function useCourseMaterials(courseId: string | null, limit = 50) {
 	return useQuery({
 		queryKey: ['materials', courseId, limit],
-		queryFn: async () => fetchCourseMaterials(courseId, limit),
+		// eslint-disable-next-line ts/no-non-null-assertion -- enabled guard ensures courseId is non-null
+		queryFn: async () => fetchCourseMaterials(courseId!, limit),
 		enabled: !!courseId,
 	})
 }
@@ -57,7 +59,8 @@ export function useCourseMaterials(courseId: string | null, limit = 50) {
 export function useCourseExams(courseId: string | null) {
 	return useQuery({
 		queryKey: ['exams', courseId],
-		queryFn: async () => fetchCourseExams(courseId),
+		// eslint-disable-next-line ts/no-non-null-assertion -- enabled guard ensures courseId is non-null
+		queryFn: async () => fetchCourseExams(courseId!),
 		enabled: !!courseId,
 	})
 }

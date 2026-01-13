@@ -1,42 +1,42 @@
 export type ContentType = 'book' | 'video' | 'notes' | 'exam' | 'lecture'
 
 export interface ContentItem {
-	id: string
-	title: string
-	type: ContentType
-	description: string
-	lectureId: string
-	pageCount?: number
-	duration?: string
-	author?: string
-	highlights?: number
-	annotations?: number
+	readonly id: string
+	readonly title: string
+	readonly type: ContentType
+	readonly description: string
+	readonly lectureId: string
+	readonly pageCount?: number
+	readonly duration?: string
+	readonly author?: string
+	readonly highlights?: number
+	readonly annotations?: number
 }
 
 export interface Lecture {
-	id: string
-	number: number
-	title: string
-	date: string
-	duration: string
-	contentCount: number
-	isCompleted: boolean
+	readonly id: string
+	readonly number: number
+	readonly title: string
+	readonly date: string
+	readonly duration: string
+	readonly contentCount: number
+	readonly isCompleted: boolean
 }
 
 export interface QuizQuestion {
-	id: string
-	question: string
-	options: string[]
-	correctAnswer: number
-	explanation: string
-	lectureId: string
+	readonly id: string
+	readonly question: string
+	readonly options: readonly string[]
+	readonly correctAnswer: number
+	readonly explanation: string
+	readonly lectureId: string
 }
 
 export interface ChatMessage {
-	id: string
-	role: 'user' | 'assistant'
-	content: string
-	timestamp: Date
+	readonly id: string
+	readonly role: 'user' | 'assistant'
+	readonly content: string
+	readonly timestamp: Date
 }
 
 export const lectures: Lecture[] = [
