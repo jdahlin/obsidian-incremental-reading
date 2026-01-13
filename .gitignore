@@ -4,6 +4,10 @@ coverage
 # vscode
 .vscode 
 
+.venv
+*.pyc
+__pycache__
+
 # Intellij
 *.iml
 .idea
@@ -26,6 +30,8 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+packages/canvas-extractor/canvas-lms
 
 # generated css build artifacts
 build-css/
