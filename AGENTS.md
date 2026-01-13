@@ -121,7 +121,6 @@ packages/core/src/anki/
 - Commit early and commit often unless the user says otherwise.
 
 ## Debugging Review UI
-
 Launch Obsidian with remote debugging:
 
 ```bash
