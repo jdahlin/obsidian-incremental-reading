@@ -1,10 +1,22 @@
-import type { ReviewControllerSettings } from '@repo/core/review'
+import type { ReviewControllerSettings, ReviewPlatform } from '@repo/core/review'
 import type { ReviewScreenActions, ReviewScreenState } from '@repo/core/review/types'
+import type { DataStore, NotePlatform } from '@repo/core/types'
 import { ReviewController } from '@repo/core/review'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { WebDataStore, WebNotePlatform, WebReviewPlatform } from './adapters'
+import {
+	ApiClient,
+	ApiDataStore,
+	ApiNotePlatform,
+	ApiReviewPlatform,
+	WebDataStore,
+	WebNotePlatform,
+	WebReviewPlatform,
+} from './adapters'
 import { ReviewRouter } from './components'
 import { createDemoData } from './demo-data'
+
+// Check for API URL from environment or default to demo mode
+const API_URL = import.meta.env.VITE_API_URL
 
 const defaultSettings: ReviewControllerSettings = {
 	newCardsPerDay: 20,
@@ -17,6 +29,29 @@ const defaultSettings: ReviewControllerSettings = {
 	cooldown: 5,
 }
 
+interface Adapters {
+	dataStore: DataStore & { clear?: () => void }
+	notePlatform: NotePlatform & { clear?: () => void }
+	reviewPlatform: ReviewPlatform
+	isApiMode: boolean
+}
+
+function createAdapters(): Adapters {
+	if (API_URL !== undefined && API_URL !== '') {
+		const client = new ApiClient(API_URL)
+		const dataStore = new ApiDataStore(client)
+		const notePlatform = new ApiNotePlatform(client)
+		const reviewPlatform = new ApiReviewPlatform(client)
+		return { dataStore, notePlatform, reviewPlatform, isApiMode: true }
+	}
+
+	// Demo mode with localStorage
+	const dataStore = new WebDataStore()
+	const notePlatform = new WebNotePlatform()
+	const reviewPlatform = new WebReviewPlatform(notePlatform)
+	return { dataStore, notePlatform, reviewPlatform, isApiMode: false }
+}
+
 export const App = () => {
 	const [state, setState] = useState<ReviewScreenState | null>(null)
 	const [actions, setActions] = useState<ReviewScreenActions | null>(null)
@@ -24,23 +59,20 @@ export const App = () => {
 	const [error, setError] = useState<string | null>(null)
 
 	// Create adapters once
-	const adapters = useMemo(() => {
-		const dataStore = new WebDataStore()
-		const notePlatform = new WebNotePlatform()
-		const reviewPlatform = new WebReviewPlatform(notePlatform)
-		return { dataStore, notePlatform, reviewPlatform }
-	}, [])
+	const adapters = useMemo(() => createAdapters(), [])
 
 	// Initialize controller
 	useEffect(() => {
 		const initController = async () => {
 			try {
-				const { dataStore, notePlatform, reviewPlatform } = adapters
+				const { dataStore, notePlatform, reviewPlatform, isApiMode } = adapters
 
-				// Check if we have data, if not create demo data
-				const items = await dataStore.listItems()
-				if (items.length === 0) {
-					createDemoData(dataStore, notePlatform)
+				// Only create demo data in demo mode
+				if (!isApiMode) {
+					const items = await dataStore.listItems()
+					if (items.length === 0) {
+						createDemoData(dataStore as WebDataStore, notePlatform as WebNotePlatform)
+					}
 				}
 
 				const controller = new ReviewController({
@@ -89,9 +121,15 @@ export const App = () => {
 	}, [adapters])
 
 	const handleClearData = useCallback(() => {
-		adapters.dataStore.clear()
-		adapters.notePlatform.clear()
-		window.location.reload()
+		if (adapters.isApiMode) {
+			// In API mode, just reload to refresh from server
+			window.location.reload()
+		} else {
+			// In demo mode, clear localStorage
+			adapters.dataStore.clear?.()
+			adapters.notePlatform.clear?.()
+			window.location.reload()
+		}
 	}, [adapters])
 
 	if (isLoading) {
@@ -118,14 +156,21 @@ export const App = () => {
 			<header
 				style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}
 			>
-				<h1 style={{ fontSize: '1.5rem', margin: 0 }}>Incremental Reading</h1>
+				<h1 style={{ fontSize: '1.5rem', margin: 0 }}>
+					Incremental Reading
+					{adapters.isApiMode && (
+						<span style={{ fontSize: '0.75rem', marginLeft: '0.5rem', opacity: 0.7 }}>
+							(API)
+						</span>
+					)}
+				</h1>
 				<button
 					type="button"
 					className="ir-btn ir-btn-secondary"
 					onClick={handleClearData}
 					style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
 				>
-					Reset Demo
+					{adapters.isApiMode ? 'Refresh' : 'Reset Demo'}
 				</button>
 			</header>
 			<ReviewRouter state={state} actions={actions} />
