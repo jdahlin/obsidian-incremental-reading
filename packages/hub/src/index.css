@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--background: 40 20% 98%;
+		--foreground: 220 25% 12%;
+
+		--card: 40 15% 96%;
+		--card-foreground: 220 25% 12%;
+
+		--popover: 40 20% 98%;
+		--popover-foreground: 220 25% 12%;
+
+		--primary: 185 45% 28%;
+		--primary-foreground: 40 20% 98%;
+
+		--secondary: 40 15% 92%;
+		--secondary-foreground: 220 25% 20%;
+
+		--muted: 40 12% 90%;
+		--muted-foreground: 220 15% 45%;
+
+		--accent: 38 92% 50%;
+		--accent-foreground: 220 25% 12%;
+
+		--destructive: 0 72% 51%;
+		--destructive-foreground: 40 20% 98%;
+
+		--border: 40 15% 88%;
+		--input: 40 15% 88%;
+		--ring: 185 45% 28%;
+
+		--radius: 0.625rem;
+
+		/* Custom tokens */
+		--content-bg: 40 25% 99%;
+		--sidebar-bg: 220 20% 14%;
+		--sidebar-foreground: 40 15% 92%;
+		--sidebar-muted: 220 15% 35%;
+		--sidebar-accent: 38 92% 55%;
+		--sidebar-hover: 220 18% 18%;
+
+		--search-bg: 40 15% 95%;
+		--search-border: 40 15% 85%;
+		--search-focus: 185 45% 28%;
+
+		--badge-book: 220 70% 55%;
+		--badge-video: 0 72% 55%;
+		--badge-notes: 142 55% 42%;
+		--badge-exam: 280 60% 55%;
+		--badge-lecture: 185 50% 45%;
+
+		--highlight: 38 92% 65%;
+		--highlight-soft: 38 80% 85%;
+
+		--chat-user: 185 40% 92%;
+		--chat-ai: 40 20% 96%;
+	}
+
+	.dark {
+		--background: 220 20% 10%;
+		--foreground: 40 15% 92%;
+
+		--card: 220 18% 14%;
+		--card-foreground: 40 15% 92%;
+
+		--popover: 220 18% 12%;
+		--popover-foreground: 40 15% 92%;
+
+		--primary: 185 50% 45%;
+		--primary-foreground: 220 25% 10%;
+
+		--secondary: 220 15% 20%;
+		--secondary-foreground: 40 15% 88%;
+
+		--muted: 220 15% 18%;
+		--muted-foreground: 40 12% 55%;
+
+		--accent: 38 85% 55%;
+		--accent-foreground: 220 25% 10%;
+
+		--destructive: 0 62% 45%;
+		--destructive-foreground: 40 20% 98%;
+
+		--border: 220 15% 22%;
+		--input: 220 15% 22%;
+		--ring: 185 50% 45%;
+
+		--content-bg: 220 18% 12%;
+		--sidebar-bg: 220 22% 8%;
+		--sidebar-foreground: 40 15% 88%;
+		--sidebar-muted: 220 12% 50%;
+		--sidebar-accent: 38 85% 55%;
+		--sidebar-hover: 220 20% 14%;
+
+		--search-bg: 220 15% 15%;
+		--search-border: 220 15% 25%;
+
+		--chat-user: 185 35% 20%;
+		--chat-ai: 220 18% 16%;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+
+	body {
+		@apply bg-background text-foreground antialiased;
+		font-family: 'Inter', system-ui, sans-serif;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: 'Playfair Display', Georgia, serif;
+	}
+}
+
+@layer components {
+	.sidebar-item {
+		@apply flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer;
+		@apply text-sidebar-foreground/80 hover:text-sidebar-foreground;
+		@apply hover:bg-sidebar-hover;
+	}
+
+	.sidebar-item-active {
+		@apply bg-sidebar-hover text-sidebar-foreground;
+		@apply border-l-2 border-sidebar-accent -ml-[2px] pl-[calc(0.75rem+2px)];
+	}
+
+	.content-badge {
+		@apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+	}
+
+	.badge-book {
+		@apply bg-[hsl(var(--badge-book)/0.15)] text-[hsl(var(--badge-book))];
+	}
+
+	.badge-video {
+		@apply bg-[hsl(var(--badge-video)/0.15)] text-[hsl(var(--badge-video))];
+	}
+
+	.badge-notes {
+		@apply bg-[hsl(var(--badge-notes)/0.15)] text-[hsl(var(--badge-notes))];
+	}
+
+	.badge-exam {
+		@apply bg-[hsl(var(--badge-exam)/0.15)] text-[hsl(var(--badge-exam))];
+	}
+
+	.badge-lecture {
+		@apply bg-[hsl(var(--badge-lecture)/0.15)] text-[hsl(var(--badge-lecture))];
+	}
+
+	.search-scope-btn {
+		@apply px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150;
+		@apply text-muted-foreground hover:text-foreground hover:bg-secondary;
+	}
+
+	.search-scope-active {
+		@apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground;
+	}
+
+	.content-card {
+		@apply bg-card rounded-xl border border-border p-4 transition-all duration-200;
+		@apply hover:shadow-md hover:border-primary/30 cursor-pointer;
+	}
+
+	.chat-bubble {
+		@apply px-4 py-3 rounded-2xl max-w-[85%];
+	}
+
+	.chat-bubble-user {
+		@apply bg-[hsl(var(--chat-user))] ml-auto rounded-br-md;
+	}
+
+	.chat-bubble-ai {
+		@apply bg-[hsl(var(--chat-ai))] mr-auto rounded-bl-md;
+	}
+
+	.quiz-option {
+		@apply w-full p-4 text-left rounded-xl border-2 border-border transition-all duration-200;
+		@apply hover:border-primary/50 hover:bg-secondary/50;
+	}
+
+	.quiz-option-selected {
+		@apply border-primary bg-primary/10;
+	}
+
+	.quiz-option-correct {
+		@apply border-green-500 bg-green-500/10;
+	}
+
+	.quiz-option-incorrect {
+		@apply border-red-500 bg-red-500/10;
+	}
+
+	.glass-panel {
+		@apply bg-background/80 backdrop-blur-xl border border-border/50;
+	}
+}
+
+@layer utilities {
+	.scrollbar-thin {
+		scrollbar-width: thin;
+		scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-thumb {
+		background-color: hsl(var(--muted-foreground) / 0.3);
+		border-radius: 3px;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+		background-color: hsl(var(--muted-foreground) / 0.5);
+	}
+}

@@ -8,7 +8,8 @@
 		"pnpm": ">=10.0.0"
 	},
 	"scripts": {
-		"dev": "turbo dev",
+		"dev": "node scripts/dev-gateway.mjs",
+		"dev:turbo": "turbo dev",
 		"build": "turbo build",
 		"lint": "turbo lint",
 		"test": "turbo test",
@@ -36,6 +37,7 @@
 		"@repo/eslint-config": "workspace:*",
 		"@vitest/coverage-v8": "catalog:",
 		"eslint": "catalog:",
+		"http-proxy": "^1.18.1",
 		"husky": "^9.1.7",
 		"knip": "^5.80.2",
 		"nano-staged": "^0.9.0",

@@ -23,7 +23,14 @@
 		},
 		"packages/api-backend": {
 			"project": ["src/**/*.ts"],
-			"entry": ["src/index.ts"]
+			"entry": ["src/db/*.ts"]
+		},
+		"packages/hub": {
+			"ignore": ["**/*"]
+		},
+		"packages/shell": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/main.tsx"]
 		},
 		"configs/vitest": {
 			"ignoreDependencies": ["vite"]

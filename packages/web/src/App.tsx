@@ -133,47 +133,65 @@ export const App = () => {
 	}, [adapters])
 
 	if (isLoading) {
-		return <div className="ir-loading">Loading...</div>
+		return (
+			<div className="web-root">
+				<div className="ir-loading">Loading...</div>
+			</div>
+		)
 	}
 
 	if (error !== null) {
 		return (
-			<div className="ir-review-app">
-				<div className="ir-error">
-					<h2>Error</h2>
-					<p>{error}</p>
+			<div className="web-root">
+				<div className="ir-review-app">
+					<div className="ir-error">
+						<h2>Error</h2>
+						<p>{error}</p>
+					</div>
 				</div>
 			</div>
 		)
 	}
 
 	if (!state || !actions) {
-		return <div className="ir-loading">Initializing...</div>
+		return (
+			<div className="web-root">
+				<div className="ir-loading">Initializing...</div>
+			</div>
+		)
 	}
 
 	return (
-		<div className="ir-review-app">
-			<header
-				style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}
-			>
-				<h1 style={{ fontSize: '1.5rem', margin: 0 }}>
-					Incremental Reading
-					{adapters.isApiMode && (
-						<span style={{ fontSize: '0.75rem', marginLeft: '0.5rem', opacity: 0.7 }}>
-							(API)
-						</span>
-					)}
-				</h1>
-				<button
-					type="button"
-					className="ir-btn ir-btn-secondary"
-					onClick={handleClearData}
-					style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+		<div className="web-root">
+			<div className="ir-review-app">
+				<header
+					style={{
+						marginBottom: '1rem',
+						display: 'flex',
+						justifyContent: 'space-between',
+					}}
 				>
-					{adapters.isApiMode ? 'Refresh' : 'Reset Demo'}
-				</button>
-			</header>
-			<ReviewRouter state={state} actions={actions} />
+					<h1 style={{ fontSize: '1.5rem', margin: 0 }}>
+						Incremental Reading
+						{adapters.isApiMode && (
+							<span
+								style={{ fontSize: '0.75rem', marginLeft: '0.5rem', opacity: 0.7 }}
+							>
+								(API)
+							</span>
+						)}
+					</h1>
+					<button
+						type="button"
+						className="ir-btn ir-btn-secondary"
+						onClick={handleClearData}
+						style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+					>
+						{adapters.isApiMode ? 'Refresh' : 'Reset Demo'}
+					</button>
+				</header>
+				<ReviewRouter state={state} actions={actions} />
+			</div>
 		</div>
 	)
 }

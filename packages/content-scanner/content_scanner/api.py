@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+import os
 import psycopg
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,13 +26,20 @@ app = FastAPI(title="Lecture Navigator API", version="0.1.0")
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8080", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:8080",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DSN = "postgresql:///johandahlin"
+DSN = os.environ.get("CONTENT_SCANNER_DSN")
+if not DSN:
+    raise RuntimeError("CONTENT_SCANNER_DSN is required")
 CALENDAR_PATH = Path(__file__).parent.parent.parent / "calendar.json"
 
 # Course metadata
@@ -351,7 +359,3 @@ async def search(
 
     return SearchResponse(query=q, results=results, total=len(results))
 
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8022)

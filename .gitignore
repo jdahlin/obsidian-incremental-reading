@@ -32,6 +32,9 @@ data.json
 .DS_Store
 
 packages/canvas-extractor/canvas-lms
+packages/kandidaterna-scraper/google_auth.py
+packages/kandidaterna-scraper/google_token.json
+packages/kandidaterna-scraper/scraped_data/*
 
 # generated css build artifacts
 build-css/

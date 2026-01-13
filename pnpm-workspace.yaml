@@ -10,6 +10,7 @@ catalog:
     better-sqlite3: ^11.7.0
     '@types/better-sqlite3': ^7.6.12
     eslint: ^9.39.2
+    vite: ^6.4.1
     tsx: ^4.21.0
     js-yaml: ^4.1.1
     '@types/js-yaml': ^4.0.9

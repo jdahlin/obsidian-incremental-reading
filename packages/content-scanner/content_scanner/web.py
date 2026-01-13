@@ -1,5 +1,6 @@
 """Single-file web search with autocomplete."""
 
+import os
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 import psycopg
@@ -7,7 +8,9 @@ from psycopg.rows import dict_row
 
 app = FastAPI()
 
-DSN = "postgresql:///johandahlin"
+DSN = os.environ.get("CONTENT_SCANNER_DSN")
+if not DSN:
+    raise RuntimeError("CONTENT_SCANNER_DSN is required")
 
 SEARCH_SQL = """
 WITH q AS (
@@ -100,7 +103,3 @@ async def search(q: str = Query(default="")):
 
     return "".join(render_hit(h) for h in hits)
 
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)

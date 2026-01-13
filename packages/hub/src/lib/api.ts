@@ -1,0 +1,265 @@
+/**
+ * API client for the lecture navigator backend.
+ */
+
+const API_BASE = import.meta.env.VITE_API_URL || window.location.origin
+
+// --- Types ---
+
+export type ContentType = 'book' | 'video' | 'notes' | 'exam' | 'lecture'
+
+export interface Course {
+	id: string
+	name: string
+	code: string
+	lecture_count: number
+	lab_count: number
+	exam_count: number
+}
+
+export interface Lecture {
+	id: string
+	number: number
+	title: string
+	date: string
+	start: string
+	end: string
+	duration: string
+	content_count: number
+	is_completed: boolean
+}
+
+export interface LectureSummary {
+	id: string
+	number: number
+	title: string
+	date: string
+	start: string
+	end: string
+	duration: string
+	contentCount: number
+	isCompleted: boolean
+}
+
+export interface Exam {
+	id: string
+	number: number
+	title: string
+	date: string
+	start: string
+	end: string
+	duration: string
+	note?: string
+}
+
+export interface ContentItem {
+	id: string
+	title: string
+	type: ContentType
+	description: string
+	lecture_id: string | null
+	page_count: number | null
+	duration: string | null
+	author: string | null
+	tags: string[]
+}
+
+export interface SearchResult {
+	resource_id: number
+	title: string
+	type: ContentType
+	page_number: number
+	rank: number
+	snippet: string
+	tags: string[]
+}
+
+// --- API Responses ---
+
+interface CourseListResponse {
+	courses: Course[]
+}
+
+interface LectureListResponse {
+	course_id: string
+	lectures: Lecture[]
+}
+
+interface ContentListResponse {
+	items: ContentItem[]
+	total: number
+}
+
+interface SearchResponse {
+	query: string
+	results: SearchResult[]
+	total: number
+}
+
+// --- API Functions ---
+
+async function fetchJson<T>(url: string): Promise<T> {
+	const response = await fetch(url)
+	if (!response.ok) {
+		throw new Error(`API error: ${response.status} ${response.statusText}`)
+	}
+	return response.json()
+}
+
+export async function fetchCourses(): Promise<Course[]> {
+	const data = await fetchJson<CourseListResponse>(`${API_BASE}/api/courses`)
+	return data.courses
+}
+
+export async function fetchLectures(courseId: string): Promise<Lecture[]> {
+	const data = await fetchJson<LectureListResponse>(
+		`${API_BASE}/api/courses/${courseId}/lectures`,
+	)
+	return data.lectures
+}
+
+export async function fetchContent(
+	limit = 50,
+	offset = 0,
+	courseId?: string,
+): Promise<ContentListResponse> {
+	let url = `${API_BASE}/api/content?limit=${limit}&offset=${offset}`
+	if (courseId) {
+		url += `&course_id=${courseId}`
+	}
+	return fetchJson<ContentListResponse>(url)
+}
+
+export interface Material {
+	id: string
+	title: string
+	type: ContentType
+	page_count: number | null
+	tags: string[]
+}
+
+interface MaterialsResponse {
+	course_id: string
+	materials: Material[]
+	total: number
+}
+
+export async function fetchCourseMaterials(courseId: string, limit = 50): Promise<Material[]> {
+	const data = await fetchJson<MaterialsResponse>(
+		`${API_BASE}/api/courses/${courseId}/materials?limit=${limit}`,
+	)
+	return data.materials
+}
+
+interface ExamsResponse {
+	course_id: string
+	exams: Exam[]
+}
+
+export async function fetchCourseExams(courseId: string): Promise<Exam[]> {
+	const data = await fetchJson<ExamsResponse>(`${API_BASE}/api/courses/${courseId}/exams`)
+	return data.exams
+}
+
+export async function searchContent(query: string, limit = 20): Promise<SearchResult[]> {
+	if (!query || query.length < 2) {
+		return []
+	}
+	const data = await fetchJson<SearchResponse>(
+		`${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+	)
+	return data.results
+}
+
+// --- Adapter functions for frontend compatibility ---
+
+/**
+ * Convert API Lecture to frontend-compatible format.
+ */
+export function adaptLecture(lecture: Lecture): LectureSummary {
+	return {
+		id: lecture.id,
+		number: lecture.number,
+		title: lecture.title,
+		date: lecture.date,
+		start: lecture.start,
+		end: lecture.end,
+		duration: lecture.duration,
+		contentCount: lecture.content_count,
+		isCompleted: lecture.is_completed,
+	}
+}
+
+/**
+ * Convert API ContentItem to frontend-compatible format.
+ */
+export function adaptContentItem(item: ContentItem): {
+	id: string
+	title: string
+	type: ContentType
+	description: string
+	lectureId: string
+	pageCount?: number
+	duration?: string
+	author?: string
+	tags: string[]
+} {
+	return {
+		id: item.id,
+		title: item.title,
+		type: item.type,
+		description: item.description,
+		lectureId: item.lecture_id || '',
+		pageCount: item.page_count ?? undefined,
+		duration: item.duration ?? undefined,
+		author: item.author ?? undefined,
+		tags: item.tags,
+	}
+}
+
+/**
+ * Convert SearchResult to ContentItem-like format for display.
+ */
+export function adaptSearchResult(result: SearchResult): {
+	id: string
+	title: string
+	type: ContentType
+	description: string
+	lectureId: string
+	pageCount?: number
+	tags: string[]
+} {
+	return {
+		id: String(result.resource_id),
+		title: result.title,
+		type: result.type,
+		description: result.snippet.replace(/<\/?b>/g, ''), // Strip HTML
+		lectureId: '',
+		pageCount: result.page_number,
+		tags: result.tags,
+	}
+}
+
+export function getTodayLecture<T extends { date: string }>(lectures: T[]): T | null {
+	const today = new Date().toISOString().split('T')[0]
+	return lectures.find((lecture) => lecture.date === today) || null
+}
+
+export function getNextExam<T extends { date: string }>(
+	exams: T[],
+): { exam: T; daysUntil: number } | null {
+	const today = new Date().toISOString().split('T')[0]
+	const upcoming = exams
+		.filter((exam) => exam.date >= today)
+		.sort((a, b) => a.date.localeCompare(b.date))
+
+	if (upcoming.length === 0) {
+		return null
+	}
+
+	const exam = upcoming[0]
+	const daysUntil = Math.ceil(
+		(new Date(exam.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+	)
+	return { exam, daysUntil }
+}

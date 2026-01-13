@@ -1,38 +1,26 @@
 # Obsidian Incremental Reading Plugin
 
-## Project Overview
+A monorepo implementing SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition.
 
-This is a monorepo for an Obsidian plugin that implements SuperMemo-inspired incremental reading with extracts, cloze deletions, and FSRS-based spaced repetition. It includes a CLI for terminal-based review.
+## Quick Reference
 
-**Key Documentation:**
+```bash
+pnpm install         # Install dependencies
+pnpm run dev         # Development build (watch mode, all packages)
+pnpm run build       # Production build (all packages)
+pnpm run typecheck   # TypeScript type checking
+pnpm run lint        # ESLint
+pnpm test            # Run all tests with coverage
+pnpm run format      # Format code with Prettier
+```
 
-- `docs/ARCHITECTURE.md` - Technical design, data model, and implementation status
-- `docs/IMPLEMENTATION_SPEC.md` - Step-by-step implementation guide
-- `docs/USER_GUIDE.md` - User-facing documentation
-- `README.md` - Project overview, features, and installation
+### Per-Package Commands
 
-## Core Concepts
-
-### Incremental Reading Workflow
-
-1. **Extract** - Select text -> create new note linked from source
-2. **Cloze** - Wrap text in `{{c1::answer}}` for active recall
-3. **Review** - Study due items with spaced repetition scheduling
-
-### Data Model
-
-- **Topics** - Extracts without clozes (passive review)
-- **Items** - Cloze deletions (active recall with question/answer phases)
-- **Sidecar files** - Per-note scheduling state in `IR/Review Items/<id>.md`
-- **Revlog** - Review history in `IR/Revlog/YYYY-MM.md` (JSONL format)
-
-### Key Architecture Decisions
-
-- Plain Anki-style cloze syntax: `{{c1::text}}` (no HTML wrapper)
-- Single-pane review: content rendered in review panel (no separate editor)
-- Per-cloze scheduling via sidecar files
-- FSRS algorithm for spaced repetition
-- Race condition handling for concurrent file operations
+```bash
+pnpm --filter @repo/core test      # Run tests for core only
+pnpm --filter @repo/obsidian dev   # Dev mode for obsidian plugin only
+pnpm run cli                       # Run CLI directly
+```
 
 ## Monorepo Structure
 
@@ -40,32 +28,28 @@ This is a monorepo for an Obsidian plugin that implements SuperMemo-inspired inc
 packages/
 ├── core/           # @repo/core - Pure business logic (no Obsidian deps)
 │   └── src/
-│       ├── anki/       # Anki import/export, deck parsing
-│       ├── core/       # Core types, cloze parsing, frontmatter
+│       ├── anki/       # Anki import/export
+│       ├── core/       # Core types and utilities
 │       ├── data/       # Data access abstractions
 │       ├── rv/         # Random variable utilities
-│       ├── scheduling/ # FSRS calculations
+│       ├── scheduling/ # FSRS scheduling
 │       ├── stats/      # Statistics calculations
-│       ├── strategies/ # Card selection strategies
-│       └── SessionManager.ts  # Review session orchestration
+│       └── strategies/ # Card selection strategies
 │
 ├── obsidian/       # @repo/obsidian - Obsidian plugin
 │   └── src/
-│       ├── adapters/   # Platform adapters (file system, etc.)
-│       ├── bases/      # Base classes for views
+│       ├── adapters/   # Platform adapters
 │       ├── commands/   # Obsidian commands (extract, cloze)
-│       ├── data/       # File-based data access (sync, review-items)
+│       ├── data/       # File-based data access
 │       ├── editor/     # CodeMirror extensions
-│       ├── review/     # Review UI components (Preact)
-│       ├── stats/      # Statistics modal
-│       ├── settings.ts # Plugin settings
+│       ├── review/     # Review UI (Preact)
+│       ├── stats/      # Stats UI
 │       └── main.ts     # Plugin entry point
 │
 ├── cli/            # @repo/cli - Terminal review client
 │   └── src/
-│       ├── screens/    # Terminal UI screens
-│       ├── components/ # Reusable Ink components
-│       └── App.tsx     # Main CLI application (React/Ink)
+│       ├── screens/    # Terminal UI screens (React/Ink)
+│       └── components/ # Reusable components
 │
 configs/            # Shared configurations
 ├── eslint/         # @repo/eslint-config
@@ -73,48 +57,21 @@ configs/            # Shared configurations
 └── vitest/         # @repo/vitest-config
 ```
 
-## Environment & Tooling
+## Key Patterns
 
-- **Node.js**: 25+ required
-- **Package manager**: pnpm 10+
-- **Build orchestration**: Turborepo
-- **Bundler**: esbuild (for Obsidian plugin)
-- **UI framework**: Preact (Obsidian), React/Ink (CLI)
-- **Scheduling**: ts-fsrs
+### Sidecar Files (NOT Frontmatter)
 
-### Commands
+Scheduling data goes in `IR/Review Items/` sidecar files, never in note frontmatter:
 
-```bash
-pnpm install                       # Install dependencies
-pnpm run dev                       # Development build (watch mode, all packages)
-pnpm run build                     # Production build
-pnpm run lint                      # Run ESLint
-pnpm test                          # Run tests
-pnpm run typecheck                 # TypeScript type checking
-pnpm run format                    # Format with Prettier
-
-# Per-package commands
-pnpm --filter @repo/core test      # Run tests for core only
-pnpm --filter @repo/obsidian dev   # Dev mode for obsidian plugin
-pnpm run cli                       # Run CLI directly
 ```
-
-## Key Files to Understand
-
-| File                                            | Purpose                                           |
-| ----------------------------------------------- | ------------------------------------------------- |
-| `packages/core/src/SessionManager.ts`           | Review session orchestration and queue management |
-| `packages/core/src/core/cloze.ts`               | `formatClozeQuestion()` and `formatClozeAnswer()` |
-| `packages/core/src/scheduling/fsrs.ts`          | FSRS grading logic                                |
-| `packages/obsidian/src/data/sync.ts`            | Syncs note content to sidecar files               |
-| `packages/obsidian/src/data/review-items.ts`    | Reads/writes sidecar scheduling state             |
-| `packages/obsidian/src/review/ReviewScreen.tsx` | Main review UI component                          |
-
-## Patterns Used
+IR/
+├── Review Items/    # Per-note scheduling state
+└── Revlog/          # Review history (JSONL)
+```
 
 ### Race Condition Handling
 
-All file creation uses try/catch to handle concurrent operations:
+Always use try/catch for file creation:
 
 ```typescript
 try {
@@ -127,24 +84,9 @@ try {
 }
 ```
 
-### Phase Detection for Review
+### Cloze Syntax
 
-```typescript
-// Topics skip question phase, cloze items show question first
-const isClozeItem = item?.type === 'item' && item?.clozeIndex
-this.phase = isClozeItem ? 'question' : 'answer'
-```
-
-### Content Rendering
-
-```typescript
-// Load content with cloze formatting based on phase
-const formatted =
-	this.phase === 'question'
-		? formatClozeQuestion(content, item.clozeIndex)
-		: formatClozeAnswer(content, item.clozeIndex)
-await MarkdownRenderer.render(app, formatted, container, notePath, this)
-```
+Use plain Anki-style syntax: `{{c1::answer}}` - no HTML wrappers.
 
 ### Test Directory Convention
 
@@ -159,63 +101,35 @@ packages/core/src/anki/
     └── html.test.ts
 ```
 
-## Agent Guidelines
+### UI Frameworks
 
-### Do
+- **Obsidian plugin**: Use Preact (NOT React)
+- **CLI**: Use React with Ink
 
-- Read `docs/ARCHITECTURE.md` for design decisions and data model
-- Check `docs/IMPLEMENTATION_SPEC.md` for implementation status
-- Use pure functions in `packages/core/` for testable logic
-- Handle file race conditions with try/catch pattern
-- Use Preact in Obsidian plugin, React/Ink in CLI
-- Run `pnpm --filter <package> test` for package-specific testing
+## Don't
 
-### Don't
-
-- Store scheduling data in note frontmatter (use sidecars)
-- Open separate editor tabs during review (use single-pane design)
-- Wrap clozes in HTML (use plain `{{c1::text}}` syntax)
+- Store scheduling data in note frontmatter
+- Use React in Obsidian (use Preact instead)
+- Wrap clozes in HTML
 - Commit `main.js`, `styles.css`, or `node_modules/`
-- Use React in the Obsidian plugin (use Preact)
-- Use `__tests__/` directories (use `tests/`)
+- Open separate editor tabs during review (single-pane design)
 
-## Testing
+## Debugging Review UI
 
-### Running Tests
-
-```bash
-pnpm test                          # All tests
-pnpm --filter @repo/core test      # Core package only
-pnpm --filter @repo/obsidian test  # Obsidian package only
-```
-
-### Manual Plugin Testing
+Launch Obsidian with remote debugging:
 
 ```bash
-pnpm run build
-# Copy main.js, manifest.json, styles.css to:
-# <Vault>/.obsidian/plugins/obsidian-incremental-reading/
+open -a Obsidian --args --remote-debugging-port=9222
 ```
 
-Reload Obsidian and enable in **Settings -> Community plugins**.
+Use Chrome DevTools MCP to inspect the review view:
 
-## Manifest Rules
+```javascript
+document.querySelector('.ir-review-view')
+```
 
-- `id`: `obsidian-incremental-reading` (never change after release)
-- `version`: Semantic versioning (x.y.z)
-- Keep `minAppVersion` accurate when using newer APIs
+## Documentation
 
-## Releases
-
-1. Bump version in `manifest.json`
-2. Update `versions.json` to map plugin version -> min app version
-3. Create GitHub release with tag matching version (no `v` prefix)
-4. Attach `main.js`, `manifest.json`, `styles.css`
-
-## References
-
-- Obsidian API: https://docs.obsidian.md
-- FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki
-- SuperMemo IR: https://supermemo.guru/wiki/Incremental_reading
-- Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Turborepo: https://turbo.build/repo/docs
+- `docs/ARCHITECTURE.md` - Technical design and data model
+- `docs/IMPLEMENTATION_SPEC.md` - Implementation guide
+- `AGENTS.md` - Detailed agent guidelines
