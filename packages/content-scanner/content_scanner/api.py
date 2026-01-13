@@ -1,10 +1,9 @@
 """Backend API for lecture navigator frontend."""
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
-
-import os
 import psycopg
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,68 +48,44 @@ COURSE_META = {
     "fysiologi_3": {"name": "Fysiologi 3 - Digestion & Reproduktion", "code": "LPG002"},
 }
 
-# Search SQL from existing web.py
 SEARCH_SQL = """
 WITH q AS (
     SELECT websearch_to_tsquery('swedish', %(query)s) AS q_sv,
            websearch_to_tsquery('english', %(query)s) AS q_en
-),
-matches AS (
-    SELECT DISTINCT ON (r.id, rp.page_number)
-        r.id, rp.page_number, r.name AS filename, op.content,
-        (ts_rank_cd(op.tsv_sv, q.q_sv) + ts_rank_cd(op.tsv_en, q.q_en))::float AS rank,
-        q.q_sv
-    FROM q, ocr_page op
-    JOIN ocr_attempt oa ON oa.id = op.ocr_attempt_id AND oa.selected
-    JOIN resource r ON r.id = oa.resource_id
-    JOIN resource_page rp ON rp.id = op.resource_page_id
-    WHERE op.tsv_sv @@ q.q_sv OR op.tsv_en @@ q.q_en
-    ORDER BY r.id, rp.page_number, rank DESC
 )
-SELECT m.id, m.page_number, m.filename, m.rank,
-    ts_headline('swedish', m.content, m.q_sv, 'MaxWords=30,MinWords=15') AS snippet,
-    array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
-FROM matches m
-LEFT JOIN resource_tag rt ON rt.resource_id = m.id
-LEFT JOIN tag t ON t.id = rt.tag_id
-GROUP BY m.id, m.page_number, m.filename, m.rank, m.content, m.q_sv
-ORDER BY m.rank DESC
+SELECT s.resource_id AS id,
+       s.page_number,
+       s.filename,
+       (ts_rank_cd(s.tsv_sv, q.q_sv) + ts_rank_cd(s.tsv_en, q.q_en))::float AS rank,
+       ts_headline('swedish', s.content, q.q_sv, 'MaxWords=30,MinWords=15') AS snippet,
+       s.tags
+FROM search_index_view s, q
+WHERE s.tsv_sv @@ q.q_sv OR s.tsv_en @@ q.q_en
+ORDER BY rank DESC
 LIMIT %(limit)s;
 """
 
 RESOURCES_SQL = """
-SELECT r.id, r.name, r.mime_type,
-       (SELECT COUNT(*) FROM resource_page WHERE resource_id = r.id) AS page_count,
-       array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
-FROM resource r
-LEFT JOIN resource_tag rt ON rt.resource_id = r.id
-LEFT JOIN tag t ON t.id = rt.tag_id
-GROUP BY r.id
-ORDER BY r.name
+SELECT id, name, mime_type, page_count, tags
+FROM resource_with_tags_view
+ORDER BY name
 LIMIT %(limit)s OFFSET %(offset)s;
 """
 
 RESOURCES_BY_TAG_SQL = """
-SELECT r.id, r.name, r.mime_type,
-       (SELECT COUNT(*) FROM resource_page WHERE resource_id = r.id) AS page_count,
-       array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
-FROM resource r
-JOIN resource_tag rt ON rt.resource_id = r.id
-JOIN tag t ON t.id = rt.tag_id
-WHERE t.name = %(tag)s
-GROUP BY r.id
-ORDER BY r.name
+SELECT id, name, mime_type, page_count, tags
+FROM resource_with_tags_view
+WHERE %(tag)s = ANY(tags)
+ORDER BY name
 LIMIT %(limit)s OFFSET %(offset)s;
 """
 
-RESOURCES_COUNT_SQL = "SELECT COUNT(*) AS total FROM resource;"
+RESOURCES_COUNT_SQL = "SELECT COUNT(*) AS total FROM resource_with_tags_view;"
 
 RESOURCES_COUNT_BY_TAG_SQL = """
-SELECT COUNT(DISTINCT r.id) AS total
-FROM resource r
-JOIN resource_tag rt ON rt.resource_id = r.id
-JOIN tag t ON t.id = rt.tag_id
-WHERE t.name = %(tag)s;
+SELECT COUNT(*) AS total
+FROM resource_with_tags_view
+WHERE %(tag)s = ANY(tags);
 """
 
 # Mapping course modules to exam tags/patterns
@@ -358,4 +333,3 @@ async def search(
         ))
 
     return SearchResponse(query=q, results=results, total=len(results))
-
