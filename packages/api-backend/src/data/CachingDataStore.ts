@@ -26,8 +26,6 @@ export class CachingDataStore implements DataStore {
 	}
 
 	private async doInitialize(): Promise<void> {
-		const startTime = Date.now()
-
 		// Load all items
 		this.items = await this.delegate.listItems()
 
@@ -47,8 +45,6 @@ export class CachingDataStore implements DataStore {
 		}
 
 		this.initialized = true
-		const elapsed = Date.now() - startTime
-		process.stdout.write(`Cache initialized: ${this.items.length} items in ${elapsed}ms\n`)
 	}
 
 	async listItems(): Promise<ReviewItem[]> {
