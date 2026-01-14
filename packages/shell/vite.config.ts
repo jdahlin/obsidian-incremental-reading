@@ -1,29 +1,26 @@
+import type { Plugin, ViteDevServer } from 'vite'
 import { resolve } from 'node:path'
-
 import react from '@vitejs/plugin-react'
 import autoprefixer from 'autoprefixer'
 import tailwindcss from 'tailwindcss'
-import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
 
 function devUrlsPlugin(): Plugin {
 	return {
 		name: 'dev-urls',
-		configureServer(server) {
-			const original = server.printUrls
+		configureServer(server: ViteDevServer) {
+			const gatewayUrl = process.env.DEV_GATEWAY_URL
+			const webUrl = process.env.DEV_WEB_URL
+			const hubUrl = process.env.DEV_HUB_URL
+			const apiProxyUrl = process.env.DEV_API_PROXY_URL
+			const apiDirectUrl = process.env.DEV_API_URL
+			if (!gatewayUrl && !webUrl && !hubUrl && !apiProxyUrl && !apiDirectUrl) {
+				return
+			}
 			server.printUrls = () => {
 				const logger = server.config.logger
-				const gatewayUrl = process.env.DEV_GATEWAY_URL
-				const webUrl = process.env.DEV_WEB_URL
-				const hubUrl = process.env.DEV_HUB_URL
-				const apiProxyUrl = process.env.DEV_API_PROXY_URL
-				const apiDirectUrl = process.env.DEV_API_URL
-				if (!gatewayUrl && !webUrl && !hubUrl && !apiProxyUrl && !apiDirectUrl) {
-					original()
-					return
-				}
 				logger.info('')
-				const bold = (value: string) => `\u001b[1m${value}\u001b[0m`
+				const bold = (value: string) => `\u001B[1m${value}\u001B[0m`
 				if (gatewayUrl) {
 					const appUrl = gatewayUrl.endsWith('/') ? gatewayUrl : `${gatewayUrl}/`
 					logger.info(`  ${bold('App:')}      ${appUrl}`)
