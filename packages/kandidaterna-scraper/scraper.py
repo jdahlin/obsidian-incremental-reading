@@ -24,6 +24,7 @@ import httpx
 import browser_cookie3
 import json
 import io
+import os
 import re
 import sys
 import time
@@ -60,7 +61,25 @@ FIREBASE_API_KEY = "***REMOVED***"
 FIREBASE_GMP_ID = "1:644810584310:web:fb0c47ae4f31e6f10a7cd7"
 
 # Auth credentials
-REFRESH_TOKEN = "***REMOVED***"
+ENV_FILE = Path(".env")
+
+
+def _load_env_file(path: Path) -> None:
+    if not path.exists():
+        return
+
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"'")
+        os.environ.setdefault(key, value)
+
+
+_load_env_file(ENV_FILE)
+REFRESH_TOKEN = os.environ.get("KANDIDATERNA_REFRESH_TOKEN")
 SESSION_COOKIE = "s%3ASoYJjtTzwPXkP9n5Vy0d4PT1IPN2%3Aedf5184d-78b2-4761-b037-7fb73defaa9e.r4hug9XzU2aZT%2B7asQW9Q39tiKPdSLQVH5WkWlBMVUg"
 
 # All categories from kandidaterna.app/new-library
@@ -602,6 +621,9 @@ class KandidaternaScraper:
 
     def refresh_access_token(self):
         """Get a new access token using the refresh token."""
+        if not REFRESH_TOKEN:
+            raise RuntimeError("Missing KANDIDATERNA_REFRESH_TOKEN (set it in .env or environment).")
+
         self.log("Refreshing access token...")
 
         resp = self.client.post(
