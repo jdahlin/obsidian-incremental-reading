@@ -52,16 +52,25 @@ SEARCH_SQL = """
 WITH q AS (
     SELECT websearch_to_tsquery('swedish', %(query)s) AS q_sv,
            websearch_to_tsquery('english', %(query)s) AS q_en
+),
+matches AS (
+    SELECT DISTINCT ON (s.resource_id, s.page_number)
+        s.resource_id,
+        s.page_number,
+        s.filename,
+        s.content,
+        (ts_rank_cd(s.tsv_sv, q.q_sv) + ts_rank_cd(s.tsv_en, q.q_en))::float AS rank,
+        q.q_sv,
+        s.tags
+    FROM q, search_index_view s
+    WHERE s.tsv_sv @@ q.q_sv OR s.tsv_en @@ q.q_en
+    ORDER BY s.resource_id, s.page_number, rank DESC
 )
-SELECT s.resource_id AS id,
-       s.page_number,
-       s.filename,
-       (ts_rank_cd(s.tsv_sv, q.q_sv) + ts_rank_cd(s.tsv_en, q.q_en))::float AS rank,
-       ts_headline('swedish', s.content, q.q_sv, 'MaxWords=30,MinWords=15') AS snippet,
-       s.tags
-FROM search_index_view s, q
-WHERE s.tsv_sv @@ q.q_sv OR s.tsv_en @@ q.q_en
-ORDER BY rank DESC
+SELECT m.resource_id AS id, m.page_number, m.filename, m.rank,
+    ts_headline('swedish', m.content, m.q_sv, 'MaxWords=30,MinWords=15') AS snippet,
+    m.tags
+FROM matches m
+ORDER BY m.rank DESC
 LIMIT %(limit)s;
 """
 

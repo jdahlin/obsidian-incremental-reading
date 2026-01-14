@@ -188,6 +188,41 @@ def init_db() -> None:
 
 
 @app.command()
+def migrate_db() -> None:
+    """Apply database migrations."""
+    migrations_path = Path(__file__).parent.parent / "migrations"
+    db = get_db()
+    try:
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                name TEXT PRIMARY KEY,
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """
+        )
+        migrations = sorted(migrations_path.glob("*.sql"))
+        applied = 0
+        for migration in migrations:
+            name = migration.name
+            row = db.fetch_one(
+                "SELECT name FROM schema_migrations WHERE name = %(name)s",
+                {"name": name},
+            )
+            if row:
+                continue
+            db.execute_script(migration.read_text())
+            db.execute(
+                "INSERT INTO schema_migrations (name) VALUES (%(name)s)",
+                {"name": name},
+            )
+            applied += 1
+        print(f"[green]Applied {applied} migration(s)[/green]")
+    finally:
+        db.close()
+
+
+@app.command()
 def import_course(
     path: Path = typer.Argument(..., help="Path to course directory (e.g. scraped_data/anatomi_och_histologi_2)"),
     source: str = typer.Option("kandidaterna", help="Source tag (kandidaterna or canvas)"),
