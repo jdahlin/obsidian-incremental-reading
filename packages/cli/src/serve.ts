@@ -1,7 +1,7 @@
 import type { Buffer } from 'node:buffer'
-import type { ChildProcess } from 'node:child_process'
+import type { ChildProcess, StdioOptions } from 'node:child_process'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { Socket } from 'node:net'
+import type { Duplex } from 'node:stream'
 
 import { spawn } from 'node:child_process'
 import { createServer, request as httpRequest } from 'node:http'
@@ -124,7 +124,7 @@ function proxyHttp(
 function proxyWs(
 	options: Readonly<ServeOptions>,
 	req: IncomingMessage,
-	socket: Socket,
+	socket: Duplex,
 	head: Readonly<Buffer>,
 ): void {
 	const target = resolveTargetPath(req.url ?? '/', options)
@@ -172,7 +172,7 @@ export async function runServe(argv: readonly string[]): Promise<void> {
 		name: string,
 		args: readonly string[],
 		env: Record<string, string> = {},
-		stdio: 'inherit' | 'ignore' | readonly ['ignore', 'ignore', 'inherit'] = 'inherit',
+		stdio: StdioOptions = 'inherit',
 	) {
 		const child: ChildProcess = spawn(pnpmCmd, args, {
 			cwd: repoRoot,
