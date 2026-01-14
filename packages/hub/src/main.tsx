@@ -1,0 +1,16 @@
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App.tsx'
+import './index.css'
+
+// eslint-disable-next-line ts/no-non-null-assertion -- root element is guaranteed to exist
+createRoot(document.getElementById('root')!).render(
+	<BrowserRouter
+		future={{
+			v7_startTransition: true,
+			v7_relativeSplatPath: true,
+		}}
+	>
+		<App />
+	</BrowserRouter>,
+)

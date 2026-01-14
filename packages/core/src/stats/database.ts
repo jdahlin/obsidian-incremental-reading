@@ -6,6 +6,7 @@
  */
 
 import type { Database, SqlJsStatic } from 'sql.js'
+import type { DeepReadonly } from '../core/readonly'
 import type {
 	FutureDueReport,
 	RetentionReport,
@@ -38,8 +39,8 @@ export async function getSqlJs(): Promise<SqlJsStatic> {
  * Create a stats database from review and item records
  */
 export async function createStatsDatabase(
-	reviews: StatsReviewRecord[],
-	items: StatsItemRecord[],
+	reviews: readonly DeepReadonly<StatsReviewRecord>[],
+	items: readonly DeepReadonly<StatsItemRecord>[],
 ): Promise<StatsDatabase> {
 	const SQL = await getSqlJs()
 	const db = new SQL.Database()
@@ -107,7 +108,7 @@ function createTables(db: Database): void {
 	db.run('CREATE INDEX idx_items_status ON items(status)')
 }
 
-function insertReviews(db: Database, reviews: StatsReviewRecord[]): void {
+function insertReviews(db: Database, reviews: readonly DeepReadonly<StatsReviewRecord>[]): void {
 	const stmt = db.prepare(`
 		INSERT INTO reviews (ts, item_id, rating, elapsed_ms, state_before, stability_before, difficulty_before)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -131,7 +132,7 @@ function insertReviews(db: Database, reviews: StatsReviewRecord[]): void {
 	stmt.free()
 }
 
-function insertItems(db: Database, items: StatsItemRecord[]): void {
+function insertItems(db: Database, items: readonly DeepReadonly<StatsItemRecord>[]): void {
 	const stmt = db.prepare(`
 		INSERT INTO items (id, status, due, stability, difficulty, reps, lapses)
 		VALUES (?, ?, ?, ?, ?, ?, ?)

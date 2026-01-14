@@ -3,11 +3,12 @@
  * Writes current review state to IR/.session.json
  */
 
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ReviewItem, SessionItem } from '@repo/core/types'
 import type { App, TFile } from 'obsidian'
 
 /** Get clozeIndex from a ReviewItem, or null if not applicable */
-function getClozeIndex(item: ReviewItem): number | null {
+function getClozeIndex(item: DeepReadonly<ReviewItem>): number | null {
 	if (item.type === 'cloze' || item.type === 'image_occlusion') {
 		return item.clozeIndex
 	}
@@ -46,7 +47,10 @@ export interface SessionStateData {
 
 const SESSION_FILE_PATH = 'IR/.session.json'
 
-export async function writeSessionState(app: App, data: SessionStateData): Promise<void> {
+export async function writeSessionState(
+	app: App,
+	data: DeepReadonly<SessionStateData>,
+): Promise<void> {
 	const content = JSON.stringify(data, null, 2)
 
 	try {
@@ -80,17 +84,19 @@ export async function writeSessionState(app: App, data: SessionStateData): Promi
 	}
 }
 
-export function buildSessionState(params: {
-	deck: string | null
-	currentItem: SessionItem | null
-	phase: 'question' | 'answer'
-	queueCounts: { new: number; learning: number; due: number; total: number }
-	sessionStats: { reviewed: number; again: number; hard: number; good: number; easy: number }
-	startedAt: Date | null
-	lastError?: string | null
-	rawMarkdown?: string | null
-	formattedMarkdown?: string | null
-}): SessionStateData {
+export function buildSessionState(
+	params: DeepReadonly<{
+		deck: string | null
+		currentItem: SessionItem | null
+		phase: 'question' | 'answer'
+		queueCounts: { new: number; learning: number; due: number; total: number }
+		sessionStats: { reviewed: number; again: number; hard: number; good: number; easy: number }
+		startedAt: Date | null
+		lastError?: string | null
+		rawMarkdown?: string | null
+		formattedMarkdown?: string | null
+	}>,
+): SessionStateData {
 	return {
 		deck: params.deck,
 		currentItem: params.currentItem

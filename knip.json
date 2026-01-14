@@ -23,7 +23,38 @@
 		},
 		"packages/api-backend": {
 			"project": ["src/**/*.ts"],
-			"entry": ["src/index.ts"]
+			"entry": ["src/db/*.ts"]
+		},
+		"packages/hub": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": [
+				"src/main.tsx",
+				"src/components/ui/*.tsx",
+				"src/data/mockData.ts",
+				"src/hooks/*.ts",
+				"src/components/MiniCalendar.tsx"
+			],
+			"ignoreDependencies": [
+				"@hookform/resolvers",
+				"@radix-ui/*",
+				"baseline-browser-mapping",
+				"caniuse-lite",
+				"cmdk",
+				"date-fns",
+				"embla-carousel-react",
+				"input-otp",
+				"react-day-picker",
+				"react-hook-form",
+				"react-resizable-panels",
+				"recharts",
+				"vaul",
+				"zod",
+				"@tailwindcss/typography"
+			]
+		},
+		"packages/shell": {
+			"project": ["src/**/*.{ts,tsx}"],
+			"entry": ["src/main.tsx"]
 		},
 		"configs/vitest": {
 			"ignoreDependencies": ["vite"]

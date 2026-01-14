@@ -1,3 +1,5 @@
+import type { DeepReadonly } from './core/readonly'
+
 export type ItemType = 'topic' | 'cloze' | 'basic' | 'image_occlusion'
 export type ReviewMode = 'review' | 'exam'
 export type SessionStrategyId = 'JD1' | 'Anki'
@@ -118,16 +120,20 @@ export interface SessionStats {
 }
 
 export interface Scheduler {
-	grade: (state: ReviewState, rating: Rating, now: Date) => ReviewState
-	isDue: (state: ReviewState, now: Date) => boolean
-	applyExamAdjustment?: (state: ReviewState, examDate: Date, now: Date) => ReviewState
+	grade: (state: DeepReadonly<ReviewState>, rating: Rating, now: Date) => ReviewState
+	isDue: (state: DeepReadonly<ReviewState>, now: Date) => boolean
+	applyExamAdjustment?: (
+		state: DeepReadonly<ReviewState>,
+		examDate: Date,
+		now: Date,
+	) => ReviewState
 }
 
 export interface DataStore {
 	listItems: () => Promise<ReviewItem[]>
 	getState: (itemId: string) => Promise<ReviewState | null>
-	setState: (itemId: string, state: ReviewState) => Promise<void>
-	appendReview: (record: ReviewRecord) => Promise<void>
+	setState: (itemId: string, state: DeepReadonly<ReviewState>) => Promise<void>
+	appendReview: (record: DeepReadonly<ReviewRecord>) => Promise<void>
 	setScrollPos: (itemId: string, pos: number) => Promise<void>
 	getScrollPos: (itemId: string) => Promise<number | null>
 }
@@ -141,7 +147,7 @@ export interface NotePlatform {
 export interface NoteManipulator {
 	createExtract: (source: string, start: number, end: number) => string
 	insertCloze: (source: string, start: number, end: number, hint?: string) => string
-	updateFrontmatter: (source: string, data: Record<string, unknown>) => string
+	updateFrontmatter: (source: string, data: DeepReadonly<Record<string, unknown>>) => string
 }
 
 export interface ReviewRecord {

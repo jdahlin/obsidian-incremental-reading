@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { SessionConfig, SessionItem } from '../types'
 import type { SessionStrategy, StrategyContext } from './types'
 
@@ -15,7 +16,11 @@ import type { SessionStrategy, StrategyContext } from './types'
  * Total theoretical max: ~10125 for priority=100 topic with all bonuses.
  */
 export class JD1Strategy implements SessionStrategy {
-	rank(items: SessionItem[], config: SessionConfig, context: StrategyContext): SessionItem[] {
+	rank(
+		items: readonly DeepReadonly<SessionItem>[],
+		_config: DeepReadonly<SessionConfig>,
+		context: DeepReadonly<StrategyContext>,
+	): SessionItem[] {
 		const scoredItems = items.map((item) => ({
 			item,
 			score: this.calculateScore(item, context),
@@ -31,7 +36,10 @@ export class JD1Strategy implements SessionStrategy {
 		return scoredItems.map((si) => si.item)
 	}
 
-	private calculateScore(si: SessionItem, context: StrategyContext): number {
+	private calculateScore(
+		si: DeepReadonly<SessionItem>,
+		context: DeepReadonly<StrategyContext>,
+	): number {
 		const { item, state } = si
 		const now = context.now
 

@@ -122,7 +122,7 @@ export const StatsRoot: FunctionalComponent<StatsRootProps> = ({ app, settings }
 		)
 	}
 
-	if (error) {
+	if (error !== null) {
 		return (
 			<div className="ir-stats-root ir-stats-error">
 				<p>Error: {error}</p>

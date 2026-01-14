@@ -1,4 +1,5 @@
 import type { Card, RecordLog } from 'ts-fsrs'
+import type { DeepReadonly } from '../core/readonly'
 import type { Rating, ReviewState, Scheduler, SchedulingParams } from '../types'
 import { FSRS, Rating as FSRSRating, State as FSRSState, generatorParameters } from 'ts-fsrs'
 import { assertNever } from '../core/assert'
@@ -6,7 +7,7 @@ import { assertNever } from '../core/assert'
 export class FSRSScheduler implements Scheduler {
 	private fsrs: FSRS
 
-	constructor(params?: SchedulingParams) {
+	constructor(params?: DeepReadonly<SchedulingParams>) {
 		this.fsrs = new FSRS(
 			generatorParameters({
 				enable_fuzz: false,
@@ -17,7 +18,7 @@ export class FSRSScheduler implements Scheduler {
 		)
 	}
 
-	grade(state: ReviewState, rating: Rating, now: Date): ReviewState {
+	grade(state: DeepReadonly<ReviewState>, rating: Rating, now: Date): ReviewState {
 		const card = this.toCard(state)
 		const fsrsRating = this.toFSRSRating(rating)
 		const schedulingCards = this.fsrs.repeat(card, now) as RecordLog
@@ -25,7 +26,7 @@ export class FSRSScheduler implements Scheduler {
 		return this.fromCard(recordLog.card)
 	}
 
-	isDue(state: ReviewState, now: Date): boolean {
+	isDue(state: DeepReadonly<ReviewState>, now: Date): boolean {
 		if (!state.due) return true
 		return state.due <= now
 	}
@@ -41,7 +42,7 @@ export class FSRSScheduler implements Scheduler {
 	 *
 	 * This is a one-way adjustment (only pulls forward, never pushes back).
 	 */
-	applyExamAdjustment(state: ReviewState, examDate: Date, now: Date): ReviewState {
+	applyExamAdjustment(state: DeepReadonly<ReviewState>, examDate: Date, now: Date): ReviewState {
 		const targetReviews = 6
 		const minIntervalDays = 1
 		const maxIntervalDays = 60
@@ -72,7 +73,7 @@ export class FSRSScheduler implements Scheduler {
 	 * elapsed_days/scheduled_days are set to 0 because FSRS computes them from dates.
 	 * due defaults to epoch (Date(0)) for new cards to avoid undefined issues.
 	 */
-	private toCard(state: ReviewState): Card {
+	private toCard(state: DeepReadonly<ReviewState>): Card {
 		return {
 			due: state.due ?? new Date(0),
 			stability: state.stability,
@@ -86,7 +87,7 @@ export class FSRSScheduler implements Scheduler {
 		} as Card
 	}
 
-	private fromCard(card: Card): ReviewState {
+	private fromCard(card: DeepReadonly<Card>): ReviewState {
 		return {
 			status: this.fromFSRSState(card.state),
 			due: card.due,

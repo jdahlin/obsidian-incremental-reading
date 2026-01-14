@@ -8,7 +8,8 @@
 		"pnpm": ">=10.0.0"
 	},
 	"scripts": {
-		"dev": "turbo dev",
+		"dev": "node scripts/dev-gateway.mjs",
+		"dev:turbo": "turbo dev",
 		"build": "turbo build",
 		"lint": "turbo lint",
 		"test": "turbo test",
@@ -20,7 +21,8 @@
 		"clean": "turbo clean && rm -rf node_modules",
 		"prepare": "husky",
 		"knip": "knip",
-		"cli": "tsx packages/cli/src/index.tsx"
+		"cli": "tsx packages/cli/src/index.tsx",
+		"dev:web": "./scripts/dev-web.sh"
 	},
 	"nano-staged": {
 		"*.{ts,tsx,js,mjs,json}": [
@@ -35,12 +37,13 @@
 		"@repo/eslint-config": "workspace:*",
 		"@vitest/coverage-v8": "catalog:",
 		"eslint": "catalog:",
+		"http-proxy": "^1.18.1",
 		"husky": "^9.1.7",
 		"knip": "^5.80.2",
 		"nano-staged": "^0.9.0",
 		"prettier": "^3.7.4",
 		"tsx": "catalog:",
-		"turbo": "^2.7.2",
+		"turbo": "^2.7.4",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	},

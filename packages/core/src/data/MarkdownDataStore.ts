@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { DataStore, NotePlatform, ReviewItem, ReviewRecord, ReviewState } from '../types'
 import type { FileSystem } from './FileSystem'
 import { load as parse, dump as stringify } from 'js-yaml'
@@ -159,7 +160,7 @@ export class MarkdownDataStore implements DataStore {
 		}
 	}
 
-	async setState(itemId: string, state: ReviewState): Promise<void> {
+	async setState(itemId: string, state: DeepReadonly<ReviewState>): Promise<void> {
 		const { noteId, clozeKey } = this.parseItemId(itemId)
 		const existing = await this.readReviewItemFile(noteId)
 		const data: ReviewItemFile = existing ?? {
@@ -181,7 +182,7 @@ export class MarkdownDataStore implements DataStore {
 		await this.writeReviewItemFile(noteId, data)
 	}
 
-	async appendReview(record: ReviewRecord): Promise<void> {
+	async appendReview(record: DeepReadonly<ReviewRecord>): Promise<void> {
 		const date = new Date(record.ts)
 		const month = String(date.getUTCMonth() + 1).padStart(2, '0')
 		const year = date.getUTCFullYear()
@@ -253,7 +254,10 @@ ${line}`
 		return this.parseReviewItemFile(content)
 	}
 
-	private async writeReviewItemFile(noteId: string, data: ReviewItemFile): Promise<void> {
+	private async writeReviewItemFile(
+		noteId: string,
+		data: DeepReadonly<ReviewItemFile>,
+	): Promise<void> {
 		const path = this.getReviewItemPath(noteId)
 		const record: Record<string, unknown> = {
 			ir_note_id: data.ir_note_id,
@@ -322,7 +326,10 @@ ${line}`
 		return lines.slice(1, endIndex).join('\n')
 	}
 
-	private updateFrontmatter(content: string, updates: Record<string, unknown>): string {
+	private updateFrontmatter(
+		content: string,
+		updates: DeepReadonly<Record<string, unknown>>,
+	): string {
 		const fm = this.parseFrontmatterBlock(content)
 		let data: Record<string, unknown> = {}
 		if (fm !== null) {
@@ -348,7 +355,7 @@ ${line}`
 		return ['---', newYaml, '---', content].join('\n')
 	}
 
-	private parseState(raw?: RawItemState): ReviewState | undefined {
+	private parseState(raw?: DeepReadonly<RawItemState>): ReviewState | undefined {
 		if (raw === undefined) return undefined
 		return {
 			status: (raw.status as ReviewState['status']) ?? 'new',
@@ -365,7 +372,7 @@ ${line}`
 	}
 
 	private parseClozes(
-		raw?: Record<string, RawClozeEntry>,
+		raw?: DeepReadonly<Record<string, RawClozeEntry>>,
 	): Record<string, ClozeEntry> | undefined {
 		if (!raw) return undefined
 		const res: Record<string, ClozeEntry> = {}
@@ -383,7 +390,7 @@ ${line}`
 		return res
 	}
 
-	private serializeState(state: ReviewState): Record<string, unknown> {
+	private serializeState(state: DeepReadonly<ReviewState>): Record<string, unknown> {
 		const isValidDate = (d: Date | null | undefined): d is Date =>
 			d instanceof Date && !Number.isNaN(d.getTime())
 

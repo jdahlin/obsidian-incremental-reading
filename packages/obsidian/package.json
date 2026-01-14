@@ -17,13 +17,13 @@
 		"@repo/core": "workspace:*",
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",
-		"obsidian": "latest",
+		"obsidian": "1.11.4",
 		"preact": "^10.26.9",
 		"sql.js": "catalog:"
 	},
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",
-		"@codemirror/view": "^6.29.1",
+		"@codemirror/view": "6.38.6",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tsconfig": "workspace:*",
 		"@repo/vitest-config": "workspace:*",

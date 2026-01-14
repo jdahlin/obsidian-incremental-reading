@@ -53,6 +53,7 @@ export class WebReviewPlatform implements ReviewPlatform {
 		return { current: 0, longest: 0 }
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
 	getPreselectedPath(_decks: readonly DeckInfo[]): string | null {
 		// No preselection for web
 		return null

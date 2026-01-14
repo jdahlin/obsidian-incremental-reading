@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ItemState, ItemWithState, ReviewRecord } from '@repo/core/core/types'
 import type { Rating, ReviewState, Status } from '@repo/core/types'
 import type { ServerDeps } from '../server'
@@ -14,7 +15,7 @@ import { Hono } from 'hono'
 /**
  * Convert ReviewState to ItemState for compatibility.
  */
-function toItemState(state: ReviewState | null): ItemState {
+function toItemState(state: DeepReadonly<ReviewState> | null): ItemState {
 	if (state === null) {
 		return {
 			status: 'new',
@@ -37,7 +38,7 @@ function toItemState(state: ReviewState | null): ItemState {
 	}
 }
 
-export function createStatsRoutes(deps: ServerDeps): Hono {
+export function createStatsRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 
 	/**
@@ -174,10 +175,12 @@ export function createStatsRoutes(deps: ServerDeps): Hono {
 	return app
 }
 
-async function readRevlogFiles(fs: {
-	list: () => Promise<string[]>
-	read: (path: string) => Promise<string | null>
-}): Promise<ReviewRecord[]> {
+async function readRevlogFiles(
+	fs: DeepReadonly<{
+		list: () => Promise<string[]>
+		read: (path: string) => Promise<string | null>
+	}>,
+): Promise<ReviewRecord[]> {
 	const files = await fs.list()
 	const revlogFiles = files.filter((f) => f.startsWith('IR/Revlog/') && f.endsWith('.md'))
 

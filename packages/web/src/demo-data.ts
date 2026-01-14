@@ -5,6 +5,7 @@ import type { WebNotePlatform } from './adapters/WebNotePlatform'
 /**
  * Create demo data for testing the web review interface.
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- data stores
 export function createDemoData(dataStore: WebDataStore, notePlatform: WebNotePlatform): void {
 	const notes: Record<string, string> = {
 		'demo/spaced-repetition': `# Spaced Repetition

@@ -107,6 +107,7 @@ export interface ReviewPlatform {
 	 * Get the preselected deck path based on available decks.
 	 * Returns null if no preselection should be made.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
 	readonly getPreselectedPath: (decks: readonly DeckInfo[]) => string | null
 
 	/**
@@ -139,4 +140,13 @@ export interface ReviewPlatform {
 	 * Open the stats view.
 	 */
 	readonly openStats?: (extractTag: string) => void
+
+	/**
+	 * Get pre-computed deck info (for API-backed platforms).
+	 * If provided, the controller will use this instead of building deck tree from items.
+	 */
+	readonly getDeckInfo?: () => Promise<{
+		decks: DeckInfo[]
+		allCounts: { new: number; learning: number; due: number }
+	}>
 }
