@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ReviewRecord } from '@repo/core/core/types'
 import type { App } from 'obsidian'
 import { formatDate } from '@repo/core/core/frontmatter'
@@ -5,7 +6,7 @@ import { TFile } from 'obsidian'
 
 const REVLOG_FOLDER = 'IR/Revlog'
 
-export async function appendReview(app: App, entry: ReviewRecord): Promise<void> {
+export async function appendReview(app: App, entry: DeepReadonly<ReviewRecord>): Promise<void> {
 	await ensureRevlogFolder(app)
 	const ts = entry.ts ? new Date(entry.ts) : new Date()
 	const path = revlogPathForDate(ts)

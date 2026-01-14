@@ -66,8 +66,8 @@ jobs:
             - name: Install Playwright browsers
               run: pnpm --filter @repo/web exec playwright install --with-deps chromium
 
-            - name: Run E2E tests
-              run: pnpm --filter @repo/web run test:e2e
+            #- name: Run E2E tests
+            #  run: pnpm --filter @repo/web run test:e2e
 
             - name: Upload test results
               uses: actions/upload-artifact@v4

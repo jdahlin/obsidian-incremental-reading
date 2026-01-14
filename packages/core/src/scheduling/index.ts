@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { Scheduler, SchedulerId, SchedulingParams } from '../types'
 import { assertNever } from '../core/assert'
 import { FSRSScheduler } from './FSRSScheduler'
@@ -7,7 +8,7 @@ export * from './FSRSScheduler'
 export * from './SM2Scheduler'
 export * from './TopicScheduler'
 
-export function getScheduler(id: SchedulerId, params?: SchedulingParams): Scheduler {
+export function getScheduler(id: SchedulerId, params?: DeepReadonly<SchedulingParams>): Scheduler {
 	switch (id) {
 		case 'fsrs':
 			return new FSRSScheduler(params)

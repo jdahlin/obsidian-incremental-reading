@@ -48,6 +48,7 @@ export class ApiReviewPlatform implements ReviewPlatform {
 		}
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- DeckInfo type
 	getPreselectedPath(_decks: readonly DeckInfo[]): string | null {
 		// Could read from URL params or localStorage
 		return null
@@ -109,6 +110,22 @@ export class ApiReviewPlatform implements ReviewPlatform {
 		}
 	}
 
+	/**
+	 * Get pre-computed deck info from the API.
+	 * This is used by ReviewController to avoid loading all items.
+	 */
+	async getDeckInfo(): Promise<{
+		decks: DeckInfo[]
+		allCounts: { new: number; learning: number; due: number }
+	}> {
+		const response = await this.api.getFolders()
+		return {
+			decks: response.decks.map((d) => this.mapDeck(d)),
+			allCounts: response.allCounts,
+		}
+	}
+
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- API type
 	private mapDeck(deck: DeckData): DeckInfo {
 		return {
 			path: deck.path,

@@ -31,7 +31,14 @@ export function parseImageOcclusionRects(content: string): ImageOcclusionRect[] 
 		const topStr = match[3]
 		const widthStr = match[4]
 		const heightStr = match[5]
-		if (!clozeStr || !leftStr || !topStr || !widthStr || !heightStr) continue
+		if (
+			clozeStr === undefined ||
+			leftStr === undefined ||
+			topStr === undefined ||
+			widthStr === undefined ||
+			heightStr === undefined
+		)
+			continue
 
 		rects.push({
 			clozeIndex: Number.parseInt(clozeStr, 10),

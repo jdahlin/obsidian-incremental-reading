@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-/* eslint-disable no-console -- CLI application needs console output */
+
 import { serve } from '@hono/node-server'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 
+import { CachingDataStore } from './data/CachingDataStore'
 import { NodeFileSystem } from './fs/NodeFileSystem'
 import { NodeNotePlatform } from './platforms/NodeNotePlatform'
 import { createServer } from './server'
@@ -22,31 +23,36 @@ async function main(): Promise<void> {
 	// Resolve to absolute path
 	const absolutePath = vaultPath.startsWith('/') ? vaultPath : `${process.cwd()}/${vaultPath}`
 
-	console.log(`Starting API backend for vault: ${absolutePath}`)
+	process.stdout.write(`Starting API backend for vault: ${absolutePath}\n`)
 
 	// Create dependencies
 	const fs = new NodeFileSystem(absolutePath)
 	const notePlatform = new NodeNotePlatform(fs)
-	const dataStore = new MarkdownDataStore(fs, notePlatform)
+	const baseDataStore = new MarkdownDataStore(fs, notePlatform)
+	const cachingDataStore = new CachingDataStore(baseDataStore)
+
+	// Initialize cache before starting server
+	process.stdout.write('Loading vault data into cache...\n')
+	await cachingDataStore.initialize()
 
 	// Create and start server
-	const app = createServer({ fs, dataStore, notePlatform })
+	const app = createServer({ fs, dataStore: cachingDataStore, cachingDataStore, notePlatform })
 
 	const port = Number(process.env.PORT ?? DEFAULT_PORT)
 
-	console.log(`Server starting on http://localhost:${port}`)
+	process.stdout.write(`Server starting on http://localhost:${port}\n`)
 
 	serve({
 		fetch: app.fetch,
 		port,
 	})
 
-	console.log(`API backend ready!`)
-	console.log(`  Health: http://localhost:${port}/health`)
-	console.log(`  Queue:  http://localhost:${port}/api/queue`)
-	console.log(`  Items:  http://localhost:${port}/api/items`)
-	console.log(`  Stats:  http://localhost:${port}/api/stats`)
-	console.log(`  Media:  http://localhost:${port}/api/media/*`)
+	process.stdout.write('API backend ready!\n')
+	process.stdout.write(`  Health: http://localhost:${port}/health\n`)
+	process.stdout.write(`  Queue:  http://localhost:${port}/api/queue\n`)
+	process.stdout.write(`  Items:  http://localhost:${port}/api/items\n`)
+	process.stdout.write(`  Stats:  http://localhost:${port}/api/stats\n`)
+	process.stdout.write(`  Media:  http://localhost:${port}/api/media/*\n`)
 }
 
 main().catch((err) => {

@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type {
 	DataStore,
 	Rating,
@@ -194,11 +195,11 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		this.state.nextItem = itemId
 	}
 
-	setNextItems(itemIds: string[]): void {
-		this.state.nextItems = itemIds
+	setNextItems(itemIds: readonly string[]): void {
+		this.state.nextItems = [...itemIds]
 	}
 
-	setSession(config: Record<string, unknown>): void {
+	setSession(config: DeepReadonly<Record<string, unknown>>): void {
 		this.state.session = {
 			strategy: String((config.strategy as string) ?? this.state.session.strategy),
 			examDate: (config.examDate as string | null) ?? null,
@@ -292,14 +293,14 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		return this.state.states[itemId] || null
 	}
 
-	async setState(itemId: string, state: ReviewState): Promise<void> {
+	async setState(itemId: string, state: DeepReadonly<ReviewState>): Promise<void> {
 		this.state.states[itemId] = state
 		if (state.due) {
 			this.state.due[itemId] = formatDate(state.due)
 		}
 	}
 
-	async appendReview(record: ReviewRecord): Promise<void> {
+	async appendReview(record: DeepReadonly<ReviewRecord>): Promise<void> {
 		this.state.reviewLogs.push(record)
 		// Update legacy tracking for tests
 		this.state.grades.push({ itemId: record.itemId, rating: record.rating })
@@ -352,7 +353,9 @@ export class MemoryDataStore implements EngineStore, DataStore {
 		}
 	}
 
-	private mapStatesToSnapshot(states: Record<string, ReviewState>): Record<string, unknown> {
+	private mapStatesToSnapshot(
+		states: DeepReadonly<Record<string, ReviewState>>,
+	): Record<string, unknown> {
 		const result: Record<string, unknown> = {}
 		for (const key of Object.keys(states)) {
 			result[key] = states[key] // Directly expose for now
@@ -361,7 +364,7 @@ export class MemoryDataStore implements EngineStore, DataStore {
 	}
 }
 
-function buildStats(state: EngineState): Record<string, unknown> {
+function buildStats(state: DeepReadonly<EngineState>): Record<string, unknown> {
 	const noteCount = Object.keys(state.notes).length
 	const clozeCount = Object.keys(state.clozes).length
 	const itemCount = noteCount + clozeCount
@@ -391,13 +394,13 @@ function buildStats(state: EngineState): Record<string, unknown> {
 	}
 }
 
-function sortRecord<T>(record: Record<string, T>): Record<string, T> {
+function sortRecord<T>(record: DeepReadonly<Record<string, T>>): Record<string, T> {
 	return Object.keys(record)
 		.sort()
 		.reduce<Record<string, T>>((acc, key) => {
 			const value = record[key]
 			if (value !== undefined) {
-				acc[key] = value
+				acc[key] = value as T
 			}
 			return acc
 		}, {})

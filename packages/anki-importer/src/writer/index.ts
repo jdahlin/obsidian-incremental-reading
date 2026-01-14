@@ -7,6 +7,7 @@
 
 import type { AnkiImportResult } from '../importer/index.js'
 import type { IRNoteId } from '../ir-types.js'
+import type { DeepReadonly } from '../readonly.js'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -49,7 +50,10 @@ export function createOutputPaths(root: string): OutputPaths {
 /**
  * Ensure all output directories exist
  */
-export async function ensureDirectories(paths: OutputPaths, sidecarDir: string): Promise<void> {
+export async function ensureDirectories(
+	paths: DeepReadonly<OutputPaths>,
+	sidecarDir: string,
+): Promise<void> {
 	await Promise.all([
 		mkdir(paths.models, { recursive: true }),
 		mkdir(paths.revlog, { recursive: true }),
@@ -114,8 +118,8 @@ export interface WriteOptions {
  * Each sidecar contains note_path pointing to its note file
  */
 export async function writeAnkiData(
-	data: AnkiImportResult,
-	options: WriteOptions,
+	data: DeepReadonly<AnkiImportResult>,
+	options: DeepReadonly<WriteOptions>,
 ): Promise<WriteResult> {
 	const paths = createOutputPaths(options.outputDir)
 	await ensureDirectories(paths, options.sidecarDir)
@@ -192,8 +196,9 @@ export async function writeAnkiData(
 async function copyMedia(
 	sourceDir: string,
 	destDir: string,
-	errors: WriteError[],
+	errors: DeepReadonly<WriteError[]>,
 ): Promise<number> {
+	const errorsArray = errors as WriteError[]
 	let count = 0
 
 	try {
@@ -209,7 +214,7 @@ async function copyMedia(
 				await copyFile(src, dest)
 				count++
 			} catch (err) {
-				errors.push({
+				errorsArray.push({
 					type: 'media',
 					id: file,
 					path: join(destDir, file),
@@ -218,7 +223,7 @@ async function copyMedia(
 			}
 		}
 	} catch (err) {
-		errors.push({
+		errorsArray.push({
 			type: 'media',
 			id: 'directory',
 			path: sourceDir,

@@ -10,7 +10,4 @@ export default defineConfig({
 			'@repo/core': resolve(__dirname, '../core/src'),
 		},
 	},
-	server: {
-		port: 3000,
-	},
 })
