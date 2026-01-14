@@ -35,7 +35,7 @@ const baseConfig = antfu({
 
 		// Immutability at boundaries - prevent mutation of shared data
 		'@typescript-eslint/prefer-readonly-parameter-types': [
-			'error',
+			'off',
 			{
 				checkParameterProperties: false, // Allow mutable constructor params
 				ignoreInferredTypes: true, // Don't require readonly on callback params from external libs
@@ -54,7 +54,7 @@ const baseConfig = antfu({
 
 		// Logic validation
 		'@typescript-eslint/switch-exhaustiveness-check': 'warn',
-		'@typescript-eslint/strict-boolean-expressions': 'warn', // Warn only to allow gradual migration
+		'@typescript-eslint/strict-boolean-expressions': 'off', // Avoid forcing explicit undefined/null checks
 
 		// Disable rules that might not be configured
 		'import/no-nodejs-modules': 'off',

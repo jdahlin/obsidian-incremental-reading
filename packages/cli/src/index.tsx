@@ -8,10 +8,20 @@ const exitAltScreen = '\x1B[?1049l'
 const hideCursor = '\x1B[?25l'
 const showCursor = '\x1B[?25h'
 
-const cli = meow(
-	`
+const rawArgs = process.argv.slice(2)
+
+void (async () => {
+	if (rawArgs[0] === 'serve') {
+		const { runServe } = await import('./serve.js')
+		await runServe(rawArgs.slice(1))
+		return
+	}
+
+	const cli = meow(
+		`
   Usage
     $ pnpm cli [options]
+    $ pnpm cli serve [options]
 
   Options
     --vault, -v     Path to vault (default: ./vault)
@@ -36,80 +46,78 @@ const cli = meow(
     $ pnpm cli --import --deck-filter "AH del 2*"   # Import matching decks
     $ echo "status" | pnpm cli --batch
 `,
-	{
-		importMeta: import.meta,
-		flags: {
-			vault: {
-				type: 'string',
-				shortFlag: 'v',
-				default: './vault',
-			},
-			review: {
-				type: 'string',
-				shortFlag: 'r',
-			},
-			deck: {
-				type: 'string',
-				shortFlag: 'd',
-			},
-			strategy: {
-				type: 'string',
-				shortFlag: 's',
-				default: 'Anki',
-			},
-			limit: {
-				type: 'number',
-				shortFlag: 'l',
-			},
-			batch: {
-				type: 'boolean',
-				shortFlag: 'b',
-				default: false,
-			},
-			snapshot: {
-				type: 'boolean',
-				default: false,
-			},
-			import: {
-				type: 'boolean',
-				shortFlag: 'i',
-				default: false,
-			},
-			importPath: {
-				type: 'string',
-				description: 'Custom Anki profile path (defaults to standard location)',
-			},
-			deckFilter: {
-				type: 'string',
+		{
+			importMeta: import.meta,
+			flags: {
+				vault: {
+					type: 'string',
+					shortFlag: 'v',
+					default: './vault',
+				},
+				review: {
+					type: 'string',
+					shortFlag: 'r',
+				},
+				deck: {
+					type: 'string',
+					shortFlag: 'd',
+				},
+				strategy: {
+					type: 'string',
+					shortFlag: 's',
+					default: 'Anki',
+				},
+				limit: {
+					type: 'number',
+					shortFlag: 'l',
+				},
+				batch: {
+					type: 'boolean',
+					shortFlag: 'b',
+					default: false,
+				},
+				snapshot: {
+					type: 'boolean',
+					default: false,
+				},
+				import: {
+					type: 'boolean',
+					shortFlag: 'i',
+					default: false,
+				},
+				importPath: {
+					type: 'string',
+					description: 'Custom Anki profile path (defaults to standard location)',
+				},
+				deckFilter: {
+					type: 'string',
+				},
 			},
 		},
-	},
-)
+	)
 
-const {
-	vault,
-	deck,
-	strategy,
-	limit,
-	batch,
-	review,
-	snapshot,
-	import: doImport,
-	importPath,
-	deckFilter: _deckFilter, // TODO: implement deck filtering
-} = cli.flags
+	const {
+		vault,
+		deck,
+		strategy,
+		limit,
+		batch,
+		review,
+		snapshot,
+		import: doImport,
+		importPath,
+		deckFilter: _deckFilter, // TODO: implement deck filtering
+	} = cli.flags
 
-// --snapshot: render once with colors and exit (for debugging)
-if (snapshot) {
-	process.env.FORCE_COLOR = '1'
-}
+	// --snapshot: render once with colors and exit (for debugging)
+	if (snapshot) {
+		process.env.FORCE_COLOR = '1'
+	}
 
-// Check if --review or -r was passed (even without a value)
-const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r')
-const reviewFilter = review !== undefined && review !== '' ? review : undefined
+	// Check if --review or -r was passed (even without a value)
+	const reviewMode = process.argv.some((arg) => arg === '--review' || arg === '-r')
+	const reviewFilter = review !== undefined && review !== '' ? review : undefined
 
-// Main entry point - wrapped in async IIFE for lazy loading
-void (async () => {
 	// Import mode - import from Anki and exit
 	if (doImport) {
 		// Lazy load the anki-importer to avoid loading it when not needed
