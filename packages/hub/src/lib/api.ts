@@ -64,6 +64,21 @@ export interface ContentItem {
 	readonly tags: readonly string[]
 }
 
+export interface CourseItem {
+	readonly id: string
+	readonly course_id: number
+	readonly created_at: string
+	readonly modified_at: string
+	readonly name: string
+	readonly description: string | null
+	readonly lecturer: string | null
+	readonly tags: readonly string[]
+	readonly start_at: string | null
+	readonly end_at: string | null
+	readonly kind: string
+	readonly is_hidden: boolean
+}
+
 export interface SearchResult {
 	readonly resource_id: number
 	readonly title: string
@@ -94,6 +109,20 @@ interface SearchResponse {
 	query: string
 	results: SearchResult[]
 	total: number
+}
+
+interface CourseItemListResponse {
+	items: CourseItem[]
+	total: number
+}
+
+interface ResourceAssignResponse {
+	resource: {
+		id: number
+		course_id: number | null
+		course_item_id: number | null
+		updated_at: string
+	}
 }
 
 // --- API Functions ---
@@ -151,6 +180,20 @@ export async function fetchCourseMaterials(courseId: string, limit = 50): Promis
 	return data.materials
 }
 
+export async function fetchCourseItems(
+	courseId: string,
+	includeHidden = false,
+): Promise<CourseItem[]> {
+	const query = new URLSearchParams({ course_id: courseId })
+	if (includeHidden) {
+		query.set('include_hidden', 'true')
+	}
+	const data = await fetchJson<CourseItemListResponse>(
+		`${API_BASE}/api/course-items?${query.toString()}`,
+	)
+	return data.items
+}
+
 interface ExamsResponse {
 	course_id: string
 	exams: Exam[]
@@ -159,6 +202,23 @@ interface ExamsResponse {
 export async function fetchCourseExams(courseId: string): Promise<Exam[]> {
 	const data = await fetchJson<ExamsResponse>(`${API_BASE}/api/courses/${courseId}/exams`)
 	return data.exams
+}
+
+export async function assignResourceToCourseItem(
+	resourceId: string,
+	courseItemId: string | null,
+): Promise<ResourceAssignResponse> {
+	const response = await fetch(`${API_BASE}/api/resources/${resourceId}/assign`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			course_item_id: courseItemId === null ? null : Number(courseItemId),
+		}),
+	})
+	if (!response.ok) {
+		throw new Error(`API error: ${response.status} ${response.statusText}`)
+	}
+	return response.json() as Promise<ResourceAssignResponse>
 }
 
 export async function searchContent(query: string, limit = 20): Promise<SearchResult[]> {

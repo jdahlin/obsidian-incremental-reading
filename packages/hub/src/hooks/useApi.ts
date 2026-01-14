@@ -10,6 +10,7 @@ import {
 	adaptSearchResult,
 	fetchContent,
 	fetchCourseExams,
+	fetchCourseItems,
 	fetchCourseMaterials,
 	fetchCourses,
 	fetchLectures,
@@ -61,6 +62,15 @@ export function useCourseExams(courseId: string | null) {
 		queryKey: ['exams', courseId],
 		// eslint-disable-next-line ts/no-non-null-assertion -- enabled guard ensures courseId is non-null
 		queryFn: async () => fetchCourseExams(courseId!),
+		enabled: !!courseId,
+	})
+}
+
+export function useCourseItems(courseId: string | null, includeHidden = false) {
+	return useQuery({
+		queryKey: ['course-items', courseId, includeHidden],
+		// eslint-disable-next-line ts/no-non-null-assertion -- enabled guard ensures courseId is non-null
+		queryFn: async () => fetchCourseItems(courseId!, includeHidden),
 		enabled: !!courseId,
 	})
 }
