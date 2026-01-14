@@ -53,6 +53,7 @@ export class WebNotePlatform implements NotePlatform {
 	/**
 	 * Import notes from a map.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- notes object
 	importNotes(notes: Record<string, string>): void {
 		for (const [id, content] of Object.entries(notes)) {
 			this.notes.set(id, content)

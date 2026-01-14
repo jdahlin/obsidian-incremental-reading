@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ItemState } from '@repo/core/core/types'
 import type { App, TFile } from 'obsidian'
 import type { ClozeEntry, ReviewItemFile } from './review-items'
@@ -24,7 +25,7 @@ export async function syncNoteToSidecar(
 	app: App,
 	file: TFile,
 	extractTag: string,
-	frontmatterOverride?: Record<string, unknown>,
+	frontmatterOverride?: DeepReadonly<Record<string, unknown>>,
 ): Promise<void> {
 	const frontmatter =
 		frontmatterOverride ?? app.metadataCache.getFileCache(file)?.frontmatter ?? {}

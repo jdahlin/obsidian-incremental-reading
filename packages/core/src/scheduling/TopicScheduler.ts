@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../core/readonly'
 import type { Rating, ReviewState, Scheduler } from '../types'
 
 function addMinutes(date: Date, minutes: number): Date {
@@ -9,7 +10,7 @@ function addDays(date: Date, days: number): Date {
 }
 
 export class TopicScheduler implements Scheduler {
-	grade(state: ReviewState, rating: Rating, now: Date): ReviewState {
+	grade(state: DeepReadonly<ReviewState>, rating: Rating, now: Date): ReviewState {
 		let due: Date
 		let status: ReviewState['status'] = 'review'
 		let lapses = state.lapses
@@ -41,7 +42,7 @@ export class TopicScheduler implements Scheduler {
 		}
 	}
 
-	isDue(state: ReviewState, now: Date): boolean {
+	isDue(state: DeepReadonly<ReviewState>, now: Date): boolean {
 		if (!state.due) return true
 		return state.due <= now
 	}

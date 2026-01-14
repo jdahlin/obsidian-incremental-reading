@@ -4,6 +4,10 @@ coverage
 # vscode
 .vscode 
 
+.venv
+*.pyc
+__pycache__
+
 # Intellij
 *.iml
 .idea
@@ -26,6 +30,11 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+packages/canvas-extractor/canvas-lms
+packages/kandidaterna-scraper/google_auth.py
+packages/kandidaterna-scraper/google_token.json
+packages/kandidaterna-scraper/scraped_data/*
 
 # generated css build artifacts
 build-css/

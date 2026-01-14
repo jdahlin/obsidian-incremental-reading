@@ -37,6 +37,7 @@ export class ApiDataStore implements DataStore {
 		}
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- state object
 	async setState(itemId: string, state: ReviewState): Promise<void> {
 		// State is set implicitly through reviews
 		// This is a no-op for the API backend as state is managed server-side
@@ -46,6 +47,7 @@ export class ApiDataStore implements DataStore {
 		})
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- record object
 	async appendReview(record: ReviewRecord): Promise<void> {
 		// Reviews are submitted through the review endpoint
 		await this.api.submitReview(record.itemId, record.rating, record.elapsedMs)
@@ -67,6 +69,7 @@ export class ApiDataStore implements DataStore {
 		this.itemsCache = null
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- API type
 	private mapQueueItem(item: QueueItem): ReviewItem {
 		const base = {
 			id: item.id,

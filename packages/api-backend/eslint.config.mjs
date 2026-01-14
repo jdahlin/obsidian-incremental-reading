@@ -8,7 +8,16 @@ const apiOverride = {
 	},
 }
 
+// Route handlers use Hono framework types that are mutable by design
+const routeOverride = {
+	files: ['**/routes/*.ts'],
+	rules: {
+		'ts/prefer-readonly-parameter-types': 'off',
+	},
+}
+
 export default config
 	.append(...allBoundaries)
 	.append(testOverride)
 	.append(apiOverride)
+	.append(routeOverride)

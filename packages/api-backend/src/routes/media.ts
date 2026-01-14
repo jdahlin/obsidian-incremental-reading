@@ -1,8 +1,9 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { ServerDeps } from '../server'
 
 import { Hono } from 'hono'
 
-export function createMediaRoutes(deps: ServerDeps): Hono {
+export function createMediaRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 
 	/**

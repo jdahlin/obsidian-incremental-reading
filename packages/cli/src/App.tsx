@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { SessionStrategyId } from '@repo/core/types'
 import { MarkdownDataStore } from '@repo/core/data/MarkdownDataStore'
 import { SessionManager } from '@repo/core/SessionManager'
@@ -29,7 +30,7 @@ export function App({
 	reviewMode,
 	reviewFilter,
 	exitAfterRender,
-}: AppProps) {
+}: DeepReadonly<AppProps>) {
 	const { exit } = useApp()
 	const { stdout } = useStdout()
 	const [tab, setTab] = useState<Tab>(

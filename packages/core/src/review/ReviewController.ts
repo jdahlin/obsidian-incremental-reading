@@ -52,6 +52,7 @@ interface UndoState {
 	previousState: ReviewState
 }
 
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- callback type
 type Listener = (state: ReviewScreenState) => void
 
 /**
@@ -212,10 +213,11 @@ export class ReviewController {
 	/**
 	 * Handle keyboard events during review.
 	 */
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- event type
 	handleKeyDown(event: KeyDownEvent): void | Promise<void> {
 		if (event.defaultPrevented) return
 		const target = event.target
-		if (target?.tagName && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
+		if (target?.tagName !== undefined && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return
 
 		if (event.key === 'Escape' && this.model.screen === 'review') {
 			void this.backToSummary()
@@ -269,42 +271,54 @@ export class ReviewController {
 		const requestId = ++this.refreshRequestId
 		const now = new Date()
 
-		const engineItems = await this.deps.dataStore.listItems()
 		const items: ItemWithState[] = []
-		for (const engineItem of engineItems) {
-			const state = await this.deps.dataStore.getState(engineItem.id)
-			items.push({
-				id: engineItem.id,
-				noteId: engineItem.noteId,
-				notePath: engineItem.notePath,
-				type: this.mapItemType(engineItem.type),
-				clozeIndex: getClozeIndex(engineItem),
-				state: state
-					? {
-							status: state.status,
-							due: state.due,
-							stability: state.stability,
-							difficulty: state.difficulty,
-							reps: state.reps,
-							lapses: state.lapses,
-							last_review: state.lastReview,
-						}
-					: {
-							status: 'new',
-							due: null,
-							stability: 0,
-							difficulty: 0,
-							reps: 0,
-							lapses: 0,
-							last_review: null,
-						},
-				priority: engineItem.priority,
-				created: engineItem.created,
-			})
+		let decks: DeckInfo[]
+		let allCounts: DeckCounts
+
+		// Use pre-computed deck info if available (for API-backed platforms)
+		if (this.deps.platform.getDeckInfo !== undefined) {
+			const deckInfo = await this.deps.platform.getDeckInfo()
+			decks = deckInfo.decks
+			allCounts = deckInfo.allCounts
+			// Items not needed for folder screen when using server-side computation
+		} else {
+			// Fall back to building deck tree from items
+			const engineItems = await this.deps.dataStore.listItems()
+			for (const engineItem of engineItems) {
+				const state = await this.deps.dataStore.getState(engineItem.id)
+				items.push({
+					id: engineItem.id,
+					noteId: engineItem.noteId,
+					notePath: engineItem.notePath,
+					type: this.mapItemType(engineItem.type),
+					clozeIndex: getClozeIndex(engineItem),
+					state: state
+						? {
+								status: state.status,
+								due: state.due,
+								stability: state.stability,
+								difficulty: state.difficulty,
+								reps: state.reps,
+								lapses: state.lapses,
+								last_review: state.lastReview,
+							}
+						: {
+								status: 'new',
+								due: null,
+								stability: 0,
+								difficulty: 0,
+								reps: 0,
+								lapses: 0,
+								last_review: null,
+							},
+					priority: engineItem.priority,
+					created: engineItem.created,
+				})
+			}
+			decks = buildDeckTree(items, now)
+			allCounts = getCountsForFolder(items, '', now)
 		}
 
-		const decks = buildDeckTree(items, now)
-		const allCounts = getCountsForFolder(items, '', now)
 		const todayStats = await this.deps.platform.getTodayStats(now)
 		const streak = await this.deps.platform.getStreakInfo(now)
 		if (requestId !== this.refreshRequestId) return
@@ -615,6 +629,7 @@ export class ReviewController {
 		await this.updateSessionFile()
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- SessionItem type
 	private async loadItemContent(si: SessionItem | null, phase: ReviewPhase): Promise<void> {
 		const requestId = ++this.contentRequestId
 		if (!si) {
@@ -643,6 +658,7 @@ export class ReviewController {
 		}
 	}
 
+	// eslint-disable-next-line ts/prefer-readonly-parameter-types -- callback/model type
 	private setModel(update: ReviewModel | ((prev: ReviewModel) => ReviewModel)): void {
 		this.model = typeof update === 'function' ? update(this.model) : update
 		this.emit()

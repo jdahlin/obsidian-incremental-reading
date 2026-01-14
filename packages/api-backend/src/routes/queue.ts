@@ -1,5 +1,6 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { DeckInfo, ItemState, ItemWithState } from '@repo/core/core/types'
-import type { ReviewState } from '@repo/core/types'
+import type { ReviewItem, ReviewState } from '@repo/core/types'
 import type { ServerDeps } from '../server'
 
 import { buildDeckTree, getCountsForFolder } from '@repo/core/core/decks'
@@ -8,7 +9,7 @@ import { Hono } from 'hono'
 /**
  * Convert ReviewState (camelCase lastReview) to ItemState (snake_case last_review).
  */
-function toItemState(state: ReviewState | null): ItemState {
+function toItemState(state: DeepReadonly<ReviewState> | null): ItemState {
 	if (state === null) {
 		return {
 			status: 'new',
@@ -31,12 +32,38 @@ function toItemState(state: ReviewState | null): ItemState {
 	}
 }
 
-export function createQueueRoutes(deps: ServerDeps): Hono {
+function mapItemType(type: string): ItemWithState['type'] {
+	const typeMap: Record<string, ItemWithState['type']> = {
+		topic: 'topic',
+		cloze: 'item',
+		basic: 'basic',
+		image_occlusion: 'image_occlusion',
+	}
+	return typeMap[type] ?? 'item'
+}
+
+function toItemWithState(
+	item: DeepReadonly<ReviewItem>,
+	state: DeepReadonly<ReviewState> | null,
+): ItemWithState {
+	return {
+		id: item.id,
+		noteId: item.noteId,
+		notePath: item.notePath,
+		type: mapItemType(item.type),
+		clozeIndex: 'clozeIndex' in item ? item.clozeIndex : null,
+		state: toItemState(state),
+		priority: item.priority,
+		created: item.created ?? new Date(),
+	}
+}
+
+export function createQueueRoutes(deps: DeepReadonly<ServerDeps>): Hono {
 	const app = new Hono()
 
 	/**
 	 * GET /api/queue
-	 * Returns today's review queue.
+	 * Returns today's review queue (limited, for actual review).
 	 */
 	app.get('/', async (c) => {
 		const folder = c.req.query('folder')
@@ -44,27 +71,25 @@ export function createQueueRoutes(deps: ServerDeps): Hono {
 		const limit = limitParam !== undefined ? Number.parseInt(limitParam, 10) : 50
 
 		const now = new Date()
-		const items = await deps.dataStore.listItems()
 
-		// Build items with state
-		const itemsWithState: ItemWithState[] = []
-		for (const item of items) {
-			// Filter by folder if specified
-			if (folder !== undefined && !item.notePath.startsWith(folder)) {
-				continue
+		// Use caching store's efficient method if available
+		let itemsWithState: ItemWithState[]
+		if (deps.cachingDataStore !== undefined) {
+			const cached = await deps.cachingDataStore.getItemsWithStates()
+			itemsWithState = cached
+				.filter(({ item }) => folder === undefined || item.notePath.startsWith(folder))
+				.map(({ item, state }) => toItemWithState(item, state))
+		} else {
+			// Fallback to loading items individually
+			const items = await deps.dataStore.listItems()
+			itemsWithState = []
+			for (const item of items) {
+				if (folder !== undefined && !item.notePath.startsWith(folder)) {
+					continue
+				}
+				const state = await deps.dataStore.getState(item.id)
+				itemsWithState.push(toItemWithState(item, state))
 			}
-
-			const state = await deps.dataStore.getState(item.id)
-			itemsWithState.push({
-				id: item.id,
-				noteId: item.noteId,
-				notePath: item.notePath,
-				type: mapItemType(item.type),
-				clozeIndex: 'clozeIndex' in item ? item.clozeIndex : null,
-				state: toItemState(state),
-				priority: item.priority,
-				created: item.created ?? new Date(),
-			})
 		}
 
 		// Filter to due items
@@ -115,25 +140,24 @@ export function createQueueRoutes(deps: ServerDeps): Hono {
 	/**
 	 * GET /api/queue/folders
 	 * Returns folders containing review items (for deck selection).
+	 * This is the main endpoint for the folder screen - returns pre-computed counts.
 	 */
 	app.get('/folders', async (c) => {
 		const now = new Date()
-		const items = await deps.dataStore.listItems()
 
-		// Build items with state for deck tree
-		const itemsWithState: ItemWithState[] = []
-		for (const item of items) {
-			const state = await deps.dataStore.getState(item.id)
-			itemsWithState.push({
-				id: item.id,
-				noteId: item.noteId,
-				notePath: item.notePath,
-				type: mapItemType(item.type),
-				clozeIndex: 'clozeIndex' in item ? item.clozeIndex : null,
-				state: toItemState(state),
-				priority: item.priority,
-				created: item.created ?? new Date(),
-			})
+		// Use caching store's efficient method if available
+		let itemsWithState: ItemWithState[]
+		if (deps.cachingDataStore !== undefined) {
+			const cached = await deps.cachingDataStore.getItemsWithStates()
+			itemsWithState = cached.map(({ item, state }) => toItemWithState(item, state))
+		} else {
+			// Fallback to loading items individually
+			const items = await deps.dataStore.listItems()
+			itemsWithState = []
+			for (const item of items) {
+				const state = await deps.dataStore.getState(item.id)
+				itemsWithState.push(toItemWithState(item, state))
+			}
 		}
 
 		const decks = buildDeckTree(itemsWithState, now)
@@ -148,17 +172,7 @@ export function createQueueRoutes(deps: ServerDeps): Hono {
 	return app
 }
 
-function mapItemType(type: string): ItemWithState['type'] {
-	const typeMap: Record<string, ItemWithState['type']> = {
-		topic: 'topic',
-		cloze: 'item',
-		basic: 'basic',
-		image_occlusion: 'image_occlusion',
-	}
-	return typeMap[type] ?? 'item'
-}
-
-function serializeDecks(decks: DeckInfo[]): unknown[] {
+function serializeDecks(decks: readonly DeepReadonly<DeckInfo>[]): unknown[] {
 	return decks.map((deck) => ({
 		path: deck.path,
 		name: deck.name,

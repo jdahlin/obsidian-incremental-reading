@@ -1,3 +1,4 @@
+import type { DeepReadonly } from './core/readonly'
 import type { SessionStrategy, StrategyContext } from './strategies/types'
 import type {
 	DataStore,
@@ -44,11 +45,11 @@ export class SessionManager {
 		private config: SessionConfig,
 	) {}
 
-	setConfig(config: SessionConfig): void {
-		this.config = config
+	setConfig(config: DeepReadonly<SessionConfig>): void {
+		this.config = { ...config } as SessionConfig
 	}
 
-	async loadPool(now: Date = new Date(), options?: LoadPoolOptions): Promise<void> {
+	async loadPool(now: Date = new Date(), options?: DeepReadonly<LoadPoolOptions>): Promise<void> {
 		let items = await this.dataStore.listItems()
 
 		// Apply folder filtering
@@ -262,9 +263,9 @@ export class SessionManager {
 	 * If the last N reviews were all from noteId X, exclude X from this pick.
 	 * This only affects the immediate next selection; X becomes eligible again after.
 	 */
-	private applyClumpLimit(items: SessionItem[]): SessionItem[] {
+	private applyClumpLimit(items: readonly DeepReadonly<SessionItem>[]): SessionItem[] {
 		const limit = this.config.clumpLimit ?? 3
-		if (this.historyIds.length < limit) return items
+		if (this.historyIds.length < limit) return [...items] as SessionItem[]
 
 		const recentNoteIds = this.historyIds
 			.slice(-limit)
@@ -276,21 +277,24 @@ export class SessionManager {
 			recentNoteIds.every((id) => id === lastNoteId) && recentNoteIds.length === limit
 
 		if (isClumped) {
-			return items.filter((si) => si.item.noteId !== lastNoteId)
+			return items.filter((si) => si.item.noteId !== lastNoteId) as SessionItem[]
 		}
 
-		return items
+		return [...items] as SessionItem[]
 	}
 
-	private filterByFolder(items: ReviewItem[], folderPath: string): ReviewItem[] {
+	private filterByFolder(
+		items: readonly DeepReadonly<ReviewItem>[],
+		folderPath: string,
+	): ReviewItem[] {
 		if (folderPath === '/') {
 			// Root folder: items with no folder in path
-			return items.filter((item) => !item.notePath.includes('/'))
+			return items.filter((item) => !item.notePath.includes('/')) as ReviewItem[]
 		}
 		const normalized = folderPath.replace(/\/$/, '')
 		return items.filter(
 			(item) => item.notePath === normalized || item.notePath.startsWith(`${normalized}/`),
-		)
+		) as ReviewItem[]
 	}
 
 	getCounts(now: Date): { new: number; learning: number; due: number } {

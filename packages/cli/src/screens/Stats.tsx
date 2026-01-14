@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { SessionManager } from '@repo/core/SessionManager'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -16,7 +17,7 @@ interface ReviewStats {
 	cards: { total: number; new: number; learning: number; due: number }
 }
 
-export function Stats({ session, vaultPath }: StatsProps) {
+export function Stats({ session, vaultPath }: DeepReadonly<StatsProps>) {
 	const [stats, setStats] = useState<ReviewStats | null>(null)
 	const [loading, setLoading] = useState(true)
 
@@ -149,7 +150,11 @@ export function Stats({ session, vaultPath }: StatsProps) {
 		)
 	}
 
-	const Bar = ({ value, max, color }: { value: number; max: number; color: string }) => {
+	const Bar = ({
+		value,
+		max,
+		color,
+	}: DeepReadonly<{ value: number; max: number; color: string }>) => {
 		const width = 30
 		const filled = max > 0 ? Math.round((value / max) * width) : 0
 		return (

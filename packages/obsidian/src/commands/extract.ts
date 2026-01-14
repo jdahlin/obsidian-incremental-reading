@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '@repo/core/core/readonly'
 import type { App, Editor, MarkdownFileInfo, MarkdownView } from 'obsidian'
 import { formatDate } from '@repo/core/core/frontmatter'
 import { Notice, stringifyYaml, TFile } from 'obsidian'
@@ -12,22 +13,24 @@ export interface ExtractOptions {
 	priority?: number
 }
 
+/* eslint-disable ts/prefer-readonly-parameter-types -- Obsidian types */
 export async function extractToIncrementalNote(
 	app: App,
 	editor: Editor,
 	view: MarkdownView | MarkdownFileInfo,
-	options: ExtractOptions,
+	options: DeepReadonly<ExtractOptions>,
 ): Promise<void> {
+	/* eslint-enable ts/prefer-readonly-parameter-types */
 	const selectionRaw = editor.getSelection()
 	const selection = normalizeSelection(selectionRaw)
 	if (!selection) {
-		new Notice('No selection to extract.')
+		void new Notice('No selection to extract.')
 		return
 	}
 
 	let sourceFile = view.file
 	if (!sourceFile) {
-		new Notice('No active file.')
+		void new Notice('No active file.')
 		return
 	}
 
@@ -66,7 +69,7 @@ export async function extractToIncrementalNote(
 	editor.setSelection(from, editor.getCursor('to'))
 
 	await syncNoteToSidecar(app, childFile, tag, frontmatter)
-	new Notice(`Created note: ${childFile.basename}`)
+	void new Notice(`Created note: ${childFile.basename}`)
 }
 
 function isFolderNote(file: TFile): boolean {

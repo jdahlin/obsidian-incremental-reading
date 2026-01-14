@@ -5,6 +5,7 @@ import type { DebugInfo, QueueName, ReviewPhase, SessionStats } from './types'
 /**
  * Get clozeIndex from a ReviewItem, or null if not applicable.
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- ReviewItem type
 export function getClozeIndex(item: ReviewItem): number | null {
 	if (item.type === 'cloze' || item.type === 'image_occlusion') {
 		return item.clozeIndex
@@ -17,6 +18,7 @@ export function getClozeIndex(item: ReviewItem): number | null {
  * - Cloze, basic, and image_occlusion cards start with question phase
  * - Topic cards go directly to answer (show full content)
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- SessionItem type
 export function determinePhase(item: SessionItem | null): ReviewPhase {
 	if (!item) return 'question'
 	const type = item.item.type
@@ -38,6 +40,7 @@ export function getQueueName(status: string): QueueName {
 /**
  * Build debug info from a session item.
  */
+// eslint-disable-next-line ts/prefer-readonly-parameter-types -- SessionItem type
 export function buildDebugInfo(item: SessionItem): DebugInfo {
 	return {
 		queue: getQueueName(item.state.status),
@@ -54,9 +57,11 @@ export function buildDebugInfo(item: SessionItem): DebugInfo {
 /**
  * Flatten a deck tree into a flat array.
  */
+/* eslint-disable ts/prefer-readonly-parameter-types -- DeckInfo type */
 export function flattenDecks(decks: readonly DeckInfo[]): readonly DeckInfo[] {
 	const rows: DeckInfo[] = []
 	const walk = (nodes: readonly DeckInfo[]): void => {
+		/* eslint-enable ts/prefer-readonly-parameter-types */
 		for (const node of nodes) {
 			rows.push(node)
 			if (node.children.length > 0) walk(node.children)

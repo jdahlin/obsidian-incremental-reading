@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3'
+import type { DeepReadonly } from '../readonly.js'
 import type { Deck, DeckRow } from '../types.js'
 import { readDecks } from '../database.js'
 import { deckId, parseDeckPath } from '../types.js'
@@ -16,7 +17,7 @@ import { deckId, parseDeckPath } from '../types.js'
 /**
  * Convert raw deck row to hydrated Deck
  */
-function hydrateDeck(row: DeckRow): Deck {
+function hydrateDeck(row: DeepReadonly<DeckRow>): Deck {
 	// Anki uses \x1f as hierarchy separator in some versions, normalize to ::
 	// eslint-disable-next-line no-control-regex
 	const normalizedName = row.name.replace(/\x1F/g, '::')
@@ -35,7 +36,7 @@ function hydrateDeck(row: DeckRow): Deck {
 /**
  * Import all decks from database
  */
-export function importDecks(db: Database.Database): Deck[] {
+export function importDecks(db: DeepReadonly<Database.Database>): Deck[] {
 	const rows = readDecks(db)
 	return rows.map(hydrateDeck)
 }
