@@ -1,5 +1,3 @@
-import type { QueryResultRow } from 'pg'
-
 function quoteIdent(identifier: string): string {
 	return `"${identifier.replace(/"/g, '""')}"`
 }
@@ -61,9 +59,9 @@ export function buildUpdateStatement(
 	}
 }
 
-export function mapRowDates<T extends QueryResultRow>(row: T, keys: readonly string[]): T {
+export function mapRowDates<T extends object>(row: T, keys: readonly string[]): T {
 	for (const key of keys) {
-		const value: unknown = row[key]
+		const value = (row as Record<string, unknown>)[key]
 		if (value instanceof Date) {
 			;(row as Record<string, unknown>)[key] = value.toISOString()
 		}

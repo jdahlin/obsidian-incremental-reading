@@ -14,7 +14,6 @@ const DEFAULT_PORT = 3001
 async function main(): Promise<void> {
 	const args = process.argv.slice(2).filter((value) => value !== '--')
 	const vaultPath = args[0] ?? process.env.VAULT_PATH ?? './anki-vault'
-
 	const absolutePath = vaultPath.startsWith('/') ? vaultPath : `${process.cwd()}/${vaultPath}`
 
 	// Create dependencies
