@@ -152,8 +152,7 @@ For cloze items, you first see the question (cloze hidden), then click "Show Ans
 | Cloze selection (same index) | Wrap selection as cloze, reuse last index |
 | Open review                  | Start review session                      |
 | Set priority                 | Change priority of current note           |
-| Open statistics              | Show statistics modal                     |
-| Export review history        | Export revlog to CSV                      |
+| Export review history        | Export review log to CSV file             |
 
 **Note:** No default hotkeys are assigned. Set your preferred hotkeys in **Settings → Hotkeys**.
 
@@ -161,7 +160,7 @@ For cloze items, you first see the question (cloze hidden), then click "Show Ans
 
 ## Statistics
 
-Run **Open statistics** to see:
+Statistics are available in the review interface to see:
 
 - **Total reviews** - All-time review count
 - **Retention** - Percentage of reviews where you remembered
@@ -177,15 +176,19 @@ Run **Open statistics** to see:
 
 Access via **Settings → Community plugins → Incremental Reading**.
 
-| Setting             | Default | Description                             |
-| ------------------- | ------- | --------------------------------------- |
-| New cards per day   | 10      | Max new items introduced daily          |
-| Maximum interval    | 365     | Longest time between reviews (days)     |
-| Request retention   | 0.9     | Target probability of remembering       |
-| Extract tag         | `topic` | Tag that marks notes for review         |
-| Extract title words | 5       | Words for auto-generated extract titles |
-| Track review time   | On      | Record time spent per review            |
-| Show streak         | On      | Display streak in deck summary          |
+| Setting                            | Default | Description                                         |
+| ---------------------------------- | ------- | --------------------------------------------------- |
+| New cards per day                  | 10      | Max new items introduced daily                      |
+| Maximum interval                   | 365     | Longest time between reviews (days)                 |
+| Request retention                  | 0.9     | Target probability of remembering                   |
+| Extract tag                        | `topic` | Tag that marks notes for review                     |
+| Extract title words                | 5       | Words for auto-generated extract titles             |
+| Create folder for extracted topics | Off     | Create folder when extracting from non-folder notes |
+| Track review time                  | On      | Record time spent per review                        |
+| Show streak                        | On      | Display streak in deck summary                      |
+| Queue strategy                     | JD1     | Queue ordering (JD1 or Anki)                        |
+| Clump limit                        | 3       | Maximum consecutive clozes from same note           |
+| Cooldown                           | 5       | Number of reviews before failed item re-enters      |
 
 ---
 
@@ -241,8 +244,8 @@ Glycolysis produces a net gain of {{c1::2 ATP}} per glucose molecule.
 
 ### "No items to review"
 
-1. Check that notes have the `#topic` tag
-2. New items might be limited by "New cards per day" setting
+1. Check that notes have the `#topic` tag (or your configured extract tag)
+2. New items might be limited by "New cards per day" setting (default: 10)
 3. All items might be scheduled for future dates
 
 ### Clozes not hiding during review

@@ -26,19 +26,21 @@ This plugin implements the core incremental reading workflow, allowing you to bu
 
 ### Commands
 
-| Command               | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| Extract to topic note | Creates a new note from selection, replaces with link |
-| Cloze selection       | Wraps selection in `{{c1::...}}` cloze syntax         |
-| Open review           | Opens the review panel                                |
-| Sync all notes        | Re-syncs all tagged notes to sidecar files            |
+| Command                      | Description                                           |
+| ---------------------------- | ----------------------------------------------------- |
+| Extract to topic note        | Creates a new note from selection, replaces with link |
+| Cloze selection              | Wraps selection in `{{c1::...}}` cloze syntax         |
+| Cloze selection (same index) | Wraps selection in cloze with same index as previous  |
+| Open review                  | Opens the review panel                                |
+| Set priority                 | Change priority of current note (0-100)               |
+| Export review history        | Export review log to CSV file                         |
 
 ## How It Works
 
 ### Workflow
 
 1. **Import** - Add articles or content to your vault
-2. **Tag** - Add the extract tag (default: `#extract`) to notes you want to process
+2. **Tag** - Add the extract tag (default: `#topic`) to notes you want to process
 3. **Extract** - Select important passages and use "Extract to topic note"
 4. **Cloze** - Create cloze deletions from key facts: `{{c1::answer}}`
 5. **Review** - Open the review panel to study due items
@@ -103,35 +105,55 @@ BRAT will automatically keep the plugin updated when new releases are published.
 
 ### Development
 
+This is a monorepo with multiple packages. See `AGENTS.md` for detailed development guidelines.
+
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
-# Development build (watch mode)
-npm run dev
+# Development build (watch mode, all packages)
+pnpm run dev
 
-# Production build
-npm run build
+# Production build (all packages)
+pnpm run build
 
-# Run tests
-npm test
+# Run tests (all packages)
+pnpm test
+
+# TypeScript type checking
+pnpm run typecheck
 
 # Lint
-npm run lint
+pnpm run lint
+
+# Format code
+pnpm run format
+
+# Run CLI directly
+pnpm run cli
+
+# Per-package commands
+pnpm --filter @repo/core test      # Run tests for core only
+pnpm --filter @repo/obsidian dev   # Dev mode for obsidian plugin only
 ```
 
 ## Configuration
 
 Settings available in the plugin options:
 
-| Setting           | Default   | Description                                    |
-| ----------------- | --------- | ---------------------------------------------- |
-| Extract tag       | `extract` | Tag that marks notes for incremental reading   |
-| Title words       | 5         | Words from selection used for extract filename |
-| New cards per day | 20        | Maximum new items introduced daily             |
-| Maximum interval  | 365       | Maximum days between reviews                   |
-| Request retention | 0.9       | Target retention rate (0.0-1.0)                |
-| Show streak       | true      | Display streak in review summary               |
+| Setting                            | Default | Description                                           |
+| ---------------------------------- | ------- | ----------------------------------------------------- |
+| New cards per day                  | 10      | Maximum new items introduced daily                    |
+| Maximum interval                   | 365     | Maximum days between reviews                          |
+| Request retention                  | 0.9     | Target retention rate (0.0-1.0)                       |
+| Extract tag                        | `topic` | Tag that marks notes for incremental reading          |
+| Extract title words                | 5       | Words from selection used for extract filename        |
+| Create folder for extracted topics | false   | Create a folder when extracting from non-folder notes |
+| Track review time                  | true    | Store elapsed time per review in the revlog           |
+| Show streak                        | true    | Display streak in review summary                      |
+| Queue strategy                     | JD1     | Queue ordering (JD1 or Anki)                          |
+| Clump limit                        | 3       | Maximum consecutive clozes from same note             |
+| Cooldown                           | 5       | Number of reviews before failed item re-enters queue  |
 
 ## Credits
 

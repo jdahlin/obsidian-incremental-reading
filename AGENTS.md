@@ -28,10 +28,11 @@ pnpm run cli                       # Run CLI directly
 packages/
 ├── core/           # @repo/core - Pure business logic (no Obsidian deps)
 │   └── src/
-│       ├── anki/       # Anki import/export
 │       ├── core/       # Core types and utilities
 │       ├── data/       # Data access abstractions
-│       ├── rv/         # Random variable utilities
+│       ├── memory/     # In-memory test stores
+│       ├── review/     # Review controller and platform abstractions
+│       ├── rv/         # .rv test script DSL
 │       ├── scheduling/ # FSRS scheduling
 │       ├── stats/      # Statistics calculations
 │       └── strategies/ # Card selection strategies
@@ -50,6 +51,15 @@ packages/
 │   └── src/
 │       ├── screens/    # Terminal UI screens (React/Ink)
 │       └── components/ # Reusable components
+│
+├── web/            # @repo/web - Web reviewer (React)
+├── hub/            # @repo/hub - Course management hub (React)
+├── shell/          # @repo/shell - Simple web shell
+├── api-backend/    # @repo/api-backend - REST API server
+├── anki-importer/  # @repo/anki-importer - Anki collection importer
+├── content-scanner/# Python content scanner service
+├── canvas-extractor/# Python Canvas LMS extractor
+├── transcriber/    # Python transcription service
 │
 configs/            # Shared configurations
 ├── eslint/         # @repo/eslint-config
@@ -121,6 +131,7 @@ packages/core/src/anki/
 - Commit early and commit often unless the user says otherwise.
 
 ## Debugging Review UI
+
 Launch Obsidian with remote debugging:
 
 ```bash
@@ -136,5 +147,5 @@ document.querySelector('.ir-review-view')
 ## Documentation
 
 - `docs/ARCHITECTURE.md` - Technical design and data model
-- `docs/IMPLEMENTATION_SPEC.md` - Implementation guide
+- `docs/USER_GUIDE.md` - User documentation
 - `AGENTS.md` - Detailed agent guidelines
