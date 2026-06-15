@@ -157,14 +157,19 @@ function getOutstandingItems(): ReviewItem[]
 - **Mercy**: Bulk postpone to manage backlog
 - **Auto-balance**: Spread reviews evenly
 
-**What's needed:**
+**Current state:**
+
+- ✅ **Postpone**: Implemented in core (`ReviewController.postpone()`) but not exposed in Obsidian UI
+- ❌ **Mercy**: Not implemented
+- ❌ **Auto-balance**: Not implemented
+
+**What's still needed:**
 
 ```typescript
-function postponeItem(itemId: string, days: number): Promise<void>
 function mercy(queue: SessionItem[], keepCount: number, spreadDays: number): Promise<void>
 ```
 
-**Difficulty: Medium**
+**Difficulty: Low-Medium** (for UI exposure) / **Medium** (for mercy/auto-balance)
 
 ---
 
@@ -198,6 +203,16 @@ citations: ['Smith, 2020']
 | Export              | ✅     | CSV export command                       |
 | Folder notes        | ✅     | `createFolderForExtractedTopics` setting |
 
+### Recently Added
+
+| Feature                  | Package           | Status | Notes                               |
+| ------------------------ | ----------------- | ------ | ----------------------------------- |
+| Web reviewer             | `web`             | ✅     | React-based web review interface    |
+| Course management hub    | `hub`             | ✅     | Student/teacher dashboard           |
+| REST API backend         | `api-backend`     | ✅     | HTTP API for web clients            |
+| Anki collection importer | `anki-importer`   | ✅     | Import Anki cards with scheduling   |
+| Content scanning service | `content-scanner` | ✅     | Python service for content analysis |
+
 ### Not Implemented
 
 | Feature                      | Difficulty | Notes                           |
@@ -222,7 +237,7 @@ citations: ['Smith, 2020']
 
 ### Phase 2: Overload Management (High Priority)
 
-1. **Manual Postpone** - Single item postpone command
+1. **Manual Postpone UI** - Expose existing postpone functionality in Obsidian UI (core already implemented)
 2. **Auto-Postpone** - Automatic when queue exceeds limit
 3. **Mercy** - Bulk postpone with workload balancing
 
